@@ -1,0 +1,1 @@
+{"status":"passing","notes":"Redirects via proxy.ts (/ and /books*) plus requireUser(); / page redirects at request time."}

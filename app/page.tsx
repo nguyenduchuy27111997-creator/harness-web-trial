@@ -1,8 +1,18 @@
+import { Suspense } from "react";
+import { redirect } from "next/navigation";
+import { connection } from "next/server";
+
+// Redirecting at request time keeps the prerender (and its instant validation) free of a thrown redirect.
+async function GoToBooks() {
+  await connection();
+  redirect("/books");
+  return null;
+}
+
 export default function Home() {
   return (
-    <main className="mx-auto flex max-w-4xl flex-col gap-4 p-8">
-      <h1 className="text-4xl font-semibold tracking-tight">Welcome</h1>
-      <p className="text-muted-foreground">Replace this page with the first feature.</p>
-    </main>
+    <Suspense>
+      <GoToBooks />
+    </Suspense>
   );
 }
