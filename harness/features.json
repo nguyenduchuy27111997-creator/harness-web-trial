@@ -1,0 +1,17 @@
+{
+  "features": [
+    {
+      "id": "F000",
+      "milestone": "M1",
+      "priority": 0,
+      "complexity": "S",
+      "title": "Example: replace via /kickoff",
+      "acceptance": [
+        "Open the app at the root URL",
+        "See the home page render without console errors"
+      ],
+      "status": "failing",
+      "notes": ""
+    }
+  ]
+}

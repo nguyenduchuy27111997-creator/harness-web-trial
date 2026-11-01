@@ -1,0 +1,17 @@
+{
+  "threshold": 3,
+  "minTokens": 60,
+  "format": ["typescript", "tsx"],
+  "ignore": [
+    "**/node_modules/**",
+    "**/.next/**",
+    "**/coverage/**",
+    "**/playwright-report/**",
+    "**/test-results/**",
+    "**/*.d.ts",
+    "**/supabase/**",
+    "**/harness/**"
+  ],
+  "reporters": ["console"],
+  "gitignore": true
+}

@@ -1,0 +1,7 @@
+# Default rules, minus one false positive: harness/kit-manifest.json holds SHA-256
+# checksums of kit files, and a hash next to a name like "supabase_env.py" reads as an API key.
+[extend]
+useDefault = true
+
+[allowlist]
+paths = ['''^harness/kit-manifest\.json$''']

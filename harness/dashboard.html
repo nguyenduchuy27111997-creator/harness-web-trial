@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Build loop</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --panel: #ffffff; --text: #1d1d1b; --muted: #6b6b66; --line: #e4e3df;
+    --accent: #2f6fd6; --ok: #1f8a4c; --warn: #b26b00; --bad: #c0392b; --chip: #efeeea;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #151514; --panel: #1f1f1d; --text: #ecebe7; --muted: #9a9993; --line: #33322f;
+            --accent: #6aa0ff; --ok: #4cc27f; --warn: #e2a33b; --bad: #ef6b5e; --chip: #2a2a27; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 20px 16px 40px; }
+  header { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: baseline; margin-bottom: 18px; }
+  h1 { font-size: 20px; margin: 0; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 26px 0 8px; }
+  .stat { color: var(--muted); }
+  .stat b { color: var(--text); font-variant-numeric: tabular-nums; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; background: var(--chip); }
+  .running { color: var(--ok); } .stopped { color: var(--muted); }
+  .bar { width: 160px; height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; display: inline-block; vertical-align: middle; }
+  .bar i { display: block; height: 100%; background: var(--accent); }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-weight: 500; color: var(--muted); font-size: 12px; }
+  tr:last-child td { border-bottom: 0; }
+  td.id { font-weight: 600; white-space: nowrap; }
+  td.note { color: var(--muted); }
+  a { color: var(--accent); text-decoration: none; }
+  .stage-building, .stage-review, .stage-fixing { color: var(--accent); }
+  .stage-ci, .stage-waiting_base, .stage-merging, .stage-queued { color: var(--warn); }
+  .stage-merged { color: var(--ok); }
+  .stage-needs_human, .stage-held, .stage-failed, .stage-reverted { color: var(--bad); }
+  .ask { background: var(--panel); border: 1px solid var(--bad); border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; }
+  .ask b { margin-right: 6px; }
+  .shots { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .shots img { height: 64px; border: 1px solid var(--line); border-radius: 4px; }
+  pre { margin: 0; padding: 12px; font: 12px/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap;
+        color: var(--muted); max-height: 260px; overflow: auto; }
+  .empty { padding: 12px; color: var(--muted); }
+  .tabs { display: flex; gap: 6px; margin: 4px 0 0; }
+  .tabs button { font: inherit; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line);
+                 background: var(--panel); color: var(--muted); cursor: pointer; }
+  .tabs button.on { color: var(--text); border-color: var(--accent); }
+  .hidden { display: none; }
+  .warn { color: var(--warn); }
+  @media (max-width: 640px) { .hide-sm { display: none; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Build loop</h1>
+    <span id="run" class="pill">…</span>
+    <span class="stat">spent <b id="spent">-</b> of <b id="budget">-</b> <span class="bar"><i id="barfill" style="width:0"></i></span></span>
+    <span class="stat">lanes <b id="lanes">-</b></span>
+    <span class="stat">merged <b id="merged">-</b></span>
+    <span class="stat hide-sm">updated <b id="updated">-</b></span>
+  </header>
+  <div id="stale" class="ask hidden"></div>
+  <div id="health" class="stat"></div>
+  <div id="reason" class="stat"></div>
+  <div id="milestones" class="stat"></div>
+  <div class="tabs"><button id="tab-now" class="on">Now</button><button id="tab-history">History</button></div>
+
+  <section id="now">
+  <h2>Waiting on you</h2>
+  <div id="asks"><div class="empty">Nothing. Answer questions in the Claude chat (/build).</div></div>
+
+  <h2>Features</h2>
+  <div class="panel"><table>
+    <thead><tr><th>Feature</th><th>Stage</th><th>PR</th><th class="hide-sm">Cost</th><th class="hide-sm">Time</th><th>Note</th></tr></thead>
+    <tbody id="jobs"><tr><td colspan="6" class="empty">No features yet.</td></tr></tbody>
+  </table></div>
+
+  <h2>Repeated failures</h2>
+  <div id="repeated"><div class="empty">None yet. A failure of the same kind twice shows here.</div></div>
+
+  <h2>Events</h2>
+  <div class="panel"><pre id="events">…</pre></div>
+  </section>
+
+  <section id="history" class="hidden">
+  <h2>Runs</h2>
+  <div class="panel"><table>
+    <thead><tr><th>Started</th><th>Spent</th><th>Merged</th><th class="hide-sm">Per feature</th><th>Stopped because</th></tr></thead>
+    <tbody id="runs"><tr><td colspan="5" class="empty">No finished runs yet.</td></tr></tbody>
+  </table></div>
+  </section>
+</main>
+<script>
+const ORDER = ["building", "review", "fixing", "ci", "merging", "waiting_base", "queued",
+               "needs_human", "held", "failed", "reverted", "merged"];
+const mins = s => s ? Math.max(1, Math.round(s / 60)) + " min" : "";
+for (const t of ["now", "history"]) document.getElementById("tab-" + t).onclick = () => {
+  for (const u of ["now", "history"]) {
+    document.getElementById(u).classList.toggle("hidden", u !== t);
+    document.getElementById("tab-" + u).classList.toggle("on", u === t);
+  }
+};
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+
+async function refresh() {
+  try {
+    const s = await (await fetch("/state.json", {cache: "no-store"})).json();
+    const jobs = Object.values(s.jobs || {});
+    document.getElementById("run").textContent = s.running ? "running" : "stopped";
+    document.getElementById("run").className = "pill " + (s.running ? "running" : "stopped");
+    document.getElementById("spent").textContent = "$" + (s.spent || 0).toFixed(2);
+    document.getElementById("budget").textContent = "$" + (s.budget || 0);
+    document.getElementById("barfill").style.width = Math.min(100, 100 * (s.spent || 0) / (s.budget || 1)) + "%";
+    const busy = jobs.filter(j => ["building", "review", "fixing"].includes(j.stage)).length;
+    document.getElementById("lanes").textContent = busy + " / " + (s.lanes || "-");
+    document.getElementById("merged").textContent = jobs.filter(j => j.stage === "merged" && !j.revert_of).length;
+    document.getElementById("updated").textContent = (s.updated || "").slice(11);
+    // Health: the machine and the loop. A running loop that stopped ticking is the one thing to shout about.
+    const h = s.health || {};
+    const chips = [h.load != null && `load ${h.load}/${h.cpus}`, h.memory && `memory ${h.memory}`,
+      h.disk_free_gb != null && `disk ${h.disk_free_gb} GB`, h.offline_since && `offline since ${h.offline_since.slice(11)}`,
+      h.pause_kind && `paused (${h.pause_kind})`, h.sleeps && `slept ${h.sleeps}x`,
+      h.ci_wait_minutes != null && `CI wait ${h.ci_wait_minutes} min`].filter(Boolean);
+    document.getElementById("health").innerHTML = chips.map(c => `<span class="pill">${esc(c)}</span>`).join(" ");
+    const age = s.last_tick ? (Date.now() - new Date(s.last_tick).getTime()) / 1000 : 0;
+    const stale = document.getElementById("stale");
+    stale.textContent = `The loop has not ticked for ${Math.round(age / 60)} min: it may be stuck. Ask in chat: /build status.`;
+    stale.classList.toggle("hidden", !(s.running && age > 300));
+    document.getElementById("reason").textContent =
+      (s.main_red ? "Main CI is red: only the revert may merge. " : "") + (s.stop_reason ? "Stop: " + s.stop_reason : "");
+
+    const asks = jobs.filter(j => j.question);
+    document.getElementById("asks").innerHTML = asks.length
+      ? asks.map(j => `<div class="ask"><b>${esc(j.id)}</b>${esc(j.question)}</div>`).join("")
+      : '<div class="empty">Nothing. Answer questions in the Claude chat (/build), or with /answer on the PR.</div>';
+
+    jobs.sort((a, b) => ORDER.indexOf(a.stage) - ORDER.indexOf(b.stage) || a.id.localeCompare(b.id));
+    document.getElementById("jobs").innerHTML = jobs.length ? jobs.map(j => `
+      <tr>
+        <td class="id">${esc(j.id)}<div class="note">${esc(j.title)}</div>
+          ${(j.shots || []).length ? `<div class="shots">${j.shots.map(n =>
+            `<a href="/evidence/${esc(j.id)}/${esc(n)}" target="_blank"><img loading="lazy" src="/evidence/${esc(j.id)}/${esc(n)}" alt="${esc(n)}"></a>`).join("")}</div>` : ""}</td>
+        <td class="stage-${esc(j.stage)}">${esc(j.stage.replace("_", " "))}${j.base && j.base !== "main" ? `<div class="note">on ${esc(j.base)}</div>` : ""}</td>
+        <td>${j.pr_url ? `<a href="${esc(j.pr_url)}" target="_blank">#${esc(j.pr)}</a>` : ""}</td>
+        <td class="hide-sm">${j.cost ? "$" + j.cost.toFixed(2) : ""}</td>
+        <td class="hide-sm">${mins(j.lead_seconds || j.seconds)}${(j.sessions || []).length ? `<div class="note">${j.sessions.length} sessions</div>` : ""}</td>
+        <td class="note">${esc(j.note)}</td>
+      </tr>`).join("") : '<tr><td colspan="6" class="empty">No features yet.</td></tr>';
+
+    const ms = Object.entries(s.milestone_spent || {});
+    document.getElementById("milestones").innerHTML = ms.map(([m, v]) =>
+      `<span class="${(s.milestone_over || {})[m] ? "warn" : ""}">${esc(m)} $${v.toFixed(2)}${(s.milestone_over || {})[m] ? " (over budget)" : ""}</span>`).join(" · ");
+    const rep = Object.entries(s.repeated || {});
+    document.getElementById("repeated").innerHTML = rep.length
+      ? '<div class="panel"><table>' + rep.map(([k, n]) => `<tr><td class="id">x${n}</td><td>${esc(k)}</td></tr>`).join("") + "</table></div>"
+      : '<div class="empty">None yet. A failure of the same kind twice shows here.</div>';
+
+    const runs = (await (await fetch("/history.json", {cache: "no-store"})).json()).reverse();
+    document.getElementById("runs").innerHTML = runs.length ? runs.map(r => {
+      const per = r.merged.length ? "$" + (r.merged.reduce((a, m) => a + m.cost, 0) / r.merged.length).toFixed(2) : "";
+      return `<tr><td>${esc(r.started.replace("T", " ").slice(0, 16))}</td><td>$${r.spent.toFixed(2)} of $${r.budget}${r.spent_incomplete ? `<div class="note">up to $${r.spent_max.toFixed(2)}: stopped sessions did not report</div>` : ""}</td>
+        <td>${r.merged.length}<div class="note">${esc(r.merged.map(m => m.id).join(", "))}</div></td>
+        <td class="hide-sm">${per}</td><td class="note">${esc(r.stop_reason)}</td></tr>`;
+    }).join("") : '<tr><td colspan="5" class="empty">No finished runs yet.</td></tr>';
+
+    document.getElementById("events").textContent = await (await fetch("/events", {cache: "no-store"})).text() || "No events yet.";
+  } catch (e) {
+    document.getElementById("run").textContent = "loop not reachable";
+    document.getElementById("run").className = "pill stopped";
+  }
+}
+refresh();
+setInterval(refresh, 3000);
+</script>
+</body>
+</html>

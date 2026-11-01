@@ -1,0 +1,21 @@
+{
+  "kind": "web",
+  "verify": "browser",
+  "requires": [
+    "node",
+    "uv",
+    "docker"
+  ],
+  "probes": [
+    [
+      "docker",
+      "info"
+    ]
+  ],
+  "sandbox": {
+    "allowUnixSockets": [
+      "/var/run/docker.sock",
+      "~/.docker/run/docker.sock"
+    ]
+  }
+}

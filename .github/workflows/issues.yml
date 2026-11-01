@@ -1,0 +1,22 @@
+# Mirrors harness/features.json on main into GitHub Issues (harness/sync_issues.py),
+# so an issue closes when the PR that made its feature pass is merged.
+# Uses only the default GITHUB_TOKEN: no secrets to set.
+name: issues
+on:
+  push:
+    branches: [main]
+    paths: [harness/features.json, "harness/status/**"]
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write
+jobs:
+  sync:
+    # A repository variable HARNESS_RUNS_ON picks the runner, as JSON: '["self-hosted","macOS"]' for a
+    # runner on your own machine (free, also for private repos). Unset: GitHub's ubuntu-latest.
+    runs-on: ${{ fromJSON(vars.HARNESS_RUNS_ON || '"ubuntu-latest"') }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - run: python3 harness/sync_issues.py

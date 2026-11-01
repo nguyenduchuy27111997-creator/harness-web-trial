@@ -1,0 +1,16 @@
+{
+  "sandbox": {
+    "enabled": true,
+    "failIfUnavailable": true,
+    "autoAllowBashIfSandboxed": true,
+    "allowUnsandboxedCommands": false,
+    "filesystem": {
+      "denyRead": ["~/.ssh", "~/.aws", "~/.config/gh", "~/.netrc", "~/.npmrc", "~/.docker/config.json", "~/Library/Keychains"],
+      "denyWrite": ["./harness/evidence", "./harness/hooks", "./.github", "./.githooks"]
+    },
+    "network": {
+      "allowedDomains": ["localhost", "127.0.0.1", "registry.npmjs.org", "pypi.org", "files.pythonhosted.org", "semgrep.dev"],
+      "allowLocalBinding": true
+    }
+  }
+}

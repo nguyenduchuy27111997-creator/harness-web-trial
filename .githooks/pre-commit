@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Git pre-commit hook. harness/hooks/session-start.sh points core.hooksPath here.
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+python3 harness/integrity.py --base HEAD || {
+  echo "pre-commit: integrity check failed. Undo the change above, or mark the feature blocked." >&2
+  exit 1
+}
+if command -v gitleaks >/dev/null; then
+  gitleaks git --pre-commit --staged --redact --no-banner -l warn || {
+    echo "pre-commit: gitleaks found a secret in the staged changes." >&2
+    exit 1
+  }
+else
+  echo "pre-commit: gitleaks not installed, secret scan skipped (CI still runs it)." >&2
+fi
