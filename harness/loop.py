@@ -1093,8 +1093,10 @@ class Loop:
         if job["fix_rounds"] >= 2:
             return self.set_stage(job, "held", note="review still finds bugs after 2 fixes",
                                   question=f"{job['id']}: review still finds bugs after 2 fix rounds:\n" + "\n".join(bugs))
-        if not self.can_start():  # the review runs again, with its fix, when there is budget for both
-            return self.set_stage(job, "review", note="the fix waits for budget")
+        if not self.can_start():  # the fix starts from these findings once it can: the review is not paid for twice
+            job["fix_waiting"] = "The reviewer found these bugs:\n" + "\n".join(bugs)
+            return self.set_stage(job, "review", note="the fix waits for " + ("a less busy machine" if self.busy
+                                                                               else "budget"))
         return self.start_fix(job, "The reviewer found these bugs:\n" + "\n".join(bugs))
 
     def start_fix(self, job, problems, count=True):
@@ -1713,7 +1715,10 @@ class Loop:
             if self.lanes_busy() >= self.opts.lanes or not self.can_start() or paused:
                 break
             if job["stage"] == "review" and job["id"] not in self.threads:
-                self.start_review(job)
+                if job.get("fix_waiting"):
+                    self.start_fix(job, job.pop("fix_waiting"))
+                else:
+                    self.start_review(job)
         if self.low_budget() and not self.state["stop_reason"]:
             self.state["stop_reason"] = (f"budget ${self.state['budget']} used" if self.state["budget"] - self.state["spent"] < 0.01
                                          else f"budget ${self.state['budget']} used (less than ${MIN_SESSION:.2f} left, too little "
