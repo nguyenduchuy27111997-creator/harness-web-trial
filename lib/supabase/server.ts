@@ -3,13 +3,14 @@ import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
+import type { Database } from "@/lib/database.types";
 
 // The only way server code gets a Supabase client: the user's session lives in cookies.
-export async function createClient(): Promise<SupabaseClient> {
+export async function createClient(): Promise<SupabaseClient<Database>> {
   // The auth client reads the clock (token expiry), so it must run at request time, not in a prerender.
   await connection();
   const cookieStore = await cookies();
-  return createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+  return createServerClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
     cookies: {
       getAll: () => cookieStore.getAll(),
       setAll: (cookiesToSet) => {
