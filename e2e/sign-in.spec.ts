@@ -21,6 +21,8 @@ test("sign in and sign out from the header", async ({ page }) => {
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByText("Invalid email or password")).toBeVisible();
   await expect(page).toHaveURL(/\/sign-in$/);
+  // The button fades back from disabled:opacity-50; axe would measure contrast mid-transition.
+  await expect(page.getByRole("button", { name: "Sign in" })).toHaveCSS("opacity", "1");
   await expectAccessible(page);
 
   await page.getByLabel("Password").fill("secret123");
