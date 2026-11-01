@@ -27,5 +27,7 @@ test("signed-out visitors are sent to sign in", async ({ page }) => {
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/books$/);
+  await expect(page.getByRole("heading", { name: "My books" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
   await expect(page).toHaveScreenshot("F003-books.png");
 });
