@@ -28,8 +28,11 @@ test("sign up with email and password", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
   await expectAccessible(page);
 
-  // The same email again: a form error and no new account.
+  // Signed out, the same email again: a form error and no new account.
+  await page.getByRole("button", { name: "Sign out" }).click();
+  await expect(page).toHaveURL(/\/sign-in$/);
   await page.goto("/sign-up");
+  await expect(page.getByRole("button", { name: "Sign out" })).toHaveCount(0);
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill("another123");
   await page.getByRole("button", { name: "Sign up" }).click();
