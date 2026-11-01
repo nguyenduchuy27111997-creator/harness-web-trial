@@ -8,7 +8,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["lib/**/*.ts"],
-      exclude: ["**/*.test.ts"],
+      exclude: ["**/*.test.ts", "lib/supabase/**"], // Supabase/cookie glue: covered by e2e (docs/design/M1.md)
       thresholds: { lines: 80, functions: 80, branches: 70, statements: 80 },
     },
   },
