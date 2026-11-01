@@ -883,6 +883,11 @@ class Loop:
                    + proof.read_text().split("PROBLEMS:", 1)[-1].strip()[:1500]) if rejected else \
                 "the session left uncommitted work (stashed)"
             git("stash", "push", "-q", "-u", "-m", f"loop: uncommitted work from {job['id']}", cwd=wt)
+            # A feature that committed "needs a human" and left a stray file (a screenshot, say) still needs one:
+            # building it again would hit the same wall. Seen for real in a sandboxed web run.
+            f = {} if job.get("kind") else next((x for x in backlog.read(wt) if x["id"] == job["id"]), {})
+            if f.get("status") == "blocked" and f.get("blocked_reason") == "needs_human":
+                return self.set_stage(job, "needs_human", note="needs you", question=f.get("notes") or "needs a decision")
             return self.retry(job, why)
         guard = run(["git", "show", f"{job['base_sha']}:harness/integrity.py"], cwd=wt).stdout or \
             (Path(wt) / "harness/integrity.py").read_text()

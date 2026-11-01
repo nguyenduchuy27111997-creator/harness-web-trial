@@ -6,6 +6,7 @@
     "allowUnsandboxedCommands": false,
     "filesystem": {
       "denyRead": ["~/.ssh", "~/.aws", "~/.config/gh", "~/.netrc", "~/.npmrc", "~/.docker/config.json", "~/Library/Keychains"],
+      "allowWrite": ["~/.npm", "~/.cache", "~/Library/Caches", "~/.supabase", "~/.semgrep"],
       "denyWrite": ["./harness/evidence", "./harness/hooks", "./.github", "./.githooks"]
     },
     "network": {
