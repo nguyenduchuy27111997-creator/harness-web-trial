@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Sign-up page, signUp/signOut actions, parseSignUp, server Supabase client (createClient/getUser/requireUser), site header with Sign out. /books is a placeholder heading for F004; /sign-in (F002) not built yet."
+}
