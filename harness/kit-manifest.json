@@ -1,5 +1,5 @@
 {
-  "version": "5.3.1",
+  "version": "5.3.2",
   "preset": "nextjs-supabase",
   "files": {
     ".claude/agents/architect.md": "028703baff7bdfbf7e1a593438ff1ed616d359041d5c1223b37e00100de997b4",
@@ -46,12 +46,12 @@
     "harness/health.py": "4b800257224da7a0a4edb1b214862ee0f8cf879f12205d349db00edf0d865ec4",
     "harness/hooks/audit.py": "2899927d83f2a65db8fd31b15fd23e287102d7d633ed791a0daea9de70eb7d1e",
     "harness/hooks/session-start.sh": "623c156065f0a2ea2e086e513c2367b288ece8df312955e738d027dee4ab8b4c",
-    "harness/hooks/stop-gate.sh": "6a5fd9dc52edad7d35a4a96c57485cc5a587856a54a3bc39402b2e36846bf3df",
+    "harness/hooks/stop-gate.sh": "17e18a20ca5988c838bbbe379c6c80ee89ba604b497e9aec0f7631bbe012223b",
     "harness/hooks/verifier-evidence.py": "230dc9a2997ec8e2d5f4909ade0c9ac0efdb3f13d6c683614b1e826e532bf9d1",
     "harness/integrity.py": "c33759731a165263b4af8410bf0f596b236818038b43eb7a2c60a760c57cfec5",
     "harness/loop-mcp.json": "10e61de4f6a91e39ec5085d6ef3c868a099002cce515f26ba6d763a39f2b85b4",
     "harness/loop-settings.json": "9006504982853eb687f8dd5a1282bd085dc658377e0959fdcef5cee6b88469c9",
-    "harness/loop.py": "f522850ee269a7a08f9edf97039971cc1ec27d69bbf5aca98979ec5a6ed23ce7",
+    "harness/loop.py": "b0021e34367bf9b97109c5e5bee05f35a10b53db3dce7da809212c1ef95264bd",
     "harness/metrics.py": "9314593c59623a01c43aff1aff50ca26afc03775f70488c0a58e342e2d09bb90",
     "harness/next_feature.py": "67048fa47db2878ecd2fdfdffcda50ddf4201a411de553a01f500fef6c83556c",
     "harness/notify.py": "87bbeb06dda08cc1b6420406bfb1772fd245af948bf301f5e92ff1a93e0cdfbe",

@@ -864,6 +864,8 @@ class Loop:
         command = (f"/design {job['milestone']}" if kind == "design" else self.rule_prompt(job) if kind == "rule"
                    else f"/next {job['id']}")
         prompt = command + (f" The human answered earlier questions: {extra}" if extra else "")
+        if job.get("last_failure"):  # a retry knows why the last attempt failed, so it does not repeat it blind
+            prompt += f" The previous attempt failed: {job['last_failure']}"
         cost, subtype, text = self.claude(job, prompt, job["model"])
         return {"cost": cost, "subtype": subtype, "text": text}
 
@@ -875,8 +877,13 @@ class Loop:
         if self.starved(job, res):  # not the feature's fault: build it again with a full budget, no attempt used
             return self.set_stage(job, "queued", note=f"cut off by the run's budget (${job['last_cap']}); builds again")
         if git("status", "--porcelain", cwd=wt).stdout.strip():
+            proof = Path(wt) / f"harness/evidence/design-{job.get('milestone')}.md"
+            rejected = job.get("kind") == "design" and proof.exists() and "VERDICT: FAIL" in proof.read_text()
+            why = ("the architect still failed the design after 3 rounds: "
+                   + proof.read_text().split("PROBLEMS:", 1)[-1].strip()[:1500]) if rejected else \
+                "the session left uncommitted work (stashed)"
             git("stash", "push", "-q", "-u", "-m", f"loop: uncommitted work from {job['id']}", cwd=wt)
-            return self.retry(job, "the session left uncommitted work (stashed)")
+            return self.retry(job, why)
         guard = run(["git", "show", f"{job['base_sha']}:harness/integrity.py"], cwd=wt).stdout or \
             (Path(wt) / "harness/integrity.py").read_text()
         check = self.guard(job, guard, job["base_sha"])
@@ -945,6 +952,7 @@ class Loop:
 
     def retry(self, job, why):
         self.failure(job, why)
+        job["last_failure"] = why
         job["attempts"] = job.get("attempts", 0) + 1
         if job["attempts"] <= self.opts.retries:
             return self.set_stage(job, "queued", note=f"attempt {job['attempts']} failed: {why}; retrying")

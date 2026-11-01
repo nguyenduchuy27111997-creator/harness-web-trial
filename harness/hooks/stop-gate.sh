@@ -19,6 +19,14 @@ echo "$count" >"$count_file"
 
 cd "${CLAUDE_PROJECT_DIR:-.}" || exit 0
 
+# Only hook-written evidence is dirty (an architect or verifier FAIL the session may not touch): it is
+# done, and the loop reads that report. Seen for real: a design that failed its 3 architect rounds was
+# blocked here 8 times, each running check.sh, with nothing it was allowed to fix.
+dirty="$(git status --porcelain)"
+if [ -n "$dirty" ] && ! printf '%s\n' "$dirty" | grep -qv ' harness/evidence/'; then
+  exit 0
+fi
+
 if ! ./scripts/check.sh >/dev/null 2>&1; then
   echo "scripts/check.sh is failing. Fix it, or revert your change and mark the feature blocked, before ending the session." >&2
   exit 2
