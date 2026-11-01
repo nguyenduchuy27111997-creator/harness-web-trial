@@ -47,3 +47,6 @@ coverage/
 .vercel/
 supabase/.temp/
 .lighthouseci/
+
+# Python bytecode from harness/*.py
+__pycache__/
