@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Adds the books migration, generated types, listBooks and the /books empty state. /books/new is not built yet (F005), so the Add book link lands on a 404 for now."
+}
