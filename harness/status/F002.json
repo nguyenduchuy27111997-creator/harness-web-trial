@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "signIn action + parseSignIn, /sign-in page, e2e/sign-in.spec.ts with baseline; /sign-in added to Lighthouse pages."
+}

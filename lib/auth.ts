@@ -28,3 +28,13 @@ export function parseSignUp(formData: FormData): Parsed<Credentials, AuthField> 
   if (fieldErrors.email || fieldErrors.password) return { ok: false, fieldErrors };
   return { ok: true, value: { email, password } };
 }
+
+export function parseSignIn(formData: FormData): Parsed<Credentials, AuthField> {
+  const email = field(formData, "email").trim();
+  const password = field(formData, "password");
+  const fieldErrors: FieldErrors<AuthField> = {};
+  if (!email) fieldErrors.email = "Email is required";
+  if (!password) fieldErrors.password = "Password is required";
+  if (fieldErrors.email || fieldErrors.password) return { ok: false, fieldErrors };
+  return { ok: true, value: { email, password } };
+}

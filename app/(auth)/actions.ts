@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { parseSignUp, type AuthFormState } from "@/lib/auth";
+import { parseSignIn, parseSignUp, type AuthFormState } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
 export async function signUp(_prev: AuthFormState, formData: FormData): Promise<AuthFormState> {
@@ -15,6 +15,17 @@ export async function signUp(_prev: AuthFormState, formData: FormData): Promise<
     return { formError: "An account with this email already exists", values };
   }
   if (error) return { formError: "Could not sign up. Try again.", values };
+  redirect("/books");
+}
+
+export async function signIn(_prev: AuthFormState, formData: FormData): Promise<AuthFormState> {
+  const parsed = parseSignIn(formData);
+  const values = { email: String(formData.get("email") ?? "") };
+  if (!parsed.ok) return { fieldErrors: parsed.fieldErrors, values };
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword(parsed.value);
+  if (error) return { formError: "Invalid email or password", values };
   redirect("/books");
 }
 
