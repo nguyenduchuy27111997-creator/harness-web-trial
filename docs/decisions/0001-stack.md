@@ -1,6 +1,6 @@
 # 0001: Stack (Next.js + Supabase preset)
 
-- Date: set by /kickoff
+- Date: 2026-11-02
 - Status: accepted
 
 ## Context

@@ -34,9 +34,9 @@ export default function Styleguide() {
 
       <section className="flex flex-col gap-2">
         <h2 className="text-2xl font-semibold">Type</h2>
-        <p className="text-4xl font-semibold tracking-tight">Heading 1</p>
-        <p className="text-2xl font-semibold">Heading 2</p>
-        <p className="text-lg font-medium">Heading 3</p>
+        <p className="font-heading text-4xl font-semibold tracking-tight">Heading 1</p>
+        <p className="font-heading text-2xl font-semibold">Heading 2</p>
+        <p className="font-heading text-lg font-medium">Heading 3</p>
         <p className="text-base">Body text for paragraphs and labels.</p>
         <p className="text-sm text-muted-foreground">Muted text for hints and metadata.</p>
       </section>

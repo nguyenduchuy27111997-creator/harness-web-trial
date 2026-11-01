@@ -4,5 +4,5 @@ import { test, expect } from "@playwright/test";
 test("health route names this app", async ({ request }) => {
   const res = await request.get("/api/harness-health");
   expect(res.ok()).toBe(true);
-  expect((await res.json()).app).toBe("__APP_NAME__");
+  expect((await res.json()).app).toBe("bookshelf");
 });

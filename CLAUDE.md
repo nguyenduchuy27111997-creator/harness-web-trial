@@ -3,7 +3,7 @@
 This file is a map, not a manual. Read only the docs the current task needs.
 
 ## Project
-<!-- FILL: one paragraph. What the product is, who uses it, current stage. -->
+Bookshelf: a personal reading tracker. One person per account keeps a list of books with a status (Want to read, Reading, Finished), rates and reviews finished ones, filters by status and sees yearly stats. Next.js 16 (App Router) + local Supabase (auth, Postgres with RLS), shadcn/ui on Tailwind, Playwright e2e and Vitest; the `nextjs-supabase` preset (`harness/PRESET.md`). M1 is sign-up/sign-in and the shelf (list, add); M2 is status changes, ratings, reviews, filters, delete, stats and 404s. Product choices the spec left open: `docs/decisions/0002-product-choices.md`.
 
 ## Commands
 - Start the app: `./init.sh`

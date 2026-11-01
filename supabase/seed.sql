@@ -1,0 +1,2 @@
+-- Rows every environment needs (lookup tables, a demo org).
+-- Tests create their own data; see golden principle 7.

@@ -1,17 +1,226 @@
 {
   "features": [
     {
-      "id": "F000",
+      "id": "F001",
       "milestone": "M1",
-      "priority": 0,
-      "complexity": "S",
-      "title": "Example: replace via /kickoff",
+      "priority": 1,
+      "complexity": "M",
+      "title": "Sign up with email and password",
       "acceptance": [
-        "Open the app at the root URL",
-        "See the home page render without console errors"
+        "Open /sign-up while signed out",
+        "Enter a new unique email and a password of at least 6 characters, click Sign up",
+        "Land on /books signed in, with the header showing a Sign out button",
+        "Open /sign-up again and sign up with the same email: an error shows next to the form and no account is created",
+        "Submit with an empty email or a 5-character password: a validation error shows next to that field"
       ],
-      "status": "failing",
-      "notes": ""
+      "owner_check": true
+    },
+    {
+      "id": "F002",
+      "milestone": "M1",
+      "priority": 2,
+      "complexity": "S",
+      "title": "Sign in and sign out from the header",
+      "depends_on": ["F001"],
+      "acceptance": [
+        "Sign up a new account, then click Sign out in the header: land on /sign-in",
+        "On /sign-in enter that email with a wrong password, click Sign in: see 'Invalid email or password' and stay on /sign-in",
+        "Enter the right password, click Sign in: land on /books with Sign out in the header",
+        "/sign-in links to /sign-up and /sign-up links to /sign-in"
+      ]
+    },
+    {
+      "id": "F003",
+      "milestone": "M1",
+      "priority": 3,
+      "complexity": "S",
+      "title": "Signed-out visitors are sent to sign in",
+      "depends_on": ["F002"],
+      "acceptance": [
+        "While signed out, open /books: end up on /sign-in",
+        "Sign in from there: land on /books",
+        "While signed out, open / : end up on /sign-in; while signed in, open / : end up on /books"
+      ]
+    },
+    {
+      "id": "F004",
+      "milestone": "M1",
+      "priority": 4,
+      "complexity": "M",
+      "title": "Empty shelf on /books",
+      "depends_on": ["F001"],
+      "acceptance": [
+        "Sign up a new account and open /books",
+        "See the heading 'My books', one sentence saying the shelf is empty, and an 'Add book' button",
+        "Click 'Add book': land on /books/new"
+      ],
+      "owner_check": true
+    },
+    {
+      "id": "F005",
+      "milestone": "M1",
+      "priority": 5,
+      "complexity": "M",
+      "title": "Add a book",
+      "depends_on": ["F004"],
+      "acceptance": [
+        "Signed in, open /books/new: see Title, Author and Status fields; Status shows 'Want to read' by default",
+        "Enter title 'Middlemarch' and author 'George Eliot', leave Status, click Save",
+        "Land on /books and see 'Middlemarch' by 'George Eliot' with a 'Want to read' badge; the empty state is gone",
+        "Add another book choosing Status 'Reading': it shows a 'Reading' badge"
+      ]
+    },
+    {
+      "id": "F006",
+      "milestone": "M1",
+      "priority": 6,
+      "complexity": "S",
+      "title": "Add-book validation errors next to the field",
+      "depends_on": ["F005"],
+      "acceptance": [
+        "On /books/new click Save with Title and Author empty: 'Title is required' shows next to Title and 'Author is required' next to Author, and no book is added",
+        "Enter a 201-character title: an error next to Title says it must be at most 200 characters",
+        "Enter a 121-character author: an error next to Author says it must be at most 120 characters",
+        "Fix both and Save: the book is added and shows on /books"
+      ]
+    },
+    {
+      "id": "F007",
+      "milestone": "M1",
+      "priority": 7,
+      "complexity": "S",
+      "title": "Book list newest first with status badges",
+      "depends_on": ["F005"],
+      "acceptance": [
+        "Sign up a new account, add 'First Book' (Want to read), then 'Second Book' (Reading), then 'Third Book' (Finished)",
+        "On /books the order is Third Book, Second Book, First Book",
+        "Each row shows the title in the serif font, the author, and its badge: Finished, Reading, Want to read",
+        "At phone width (390px) the list is a single column with no horizontal scroll"
+      ],
+      "owner_check": true
+    },
+    {
+      "id": "F008",
+      "milestone": "M1",
+      "priority": 8,
+      "complexity": "S",
+      "title": "I only see my own books",
+      "depends_on": ["F007", "F003"],
+      "acceptance": [
+        "Sign up account A and add a book with a unique title",
+        "Sign out, sign up account B, open /books: B sees the empty state and not A's book",
+        "Sign out, sign in as A: A's book is still listed"
+      ]
+    },
+    {
+      "id": "F009",
+      "milestone": "M2",
+      "priority": 9,
+      "complexity": "S",
+      "title": "Book page at /books/<id>",
+      "depends_on": ["F008"],
+      "acceptance": [
+        "Signed in with one book, click its title on /books: land on /books/<id>",
+        "See the title as the page heading, the author, the status badge and a 'Back to my books' link",
+        "Click 'Back to my books': return to /books"
+      ],
+      "owner_check": true
+    },
+    {
+      "id": "F010",
+      "milestone": "M2",
+      "priority": 10,
+      "complexity": "M",
+      "title": "Change a book's status; finishing records today's date",
+      "depends_on": ["F009"],
+      "acceptance": [
+        "On a 'Want to read' book's page, change Status to 'Reading' and save: the badge shows Reading, also on /books after reload",
+        "Change Status to 'Finished' and save: the page shows 'Finished on <today's date>'",
+        "Change Status back to 'Reading': the finish date is no longer shown"
+      ]
+    },
+    {
+      "id": "F011",
+      "milestone": "M2",
+      "priority": 11,
+      "complexity": "M",
+      "title": "Rate a finished book 1 to 5 stars",
+      "depends_on": ["F010"],
+      "acceptance": [
+        "On a 'Reading' book's page there is no rating control",
+        "Mark it Finished: a 5-star rating control appears",
+        "Choose 4 stars and save: after reload the page shows 4 of 5 stars selected",
+        "Change to 2 stars and save: after reload it shows 2 of 5"
+      ]
+    },
+    {
+      "id": "F012",
+      "milestone": "M2",
+      "priority": 12,
+      "complexity": "S",
+      "title": "Write a short review of a finished book",
+      "depends_on": ["F010"],
+      "acceptance": [
+        "On a 'Finished' book's page, type a review 'Loved the ending.' and save: after reload the review text is shown",
+        "Enter 2,001 characters and save: an error next to the review field says it must be at most 2,000 characters and the old review is kept",
+        "On a 'Want to read' book's page there is no review field"
+      ]
+    },
+    {
+      "id": "F013",
+      "milestone": "M2",
+      "priority": 13,
+      "complexity": "M",
+      "title": "Filter the list by status with tabs kept in the URL",
+      "depends_on": ["F008"],
+      "acceptance": [
+        "Add one book of each status, open /books: tabs All, Want to read, Reading, Finished; All is selected and all three books show",
+        "Click 'Reading': the URL becomes /books?status=reading and only the Reading book shows",
+        "Reload the page: the Reading tab is still selected with the same single book",
+        "Open /books?status=finished directly: only the Finished book shows; click All: the URL is /books and all books show",
+        "A tab with no books shows a short 'No books here' message"
+      ]
+    },
+    {
+      "id": "F014",
+      "milestone": "M2",
+      "priority": 14,
+      "complexity": "S",
+      "title": "Delete a book after confirming",
+      "depends_on": ["F009"],
+      "acceptance": [
+        "On a book's page click Delete: a dialog asks to confirm",
+        "Click Cancel: the dialog closes and the book is still there",
+        "Click Delete again and confirm: land on /books and the book is no longer listed, also after reload"
+      ]
+    },
+    {
+      "id": "F015",
+      "milestone": "M2",
+      "priority": 15,
+      "complexity": "M",
+      "title": "Stats page: finished this year and average rating",
+      "depends_on": ["F011"],
+      "acceptance": [
+        "Sign up a new account and open /stats: see 'Books finished this year: 0' and 'Average rating: No ratings yet'",
+        "Finish two books today and rate them 4 and 5 stars, finish a third without a rating",
+        "Open /stats: see 'Books finished this year: 3' and 'Average rating: 4.5'",
+        "The header links to /stats and back to /books"
+      ],
+      "owner_check": true
+    },
+    {
+      "id": "F016",
+      "milestone": "M2",
+      "priority": 16,
+      "complexity": "S",
+      "title": "Book not found page for missing or other users' books",
+      "depends_on": ["F009"],
+      "acceptance": [
+        "As account A add a book and note its /books/<id> URL",
+        "Sign out, sign in as account B and open that URL: see a 'Book not found' page with a link back to /books, served with HTTP status 404",
+        "Open /books/00000000-0000-0000-0000-000000000000: the same 'Book not found' page with status 404"
+      ]
     }
   ]
 }
