@@ -1986,6 +1986,9 @@ def service_label(root):
     return "com.harness.loop." + hashlib.sha1(str(Path(root).resolve()).encode()).hexdigest()[:10]
 
 
+SERVICE_ENV = ("LOOP_", "HARNESS_", "GH_HOST")
+
+
 def service_plist(root):
     return Path(runner.AGENTS) / f"{service_label(root)}.plist"
 
@@ -2176,7 +2179,9 @@ def cmd_service(root, a):
         plist.write_bytes(plistlib.dumps({
             "Label": label, "WorkingDirectory": str(root),
             "ProgramArguments": [sys.executable, str(Path(root) / "harness/loop.py"), "start", "--foreground", "--resume"],
-            "EnvironmentVariables": {"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "HOME": str(Path.home())},
+            # The loop's own knobs set when the service is installed (LOOP_SANDBOX=1, say) stay set under launchd.
+            "EnvironmentVariables": {"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "HOME": str(Path.home()),
+                                     **{k: v for k, v in os.environ.items() if k.startswith(SERVICE_ENV)}},
             "RunAtLoad": True, "KeepAlive": {"SuccessfulExit": False}, "ThrottleInterval": 60,
             "StandardOutPath": str(home / "launchd.log"), "StandardErrorPath": str(home / "launchd.log")}))
         r = run([runner.LAUNCHCTL, "bootstrap", domain, str(plist)], timeout=60)
