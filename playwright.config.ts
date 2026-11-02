@@ -18,7 +18,9 @@ export default defineConfig({
   snapshotPathTemplate: "{testDir}/__screenshots__/{testFilePath}/{arg}{ext}",
   ignoreSnapshots: !!process.env.CI,
   updateSnapshots: process.env.CI ? "none" : "missing",
-  expect: { toHaveScreenshot: { maxDiffPixelRatio: 0.01, animations: "disabled" } },
+  // A cold dev server (always in CI) compiles a route or server action on first use,
+  // which under parallel workers takes longer than the default 5s.
+  expect: { timeout: 15_000, toHaveScreenshot: { maxDiffPixelRatio: 0.01, animations: "disabled" } },
   // Locally: the installed Google Chrome, so nothing has to be downloaded.
   // CI installs Chromium (npx playwright install --with-deps chromium).
   use: { baseURL: `http://localhost:${port}`, channel: process.env.CI ? undefined : "chrome" },

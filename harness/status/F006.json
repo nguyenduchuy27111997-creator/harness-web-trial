@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Validation (parseNewBook + FormField errors) already shipped with F005; this adds the F006 e2e test e2e/add-book-validation.spec.ts and baseline F006-validation-errors.png. Unrelated: the default Button hover (bg-primary/80) fails axe color-contrast with cream text; the test moves the pointer off Save before the a11y check. Consider darkening the hover in components/ui/button.tsx."
+}
