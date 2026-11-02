@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Validation already existed from F005; added the e2e test with baseline. Out of scope, for F004/F005 list: a 200-char unbroken title does not wrap on /books and pushes the status badge out of view."
+}
