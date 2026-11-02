@@ -7,13 +7,13 @@ export type Database = {
           Tables: {
             "books": {
                   Row: {
-                    "author": string,"created_at": string,"id": string,"status": string,"title": string,"user_id": string
+                    "author": string,"created_at": string,"finished_on": string | null,"id": string,"rating": number | null,"review": string | null,"status": string,"title": string,"user_id": string
                   }
                   Insert: {
-                    "author": string,"created_at"?: string,"id"?: string,"status"?: string,"title": string,"user_id"?: string
+                    "author": string,"created_at"?: string,"finished_on"?: string | null,"id"?: string,"rating"?: number | null,"review"?: string | null,"status"?: string,"title": string,"user_id"?: string
                   }
                   Update: {
-                    "author"?: string,"created_at"?: string,"id"?: string,"status"?: string,"title"?: string,"user_id"?: string
+                    "author"?: string,"created_at"?: string,"finished_on"?: string | null,"id"?: string,"rating"?: number | null,"review"?: string | null,"status"?: string,"title"?: string,"user_id"?: string
                   }
                   Relationships: [
                     

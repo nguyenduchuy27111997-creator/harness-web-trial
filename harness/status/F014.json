@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Delete with confirm dialog (shadcn alert-dialog); migration 20261103120000 adds books_delete_own policy."
+}
