@@ -14,7 +14,7 @@ test("change status and finish date", async ({ page }) => {
   await page.goto("/books/new");
   await page.getByLabel("Title").fill("Status Book");
   await page.getByLabel("Author").fill("Status Author");
-  await page.getByRole("button", { name: "Save" }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page).toHaveURL(/\/books$/);
   await page.getByRole("link", { name: "Status Book" }).click();
   const main = page.locator("main");
@@ -22,7 +22,7 @@ test("change status and finish date", async ({ page }) => {
   const setStatus = async (name: string) => {
     await page.getByRole("combobox", { name: "Status" }).click();
     await page.getByRole("option", { name }).click();
-    await page.getByRole("button", { name: "Save" }).click();
+    await page.getByRole("button", { name: "Save", exact: true }).click();
     await expect(page.getByRole("status")).toHaveText("Saved");
     await expect(page.getByRole("combobox", { name: "Status" })).toHaveText(name);
   };
@@ -45,7 +45,7 @@ test("change status and finish date", async ({ page }) => {
   await page.getByRole("combobox", { name: "Status" }).click();
   await page.getByRole("option", { name: "Reading" }).click();
   await expect(page.getByRole("status")).toHaveCount(0);
-  await page.getByRole("button", { name: "Save" }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByRole("status")).toHaveText("Saved");
   await expect(page.getByText(/Finished on/)).toHaveCount(0);
 });

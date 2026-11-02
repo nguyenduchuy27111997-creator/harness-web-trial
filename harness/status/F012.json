@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "saveReview action, parseReview, updateBookReview (filtered on status finished), ReviewForm and shadcn textarea; the review form shows only while Finished. e2e/book-status.spec.ts: the status Save button selector got exact: true because 'Save review' now shares the page."
+}

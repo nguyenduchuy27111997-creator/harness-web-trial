@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { formatFinishDate, insertBook, listBooks, parseNewBook, parseStatus, updateBookStatus } from "./books";
+import { formatFinishDate, insertBook, listBooks, parseNewBook, parseReview, parseStatus, updateBookReview, updateBookStatus } from "./books";
 
 function stubClient(result: { data: unknown; error: { message: string } | null }) {
   const calls: unknown[][] = [];
@@ -120,5 +120,42 @@ describe("updateBookStatus", () => {
 
   it("throws on a database error", async () => {
     await expect(updateBookStatus(updateClient({ data: null, error: { message: "boom" } }), "x", "reading")).rejects.toThrow("boom");
+  });
+});
+
+describe("parseReview", () => {
+  const form = (review: string) => {
+    const f = new FormData();
+    f.set("review", review);
+    return f;
+  };
+
+  it("trims, and allows an empty review", () => {
+    expect(parseReview(form("  Loved the ending.  "))).toEqual({ ok: true, value: "Loved the ending." });
+    expect(parseReview(form("   "))).toEqual({ ok: true, value: "" });
+  });
+
+  it("accepts 2,000 characters and rejects 2,001", () => {
+    expect(parseReview(form("a".repeat(2000))).ok).toBe(true);
+    expect(parseReview(form("a".repeat(2001)))).toEqual({
+      ok: false,
+      fieldErrors: { review: "Review must be at most 2,000 characters" },
+    });
+  });
+});
+
+describe("updateBookReview", () => {
+  function updateClient(result: { data: unknown; error: { message: string } | null }) {
+    const query = { update: () => query, eq: () => query, select: () => Promise.resolve(result) };
+    return { from: () => query } as unknown as SupabaseClient<Database>;
+  }
+
+  it("is true when a row changed and false when none did", async () => {
+    expect(await updateBookReview(updateClient({ data: [{ id: "x" }], error: null }), "x", "Good")).toBe(true);
+    expect(await updateBookReview(updateClient({ data: [], error: null }), "x", null)).toBe(false);
+  });
+
+  it("throws on a database error", async () => {
+    await expect(updateBookReview(updateClient({ data: null, error: { message: "boom" } }), "x", "Good")).rejects.toThrow("boom");
   });
 });
