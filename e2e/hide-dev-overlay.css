@@ -1,2 +1,0 @@
-/* Next's dev overlay (e.g. a transient "1 Insight" badge after a client navigation) is not product UI. */
-nextjs-portal { display: none !important; }
