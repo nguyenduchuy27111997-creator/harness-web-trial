@@ -7,6 +7,8 @@ export type BookStatus = (typeof BOOK_STATUSES)[number];
 
 export type Book = Pick<Tables<"books">, "id" | "title" | "author" | "created_at"> & { status: BookStatus };
 
+export type BookDetail = Book & Pick<Tables<"books">, "finished_on" | "rating" | "review">;
+
 // Row Level Security limits the rows to the signed-in user's own.
 export async function listBooks(supabase: SupabaseClient<Database>): Promise<Book[]> {
   const { data, error } = await supabase
@@ -24,15 +26,15 @@ export function isUuid(value: string): boolean {
 }
 
 // Another user's id, a missing one and a malformed one all give null (RLS hides foreign rows).
-export async function getBook(supabase: SupabaseClient<Database>, id: string): Promise<Book | null> {
+export async function getBook(supabase: SupabaseClient<Database>, id: string): Promise<BookDetail | null> {
   if (!isUuid(id)) return null;
   const { data, error } = await supabase
     .from("books")
-    .select("id, title, author, status, created_at")
+    .select("id, title, author, status, created_at, finished_on, rating, review")
     .eq("id", id)
     .maybeSingle();
   if (error) throw new Error(error.message);
-  return data as Book | null;
+  return data as BookDetail | null;
 }
 
 export const STATUS_LABELS: Record<BookStatus, string> = {
@@ -68,4 +70,28 @@ function isBookStatus(value: string): value is BookStatus {
 export async function insertBook(supabase: SupabaseClient<Database>, input: NewBook): Promise<void> {
   const { error } = await supabase.from("books").insert(input);
   if (error) throw new Error(error.message);
+}
+
+export type StatusFormState = FormState<"status"> & { saved?: true };
+
+export function parseStatus(formData: FormData): Parsed<BookStatus, "status"> {
+  const status = String(formData.get("status") ?? "");
+  if (!isBookStatus(status)) return { ok: false, fieldErrors: { status: "Choose a status" } };
+  return { ok: true, value: status };
+}
+
+// false when no row changed: missing, or someone else's (RLS).
+export async function updateBookStatus(
+  supabase: SupabaseClient<Database>,
+  id: string,
+  status: BookStatus,
+): Promise<boolean> {
+  const { data, error } = await supabase.from("books").update({ status }).eq("id", id).select("id");
+  if (error) throw new Error(error.message);
+  return data.length > 0;
+}
+
+// "2026-11-02" -> "November 2, 2026"
+export function formatFinishDate(date: string): string {
+  return new Intl.DateTimeFormat("en-US", { dateStyle: "long", timeZone: "UTC" }).format(new Date(`${date}T00:00:00Z`));
 }

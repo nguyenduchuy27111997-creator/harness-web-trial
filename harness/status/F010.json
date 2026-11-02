@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Migration 20261102130000_book_progress.sql (finish-date trigger, update policy, column grants), updateStatus action, BookStatusForm, 'Finished on <date>' (UTC). Status Select is remounted with key={status} so it does not revert after Save. e2e/book-page.spec.ts got .first() on the 'Reading' assertion because the status control now shows the same text."
+}

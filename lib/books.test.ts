@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { insertBook, listBooks, parseNewBook } from "./books";
+import { formatFinishDate, insertBook, listBooks, parseNewBook, parseStatus, updateBookStatus } from "./books";
 
 function stubClient(result: { data: unknown; error: { message: string } | null }) {
   const calls: unknown[][] = [];
@@ -86,5 +86,39 @@ describe("insertBook", () => {
       from: () => ({ insert: () => Promise.resolve({ error: { message: "boom" } }) }),
     } as unknown as SupabaseClient<Database>;
     await expect(insertBook(client, input)).rejects.toThrow("boom");
+  });
+});
+
+describe("parseStatus", () => {
+  it("accepts a known status", () => {
+    expect(parseStatus(form({ status: "reading" }))).toEqual({ ok: true, value: "reading" });
+  });
+
+  it("rejects an unknown or missing status", () => {
+    const error = { ok: false, fieldErrors: { status: "Choose a status" } };
+    expect(parseStatus(form({ status: "nope" }))).toEqual(error);
+    expect(parseStatus(form({}))).toEqual(error);
+  });
+});
+
+describe("formatFinishDate", () => {
+  it("writes the date out in long form", () => {
+    expect(formatFinishDate("2026-11-02")).toBe("November 2, 2026");
+  });
+});
+
+describe("updateBookStatus", () => {
+  function updateClient(result: { data: unknown; error: { message: string } | null }) {
+    const query = { update: () => query, eq: () => query, select: () => Promise.resolve(result) };
+    return { from: () => query } as unknown as SupabaseClient<Database>;
+  }
+
+  it("is true when a row changed and false when none did", async () => {
+    expect(await updateBookStatus(updateClient({ data: [{ id: "x" }], error: null }), "x", "reading")).toBe(true);
+    expect(await updateBookStatus(updateClient({ data: [], error: null }), "x", "reading")).toBe(false);
+  });
+
+  it("throws on a database error", async () => {
+    await expect(updateBookStatus(updateClient({ data: null, error: { message: "boom" } }), "x", "reading")).rejects.toThrow("boom");
   });
 });
