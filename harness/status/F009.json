@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Book page at /books/[id]; list titles link to it. HTTP 404 status for unknown ids is F016's scope (page sets instant = false per design; app/books/loading.tsx still exists and F016 must remove it)."
+}
