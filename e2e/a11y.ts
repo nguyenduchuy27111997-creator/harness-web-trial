@@ -18,6 +18,10 @@ export async function expectAccessible(page: Page) {
   // briefly missing, and axe then reports document-title (a flaky main CI got two good features
   // reverted). Wait for the title; a page that never gets one still fails here.
   await expect(page, "the page has no <title>").toHaveTitle(/\S/);
+  // Buttons use transition-all: right after a server action the submit button fades back from
+  // disabled:opacity-50 (or from its hover colour), and axe sampling it mid-fade reported
+  // color-contrast on a slow CI runner. Let running transitions finish first.
+  await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => {}))));
   const { violations } = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
     .analyze();

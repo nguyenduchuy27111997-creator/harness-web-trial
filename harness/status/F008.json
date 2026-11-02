@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Isolation already held (RLS on public.books); added the e2e test e2e/book-isolation.spec.ts. No product code changed."
+}
