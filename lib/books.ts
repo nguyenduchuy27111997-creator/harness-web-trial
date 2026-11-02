@@ -17,6 +17,24 @@ export async function listBooks(supabase: SupabaseClient<Database>): Promise<Boo
   return data as Book[];
 }
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isUuid(value: string): boolean {
+  return UUID.test(value);
+}
+
+// Another user's id, a missing one and a malformed one all give null (RLS hides foreign rows).
+export async function getBook(supabase: SupabaseClient<Database>, id: string): Promise<Book | null> {
+  if (!isUuid(id)) return null;
+  const { data, error } = await supabase
+    .from("books")
+    .select("id, title, author, status, created_at")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data as Book | null;
+}
+
 export const STATUS_LABELS: Record<BookStatus, string> = {
   want_to_read: "Want to read",
   reading: "Reading",
