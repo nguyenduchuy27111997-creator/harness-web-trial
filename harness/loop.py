@@ -1440,8 +1440,10 @@ class Loop:
     def restack(self, job):
         with GIT_LOCK:
             git("fetch", "-q", "origin", cwd=job["worktree"])
+        # Retarget first: the rebase push starts CI, and a run whose base is the merged branch fails once
+        # that branch is deleted (the trial's F002 and F004 both failed the integrity guard this way).
+        gh("pr", "edit", str(job["pr"]), "--base", "main", cwd=self.root)
         if self.rebase(job, "origin/main", job["base_sha"]):
-            gh("pr", "edit", str(job["pr"]), "--base", "main", cwd=self.root)
             job["base"] = "main"
             job["base_sha"] = git("rev-parse", "origin/main", cwd=job["worktree"]).stdout.strip()
             self.set_stage(job, "review" if job["stage"] == "review" else "ci", note="base merged; rebased onto main")
