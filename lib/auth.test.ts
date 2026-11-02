@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseSignUp } from "./auth";
+import { parseSignIn, parseSignUp } from "./auth";
 
 function form(fields: Record<string, string>) {
   const data = new FormData();
@@ -33,5 +33,21 @@ describe("parseSignUp", () => {
     const error = { ok: false, fieldErrors: { password: "Password must be at least 6 characters" } };
     expect(parseSignUp(form({ email: "a@b.co", password: "12345" }))).toEqual(error);
     expect(parseSignUp(form({ email: "a@b.co" }))).toEqual(error);
+  });
+});
+
+describe("parseSignIn", () => {
+  it("accepts any non-empty password", () => {
+    expect(parseSignIn(form({ email: " a@b.co ", password: "1" }))).toEqual({
+      ok: true,
+      value: { email: "a@b.co", password: "1" },
+    });
+  });
+
+  it("requires both fields", () => {
+    expect(parseSignIn(form({ email: " " }))).toEqual({
+      ok: false,
+      fieldErrors: { email: "Email is required", password: "Password is required" },
+    });
   });
 });

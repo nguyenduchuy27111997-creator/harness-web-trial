@@ -1,7 +1,7 @@
 // Performance budget (scripts/perf.sh, CI). Add each public page a feature builds to
 // `pages`, and set the budgets from docs/design/<M>.md (NFR) when they differ.
 const port = Number(process.env.PORT ?? 3300);
-const pages = ["/", "/styleguide", "/sign-up"];
+const pages = ["/", "/styleguide", "/sign-up", "/sign-in"];
 
 module.exports = {
   ci: {
