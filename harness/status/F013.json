@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Tabs are server-rendered links in components/status-tabs.tsx (aria-current on the current one); listBooks(supabase, status?) and parseStatusFilter in lib/books.ts. F007 and F008 baselines changed only because the tabs row now appears on /books. Locally scripts/db-types.sh --check fails because the shared Supabase stack already has F010's unmerged migration (finished_on, rating, review); every other check.sh step passes. Not caused by F013."
+}

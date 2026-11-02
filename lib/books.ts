@@ -10,11 +10,10 @@ export type Book = Pick<Tables<"books">, "id" | "title" | "author" | "created_at
 export type BookDetail = Book & Pick<Tables<"books">, "finished_on" | "rating" | "review">;
 
 // Row Level Security limits the rows to the signed-in user's own.
-export async function listBooks(supabase: SupabaseClient<Database>): Promise<Book[]> {
-  const { data, error } = await supabase
-    .from("books")
-    .select("id, title, author, status, created_at")
-    .order("created_at", { ascending: false });
+export async function listBooks(supabase: SupabaseClient<Database>, status?: BookStatus): Promise<Book[]> {
+  let query = supabase.from("books").select("id, title, author, status, created_at");
+  if (status) query = query.eq("status", status);
+  const { data, error } = await query.order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return data as Book[];
 }
@@ -35,6 +34,11 @@ export async function getBook(supabase: SupabaseClient<Database>, id: string): P
     .maybeSingle();
   if (error) throw new Error(error.message);
   return data as BookDetail | null;
+}
+
+// A known status from the URL, else undefined (All).
+export function parseStatusFilter(value: string | string[] | undefined): BookStatus | undefined {
+  return typeof value === "string" && isBookStatus(value) ? value : undefined;
 }
 
 export const STATUS_LABELS: Record<BookStatus, string> = {
