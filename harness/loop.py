@@ -605,14 +605,19 @@ class Loop:
                     base = dj["branch"]
                 else:
                     ok = False
+            on_main = False
             for dep in f.get("depends_on", []):
                 if self.main.get(dep, {}).get("status") == "passing":
+                    on_main = True
                     continue
                 dj = self.job(dep)
                 if dj and dj["stage"] in ("review", "fixing", "ci", "waiting_base", "merging") and base == "main":
                     base = dj["branch"]  # stack on the open PR
                 else:
                     ok = False
+            if ok and on_main and base != "main" and git(
+                    "merge-base", "--is-ancestor", "origin/main", f"origin/{base}", cwd=self.root, check=False).returncode:
+                ok = False  # a dependency that merged since that PR branched off is not on it: wait for its rebase
             if ok:
                 out.append((f, base))
         return out

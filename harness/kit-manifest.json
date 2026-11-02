@@ -1,5 +1,5 @@
 {
-  "version": "5.3.6",
+  "version": "5.3.8",
   "preset": "nextjs-supabase",
   "files": {
     ".claude/agents/architect.md": "028703baff7bdfbf7e1a593438ff1ed616d359041d5c1223b37e00100de997b4",
@@ -22,7 +22,7 @@
     ".claude/skills/replan/SKILL.md": "4235831bab444034fab518dfb8ebc3e516edb0d9f07c33132ccbde18b50073be",
     ".dependency-cruiser.cjs": "5c14b0fd44c5946c5529bd637e27949a5ba1efa6ac6b7484286a1fa0a78be6f5",
     ".githooks/pre-commit": "290f557f7da27724de2535edad8380acd2721cb1bdab9d740b7086092e5b9a7a",
-    ".github/workflows/check.yml": "2143f5997d5b65865d068e2c73fc03bc9cd8ba1d1d8d33da06ad584835cc39dc",
+    ".github/workflows/check.yml": "67a0a1b20050abe9949240cf4ed301bc894f88abd4e9a6fb6bde8fd6c0605e1d",
     ".github/workflows/issues.yml": "75cb1667164f588056825b3fa650d453ff8ab533c0850dc822421c38a6b70e55",
     ".gitleaks.toml": "6c9d2af52babda2552fc99213154fc33eca05dd04e2bd6961af4ab96c01b0e81",
     ".jscpd.json": "4764cf2024cc946cd0f095bfba652746da9714b450bffff8e4b74e5d9882148b",
@@ -51,7 +51,7 @@
     "harness/integrity.py": "c33759731a165263b4af8410bf0f596b236818038b43eb7a2c60a760c57cfec5",
     "harness/loop-mcp.json": "10e61de4f6a91e39ec5085d6ef3c868a099002cce515f26ba6d763a39f2b85b4",
     "harness/loop-settings.json": "72420e6f742a4d2bbf89bd1bd9cfd7db41b5d09a6c4a9c321bf5031ce3acd1b6",
-    "harness/loop.py": "b58360380b1266f0dd29ea561d0ab6f92246986ee6da22b75ed67d85bead4d09",
+    "harness/loop.py": "4e66c2121d6d2126ece71f6e2e98e19ef58bd5faa01f905762a1119bd72aad9e",
     "harness/metrics.py": "9314593c59623a01c43aff1aff50ca26afc03775f70488c0a58e342e2d09bb90",
     "harness/next_feature.py": "67048fa47db2878ecd2fdfdffcda50ddf4201a411de553a01f500fef6c83556c",
     "harness/notify.py": "87bbeb06dda08cc1b6420406bfb1772fd245af948bf301f5e92ff1a93e0cdfbe",

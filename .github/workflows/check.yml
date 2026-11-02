@@ -57,6 +57,20 @@ jobs:
       - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0   # Semgrep (scripts/sast.sh)
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      # On a self-hosted runner the loop's sessions share this project's local Supabase stack, and each applies
+      # its own branch's migrations to it. CI would then check main against tables main does not have (the
+      # web trial reverted a good feature for it). CI gets a stack of its own, rebuilt from this commit.
+      - name: A Supabase stack of CI's own
+        if: vars.HARNESS_RUNS_ON
+        run: |
+          python3 - <<'EOF'
+          import pathlib, re
+          p = pathlib.Path("supabase/config.toml")
+          s = re.sub(r'^project_id = "(.*)"', r'project_id = "\1-ci"', p.read_text(), count=1, flags=re.M)
+          p.write_text(re.sub(r"= (5\d3\d\d)\b", lambda m: f"= {int(m.group(1)) + 100}", s))  # its own ports
+          EOF
+          scripts/db-up.sh
+          npx supabase db reset
       - run: ./scripts/check.sh
       - name: Wait for a quiet machine
         # A self-hosted runner shares the machine with the build loop's sessions: wait (up to 5 minutes) for it
