@@ -13,6 +13,8 @@ const lora = Lora({ subsets: ["latin"], variable: "--font-serif" });
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  // No page uses font-mono yet; preloading it delayed LCP past the budget (perf.sh).
+  preload: false,
 });
 
 export const metadata: Metadata = {
