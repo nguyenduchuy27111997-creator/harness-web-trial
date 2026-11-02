@@ -1,7 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { isUuid, parseStatus, updateBookStatus, type StatusFormState } from "@/lib/books";
+import {
+  isUuid,
+  parseRating,
+  parseStatus,
+  updateBookRating,
+  updateBookStatus,
+  type RatingFormState,
+  type StatusFormState,
+} from "@/lib/books";
 import { createClient, requireUser } from "@/lib/supabase/server";
 
 export async function updateStatus(
@@ -15,6 +23,25 @@ export async function updateStatus(
   if (!isUuid(id)) return { formError: "Book not found" };
   try {
     if (!(await updateBookStatus(await createClient(), id, parsed.value))) return { formError: "Book not found" };
+  } catch {
+    return { formError: "Could not save. Try again." };
+  }
+  revalidatePath("/books");
+  revalidatePath(`/books/${id}`);
+  return { saved: true };
+}
+
+export async function saveRating(
+  id: string,
+  _prev: RatingFormState,
+  formData: FormData,
+): Promise<RatingFormState> {
+  await requireUser();
+  const parsed = parseRating(formData);
+  if (!parsed.ok) return { fieldErrors: parsed.fieldErrors, values: { rating: String(formData.get("rating") ?? "") } };
+  if (!isUuid(id)) return { formError: "Book not found" };
+  try {
+    if (!(await updateBookRating(await createClient(), id, parsed.value))) return { formError: "Book not found" };
   } catch {
     return { formError: "Could not save. Try again." };
   }

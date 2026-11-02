@@ -95,3 +95,19 @@ export async function updateBookStatus(
 export function formatFinishDate(date: string): string {
   return new Intl.DateTimeFormat("en-US", { dateStyle: "long", timeZone: "UTC" }).format(new Date(`${date}T00:00:00Z`));
 }
+
+export type RatingFormState = FormState<"rating"> & { saved?: true };
+
+export function parseRating(formData: FormData): Parsed<number, "rating"> {
+  const raw = String(formData.get("rating") ?? "");
+  const rating = /^[1-5]$/.test(raw) ? Number(raw) : null;
+  if (rating === null) return { ok: false, fieldErrors: { rating: "Choose a rating from 1 to 5" } };
+  return { ok: true, value: rating };
+}
+
+// false when no row changed: missing, someone else's (RLS), or not Finished.
+export async function updateBookRating(supabase: SupabaseClient<Database>, id: string, rating: number): Promise<boolean> {
+  const { data, error } = await supabase.from("books").update({ rating }).eq("id", id).eq("status", "finished").select("id");
+  if (error) throw new Error(error.message);
+  return data.length > 0;
+}
