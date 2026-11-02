@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Behavior already existed from F004/F005 (listBooks newest first, StatusBadge, serif titles). Added e2e test and mobile baseline. Verifier non-blocking note: a 136-char title with no spaces overflows its card at 390px (add min-w-0/break-words to the title in components/book-list.tsx)."
+}
