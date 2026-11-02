@@ -27,7 +27,7 @@ export function DeleteBookButton({ title, action }: { title: string; action: (fo
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <form action={action}>
-            <AlertDialogAction type="submit">Delete</AlertDialogAction>
+            <AlertDialogAction type="submit" variant="destructive">Delete</AlertDialogAction>
           </form>
         </AlertDialogFooter>
       </AlertDialogContent>
