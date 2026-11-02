@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Ordering (created_at desc), STATUS_LABELS and serif titles already existed from F005. Added min-w-0 break-words to the row text in components/book-list.tsx so long unbroken titles wrap at 390px, and e2e/book-list.spec.ts with baseline F007-books-phone.png. No shared app-wide files touched (principle 11)."
+}
