@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { insertBook, listBooks, parseNewBook } from "./books";
+import { insertBook, listBooks, parseNewBook, removeBook } from "./books";
 
 function stubClient(result: { data: unknown; error: { message: string } | null }) {
   const calls: unknown[][] = [];
@@ -86,5 +86,33 @@ describe("insertBook", () => {
       from: () => ({ insert: () => Promise.resolve({ error: { message: "boom" } }) }),
     } as unknown as SupabaseClient<Database>;
     await expect(insertBook(client, input)).rejects.toThrow("boom");
+  });
+});
+
+describe("removeBook", () => {
+  function deleteClient(result: { data: unknown; error: { message: string } | null }) {
+    const eqs: unknown[][] = [];
+    const query = {
+      delete: () => query,
+      eq: (...args: unknown[]) => (eqs.push(args), query),
+      select: () => Promise.resolve(result),
+    };
+    return { client: { from: () => query } as unknown as SupabaseClient<Database>, eqs };
+  }
+
+  it("deletes by id and reports true", async () => {
+    const { client, eqs } = deleteClient({ data: [{ id: "x" }], error: null });
+    expect(await removeBook(client, "x")).toBe(true);
+    expect(eqs).toEqual([["id", "x"]]);
+  });
+
+  it("reports false when no row was deleted", async () => {
+    const { client } = deleteClient({ data: [], error: null });
+    expect(await removeBook(client, "x")).toBe(false);
+  });
+
+  it("throws on a database error", async () => {
+    const { client } = deleteClient({ data: null, error: { message: "boom" } });
+    await expect(removeBook(client, "x")).rejects.toThrow("boom");
   });
 });

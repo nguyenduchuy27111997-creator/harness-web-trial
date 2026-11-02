@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { DeleteBookButton } from "@/components/delete-book-button";
 import { StatusBadge } from "@/components/status-badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getBook } from "@/lib/books";
 import { createClient, requireUser } from "@/lib/supabase/server";
+import { deleteBook } from "./actions";
 
 export const metadata: Metadata = { title: "Book · Bookshelf" };
 
@@ -26,6 +28,7 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
           <h1 className="font-heading text-4xl font-semibold tracking-tight">{book.title}</h1>
           <p className="text-muted-foreground">{book.author}</p>
           <StatusBadge status={book.status} />
+          <DeleteBookButton title={book.title} action={deleteBook.bind(null, book.id)} />
         </CardContent>
       </Card>
     </main>

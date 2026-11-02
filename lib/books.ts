@@ -69,3 +69,10 @@ export async function insertBook(supabase: SupabaseClient<Database>, input: NewB
   const { error } = await supabase.from("books").insert(input);
   if (error) throw new Error(error.message);
 }
+
+// Returns false when no row was deleted (missing or someone else's: RLS hides it).
+export async function removeBook(supabase: SupabaseClient<Database>, id: string): Promise<boolean> {
+  const { data, error } = await supabase.from("books").delete().eq("id", id).select("id");
+  if (error) throw new Error(error.message);
+  return data.length > 0;
+}
