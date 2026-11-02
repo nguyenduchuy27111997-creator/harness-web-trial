@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Add a book: /books/new form, createBook action, book list with status badges. Minor UX: field errors stay visible until next submit (not in acceptance)."
+}
