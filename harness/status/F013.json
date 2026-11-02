@@ -1,4 +1,4 @@
 {
   "status": "passing",
-  "notes": "Status tabs on /books (components/status-tabs.tsx), parseStatusFilter and listBooks(supabase, status?) in lib/books.ts; tabs always shown, 'No books here' on an empty filtered tab. Baselines F003, F004, F005, F007, F008 updated because the tabs now appear on /books."
+  "notes": "Status tabs on /books (components/status-tabs.tsx) are Button asChild ghost links: the selected tab is bg-accent with aria-current=page, the others hover:bg-accent with no border. parseStatusFilter and listBooks(supabase, status?) are in lib/books.ts. The tabs always show, and an empty filtered tab says 'No books here'. Baselines F003, F004, F005, F007 and F008 were updated because the tabs now appear on /books; F007 was updated again for the tab restyle."
 }
