@@ -1,12 +1,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { insertBook, listBooks, parseNewBook } from "./books";
+import { insertBook, listBooks, parseNewBook, parseStatusFilter } from "./books";
 
 function stubClient(result: { data: unknown; error: { message: string } | null }) {
   const calls: unknown[][] = [];
   const query = {
     select: () => query,
+    eq: (...args: unknown[]) => {
+      calls.push(["eq", ...args]);
+      return query;
+    },
     order: (...args: unknown[]) => {
       calls.push(args);
       return Promise.resolve(result);
@@ -27,9 +31,27 @@ describe("listBooks", () => {
     expect(calls).toEqual([["created_at", { ascending: false }]]);
   });
 
+  it("filters by status when given", async () => {
+    const { client, calls } = stubClient({ data: [], error: null });
+    await listBooks(client, "reading");
+    expect(calls[0]).toEqual(["eq", "status", "reading"]);
+  });
+
   it("throws on a database error", async () => {
     const { client } = stubClient({ data: null, error: { message: "boom" } });
     await expect(listBooks(client)).rejects.toThrow("boom");
+  });
+});
+
+describe("parseStatusFilter", () => {
+  it("accepts a known status", () => {
+    expect(parseStatusFilter("finished")).toBe("finished");
+  });
+
+  it("falls back to All for unknown, repeated or missing values", () => {
+    expect(parseStatusFilter("nope")).toBeUndefined();
+    expect(parseStatusFilter(["reading", "finished"])).toBeUndefined();
+    expect(parseStatusFilter(undefined)).toBeUndefined();
   });
 });
 
