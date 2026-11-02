@@ -1518,6 +1518,9 @@ class Loop:
             if revert and revert["stage"] == "merged" and revert.get("main_checked"):  # its own main CI passed
                 self.state["main_red"] = False
                 self.event(revert["id"], "main is green again")
+            elif (not revert or revert["stage"] == "dropped") and self.main_ci(self.state["main_sha"])[0] == "pass":
+                self.state["main_red"] = False  # a human dropped the revert and made main green another way
+                self.event(self.state["main_red_by"], "main is green again without the revert")
 
     def revert(self, job, url):
         self.failure(job, "main CI failed after merge")
