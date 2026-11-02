@@ -25,7 +25,7 @@ test("book page from the shelf and back", async ({ page }) => {
   await expect(page.locator("main", { has: page.getByRole("heading", { level: 1, name: "Page Book" }) }).getByText("Page Author", { exact: true })).toBeVisible();
   await expect(page.locator("main", { has: page.getByRole("heading", { level: 1, name: "Page Book" }) }).getByText("Reading", { exact: true })).toBeVisible();
   await expectAccessible(page);
-  await expect(page).toHaveScreenshot("F009-book-page.png");
+  await expect(page).toHaveScreenshot("F009-book-page.png", { stylePath: "e2e/hide-dev-overlay.css" });
 
   await page.getByRole("link", { name: "Back to my books" }).click();
   await expect(page).toHaveURL(/\/books$/);

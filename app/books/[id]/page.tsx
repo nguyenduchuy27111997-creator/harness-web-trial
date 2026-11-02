@@ -18,7 +18,7 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
   if (!book) notFound();
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:p-8">
-      <Link href="/books" className="self-start text-sm text-muted-foreground hover:underline">
+      <Link href="/books" className="self-start text-sm text-primary hover:underline">
         Back to my books
       </Link>
       <Card>
