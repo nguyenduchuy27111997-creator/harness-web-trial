@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Rating form on /books/[id], shown only while Finished. Button is 'Rate' (not 'Save') so F010's e2e selector stays unambiguous; review button should be 'Post review' (decision 0003)."
+}

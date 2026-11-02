@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { formatFinishDate, insertBook, listBooks, parseNewBook, parseStatus, updateBookStatus } from "./books";
+import { formatFinishDate, insertBook, listBooks, parseNewBook, parseRating, parseStatus, updateBookRating, updateBookStatus } from "./books";
 
 function stubClient(result: { data: unknown; error: { message: string } | null }) {
   const calls: unknown[][] = [];
@@ -107,12 +107,12 @@ describe("formatFinishDate", () => {
   });
 });
 
-describe("updateBookStatus", () => {
-  function updateClient(result: { data: unknown; error: { message: string } | null }) {
-    const query = { update: () => query, eq: () => query, select: () => Promise.resolve(result) };
-    return { from: () => query } as unknown as SupabaseClient<Database>;
-  }
+function updateClient(result: { data: unknown; error: { message: string } | null }) {
+  const query = { update: () => query, eq: () => query, select: () => Promise.resolve(result) };
+  return { from: () => query } as unknown as SupabaseClient<Database>;
+}
 
+describe("updateBookStatus", () => {
   it("is true when a row changed and false when none did", async () => {
     expect(await updateBookStatus(updateClient({ data: [{ id: "x" }], error: null }), "x", "reading")).toBe(true);
     expect(await updateBookStatus(updateClient({ data: [], error: null }), "x", "reading")).toBe(false);
@@ -120,5 +120,28 @@ describe("updateBookStatus", () => {
 
   it("throws on a database error", async () => {
     await expect(updateBookStatus(updateClient({ data: null, error: { message: "boom" } }), "x", "reading")).rejects.toThrow("boom");
+  });
+});
+
+describe("parseRating", () => {
+  it("accepts 1 to 5", () => {
+    expect(parseRating(form({ rating: "4" }))).toEqual({ ok: true, value: 4 });
+  });
+
+  it("rejects anything else", () => {
+    const error = { ok: false, fieldErrors: { rating: "Choose a rating from 1 to 5" } };
+    for (const rating of ["0", "6", "3.5", "x", ""]) expect(parseRating(form({ rating }))).toEqual(error);
+    expect(parseRating(form({}))).toEqual(error);
+  });
+});
+
+describe("updateBookRating", () => {
+  it("is true when a row changed and false when none did", async () => {
+    expect(await updateBookRating(updateClient({ data: [{ id: "x" }], error: null }), "x", 4)).toBe(true);
+    expect(await updateBookRating(updateClient({ data: [], error: null }), "x", 4)).toBe(false);
+  });
+
+  it("throws on a database error", async () => {
+    await expect(updateBookRating(updateClient({ data: null, error: { message: "boom" } }), "x", 4)).rejects.toThrow("boom");
   });
 });

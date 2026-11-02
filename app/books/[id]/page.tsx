@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookStatusForm } from "@/components/book-status-form";
+import { RatingForm } from "@/components/rating-form";
 import { StatusBadge } from "@/components/status-badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatFinishDate, getBook } from "@/lib/books";
 import { createClient, requireUser } from "@/lib/supabase/server";
-import { updateStatus } from "./actions";
+import { saveRating, updateStatus } from "./actions";
 
 export const metadata: Metadata = { title: "Book · Bookshelf" };
 
@@ -32,6 +33,7 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
         </CardContent>
       </Card>
       <BookStatusForm status={book.status} action={updateStatus.bind(null, book.id)} />
+      {book.status === "finished" && <RatingForm rating={book.rating} action={saveRating.bind(null, book.id)} />}
     </main>
   );
 }
