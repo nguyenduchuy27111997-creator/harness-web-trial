@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Lora } from "next/font/google";
+import { Lora } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
@@ -9,11 +9,6 @@ import { signOut } from "./(auth)/actions";
 
 // Headings and book titles; body text uses the system sans stack from globals.css.
 const lora = Lora({ subsets: ["latin"], variable: "--font-serif" });
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Bookshelf",
@@ -30,7 +25,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={cn("h-full", "antialiased", geistMono.variable, "font-sans", lora.variable)}
+      className={cn("h-full", "antialiased", "font-sans", lora.variable)}
     >
       <body className="min-h-full flex flex-col">
         <Suspense fallback={<SiteHeader signedIn={false} signOut={signOut} />}>
