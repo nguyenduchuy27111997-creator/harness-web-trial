@@ -37,8 +37,15 @@ test("change status and finish date", async ({ page }) => {
   const today = new Intl.DateTimeFormat("en-US", { dateStyle: "long", timeZone: "UTC" }).format(new Date());
   await expect(page.getByText(`Finished on ${today}`)).toBeVisible();
   await expectAccessible(page);
-  await expect(page).toHaveScreenshot("F010-finished.png", { stylePath: "e2e/hide-dev-overlay.css" });
+  await expect(page).toHaveScreenshot("F010-finished.png", {
+    stylePath: "e2e/hide-dev-overlay.css",
+    mask: [page.getByText(/Finished on/)],
+  });
 
-  await setStatus("Reading");
+  await page.getByRole("combobox", { name: "Status" }).click();
+  await page.getByRole("option", { name: "Reading" }).click();
+  await expect(page.getByRole("status")).toHaveCount(0);
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByRole("status")).toHaveText("Saved");
   await expect(page.getByText(/Finished on/)).toHaveCount(0);
 });

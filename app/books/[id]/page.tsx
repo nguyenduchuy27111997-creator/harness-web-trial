@@ -28,7 +28,7 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
           <h1 className="font-heading text-4xl font-semibold tracking-tight">{book.title}</h1>
           <p className="text-muted-foreground">{book.author}</p>
           <StatusBadge status={book.status} />
-          {book.finished_on && <p>Finished on {formatFinishDate(book.finished_on)}</p>}
+          {book.finished_on && <p className="text-sm text-muted-foreground">Finished on {formatFinishDate(book.finished_on)}</p>}
         </CardContent>
       </Card>
       <BookStatusForm status={book.status} action={updateStatus.bind(null, book.id)} />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,11 +13,13 @@ type Props = {
 
 export function BookStatusForm({ status, action }: Props) {
   const [state, formAction, pending] = useActionState(action, {} as StatusFormState);
+  // "Saved" only describes the value that was submitted; hide it once the select changes again.
+  const [changed, setChanged] = useState(false);
   return (
-    <form action={formAction} noValidate className="flex flex-col gap-2">
+    <form action={formAction} onSubmit={() => setChanged(false)} noValidate className="flex flex-col gap-2">
       <Label htmlFor="status">Status</Label>
       <div className="flex gap-3">
-        <Select key={status} name="status" defaultValue={status}>
+        <Select key={status} name="status" defaultValue={status} onValueChange={() => setChanged(true)}>
           <SelectTrigger id="status" aria-invalid={state.fieldErrors?.status ? true : undefined}>
             <SelectValue />
           </SelectTrigger>
@@ -39,7 +41,7 @@ export function BookStatusForm({ status, action }: Props) {
           {state.formError}
         </p>
       )}
-      {state.saved && (
+      {state.saved && !changed && !pending && (
         <p role="status" className="text-sm text-muted-foreground">
           Saved
         </p>
