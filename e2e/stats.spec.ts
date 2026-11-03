@@ -26,7 +26,7 @@ test("stats: finished this year and average rating", async ({ page }) => {
   await page.getByRole("button", { name: "Sign up" }).click();
   await expect(page).toHaveURL(/\/books$/);
 
-  await page.getByRole("link", { name: "Stats" }).click();
+  await page.getByRole("link", { name: "Stats", exact: true }).click();
   await expect(page).toHaveURL(/\/stats$/);
   await expect(page.getByText("Books finished this year: 0")).toBeVisible();
   await expect(page.getByText("Average rating: No ratings yet")).toBeVisible();
@@ -35,7 +35,7 @@ test("stats: finished this year and average rating", async ({ page }) => {
   await addFinishedBook(page, "Stats Two", 5);
   await addFinishedBook(page, "Stats Three");
 
-  await page.getByRole("link", { name: "Stats" }).click();
+  await page.getByRole("link", { name: "Stats", exact: true }).click();
   await expect(page.getByText("Books finished this year: 3")).toBeVisible();
   await expect(page.getByText("Average rating: 4.5")).toBeVisible();
   await expectAccessible(page);
