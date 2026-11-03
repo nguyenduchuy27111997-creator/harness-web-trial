@@ -15,12 +15,15 @@ export default defineConfig({
   // where agents run (this machine); CI skips them. Locally a missing baseline is
   // written, and a changed one fails until it is updated on purpose
   // (npx playwright test --update-snapshots=changed), which the designer reviews.
+  // No pixel tolerance: one machine renders the same pixels every run, and in the web trial a
+  // 1% tolerance let a new header and restyled tabs (0.6% of a page) pass on stale baselines.
+  // screenshot.css hides Next's dev badge, which shows even with devIndicators: false.
   snapshotPathTemplate: "{testDir}/__screenshots__/{testFilePath}/{arg}{ext}",
   ignoreSnapshots: !!process.env.CI,
   updateSnapshots: process.env.CI ? "none" : "missing",
   // A cold dev server (always in CI) compiles a route or server action on first use,
   // which under parallel workers takes longer than the default 5s.
-  expect: { timeout: 15_000, toHaveScreenshot: { maxDiffPixelRatio: 0.01, animations: "disabled" } },
+  expect: { timeout: 15_000, toHaveScreenshot: { animations: "disabled", stylePath: "./e2e/screenshot.css" } },
   // Locally: the installed Google Chrome, so nothing has to be downloaded.
   // CI installs Chromium (npx playwright install --with-deps chromium).
   use: { baseURL: `http://localhost:${port}`, channel: process.env.CI ? undefined : "chrome" },

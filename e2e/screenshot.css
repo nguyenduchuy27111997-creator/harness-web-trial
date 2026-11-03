@@ -1,0 +1,5 @@
+/* Applied to every toHaveScreenshot (playwright.config.ts). Next's dev overlay badge
+   ("1 Issue", "1 Insight") is not product UI; runtime errors fail expectAccessible instead. */
+nextjs-portal {
+  display: none !important;
+}
