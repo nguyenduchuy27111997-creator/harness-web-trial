@@ -1,5 +1,5 @@
 {
-  "version": "5.3.15",
+  "version": "5.3.16",
   "preset": "nextjs-supabase",
   "files": {
     ".claude/agents/architect.md": "028703baff7bdfbf7e1a593438ff1ed616d359041d5c1223b37e00100de997b4",
@@ -75,7 +75,7 @@
     "scripts/env-test.sh": "b357a66e2ff1ea1c8f97f575a9fd669a2dd93f456cbc7d5d4bc8104ce4f05ef4",
     "scripts/migration-lint.py": "8912d04a7d43d0a37252a7890b84cd66d7ee3ef03cf386b389440774655ecc90",
     "scripts/perf.sh": "04c4595db9dd60369b3dd93c80f610e110bd1d8fca308d27687133f4d82c6d7d",
-    "scripts/preset-setup.sh": "d39eb294c46c629163e925b11e78e1274625b8bd005d68c082b7bae975d1fcb5",
+    "scripts/preset-setup.sh": "5190888f5b657b664a6af71c425a68778ab8719fee830b4146784eb55caf53f5",
     "scripts/rls-check.py": "9c44e29d2876d9b6383d56bbddf461ee601e23f5f4bd22b0fd5697ec8233104d",
     "scripts/sast.sh": "2d4cb847905644bcb6c9a148c2cb39c0ced96d458c2d6abd10cdf393763d030f",
     "scripts/supabase_env.py": "5a313377fbeb4770310d135364dbe58694d81491a51c6ad91fb1bd2fc6f9c6a5",

@@ -26,8 +26,11 @@ if [ ! -f package.json ]; then
     if [ ! -e "$f" ]; then mkdir -p "$(dirname "$f")"; cp "$tmp/app/$f" "$f"; fi
   done
   # shadcn/ui's tokens read the font from --font-sans; the dev badge would show up in
-  # every screenshot and visual baseline.
-  sed -i.bak -e 's/--font-geist-sans/--font-sans/' -e "s/Create Next App/$name/" app/layout.tsx && rm app/layout.tsx.bak
+  # every screenshot and visual baseline. Geist Mono goes: no page uses it, and its download
+  # pushed /styleguide's LCP over the 2500 ms budget in the web trial's CI (2618 ms).
+  sed -i.bak -e 's/--font-geist-sans/--font-sans/' -e "s/Create Next App/$name/" \
+    -e 's/import { Geist, Geist_Mono }/import { Geist }/' -e '/^const geistMono = Geist_Mono({$/,/^$/d' \
+    -e 's/ ${geistMono.variable}//' app/layout.tsx && rm app/layout.tsx.bak
   sed -i.bak 's|/\* config options here \*/|devIndicators: false, // keeps the dev badge out of screenshots|' next.config.ts && rm next.config.ts.bak
   # The generator's demo page uses raw colors and arbitrary values (scripts/ui-tokens.py).
   cat >app/page.tsx <<'PAGE'
@@ -60,7 +63,8 @@ if [ ! -f components.json ]; then
   npm pkg delete dependencies.shadcn && npm install --save-exact --save-dev --silent "shadcn@$SHADCN"
   # The default light muted text and destructive red fail WCAG AA contrast (axe-core, e2e/a11y.ts).
   sed -i.bak -e 's/--muted-foreground: oklch(0.556 0 0);/--muted-foreground: oklch(0.5 0 0);/' \
-    -e 's/--destructive: oklch(0.577 0.245 27.325);/--destructive: oklch(0.5 0.21 27.325);/' app/globals.css
+    -e 's/--destructive: oklch(0.577 0.245 27.325);/--destructive: oklch(0.5 0.21 27.325);/' \
+    -e 's/--font-mono: var(--font-geist-mono);/--font-mono: ui-monospace, monospace;/' app/globals.css
   rm app/globals.css.bak
 fi
 
