@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Review form (textarea + \"Post review\", decision 0003) shown only while Finished; parseReview counts code points to match the table's char_length check; empty review saves null."
+}
