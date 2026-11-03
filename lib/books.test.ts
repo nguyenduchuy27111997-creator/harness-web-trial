@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { formatFinishDate, insertBook, listBooks, parseNewBook, parseRating, parseStatus, updateBookRating, updateBookStatus } from "./books";
+import { formatFinishDate, insertBook, listBooks, parseNewBook, parseRating, parseStatus, removeBook, updateBookRating, updateBookStatus } from "./books";
 
 function stubClient(result: { data: unknown; error: { message: string } | null }) {
   const calls: unknown[][] = [];
@@ -108,7 +108,7 @@ describe("formatFinishDate", () => {
 });
 
 function updateClient(result: { data: unknown; error: { message: string } | null }) {
-  const query = { update: () => query, eq: () => query, select: () => Promise.resolve(result) };
+  const query = { update: () => query, delete: () => query, eq: () => query, select: () => Promise.resolve(result) };
   return { from: () => query } as unknown as SupabaseClient<Database>;
 }
 
@@ -143,5 +143,16 @@ describe("updateBookRating", () => {
 
   it("throws on a database error", async () => {
     await expect(updateBookRating(updateClient({ data: null, error: { message: "boom" } }), "x", 4)).rejects.toThrow("boom");
+  });
+});
+
+describe("removeBook", () => {
+  it("is true when a row was deleted and false when none was", async () => {
+    expect(await removeBook(updateClient({ data: [{ id: "x" }], error: null }), "x")).toBe(true);
+    expect(await removeBook(updateClient({ data: [], error: null }), "x")).toBe(false);
+  });
+
+  it("throws on a database error", async () => {
+    await expect(removeBook(updateClient({ data: null, error: { message: "boom" } }), "x")).rejects.toThrow("boom");
   });
 });

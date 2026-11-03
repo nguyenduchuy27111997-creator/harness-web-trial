@@ -111,3 +111,10 @@ export async function updateBookRating(supabase: SupabaseClient<Database>, id: s
   if (error) throw new Error(error.message);
   return data.length > 0;
 }
+
+// false when no row was deleted: missing or someone else's (RLS).
+export async function removeBook(supabase: SupabaseClient<Database>, id: string): Promise<boolean> {
+  const { data, error } = await supabase.from("books").delete().eq("id", id).select("id");
+  if (error) throw new Error(error.message);
+  return data.length > 0;
+}

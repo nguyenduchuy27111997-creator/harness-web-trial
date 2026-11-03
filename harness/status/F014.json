@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Delete button on /books/[id] opens a shadcn AlertDialog (Cancel / Delete); confirm submits deleteBook, which removes the row (RLS books_delete_own, migration 20261103120000) and redirects to /books."
+}
