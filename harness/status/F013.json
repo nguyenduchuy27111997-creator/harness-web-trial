@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Tabs are server-rendered links in components/status-tabs.tsx (aria-current on the current one); listBooks(supabase, status?) and parseStatusFilter in lib/books.ts. app/books/page.tsx shows Add book whenever the shelf exists, also on an empty filtered tab, with 'No books here. Add one or switch tabs.'. F007 and F008 baselines changed only because the tabs row now appears on /books. If scripts/db-types.sh --check fails locally, another lane's migration is in the shared Supabase stack: run npx supabase db reset; never hand-edit lib/database.types.ts."
+}
