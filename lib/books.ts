@@ -121,3 +121,19 @@ export async function removeBook(supabase: SupabaseClient<Database>, id: string)
   if (error) throw new Error(error.message);
   return data.length > 0;
 }
+
+export type ReviewFormState = FormState<"review"> & { saved?: true };
+
+// Trimmed; empty is allowed and saved as null.
+export function parseReview(formData: FormData): Parsed<string, "review"> {
+  const review = String(formData.get("review") ?? "").trim();
+  if (review.length > 2000) return { ok: false, fieldErrors: { review: "Review must be at most 2,000 characters" } };
+  return { ok: true, value: review };
+}
+
+// false when no row changed: missing, someone else's (RLS), or not Finished.
+export async function updateBookReview(supabase: SupabaseClient<Database>, id: string, review: string | null): Promise<boolean> {
+  const { data, error } = await supabase.from("books").update({ review }).eq("id", id).eq("status", "finished").select("id");
+  if (error) throw new Error(error.message);
+  return data.length > 0;
+}

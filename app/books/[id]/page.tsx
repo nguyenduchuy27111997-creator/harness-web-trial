@@ -4,11 +4,12 @@ import { notFound } from "next/navigation";
 import { BookStatusForm } from "@/components/book-status-form";
 import { DeleteBookButton } from "@/components/delete-book-button";
 import { RatingForm } from "@/components/rating-form";
+import { ReviewForm } from "@/components/review-form";
 import { StatusBadge } from "@/components/status-badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatFinishDate, getBook } from "@/lib/books";
 import { createClient, requireUser } from "@/lib/supabase/server";
-import { deleteBook, saveRating, updateStatus } from "./actions";
+import { deleteBook, saveRating, saveReview, updateStatus } from "./actions";
 
 export const metadata: Metadata = { title: "Book · Bookshelf" };
 
@@ -35,6 +36,7 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
       </Card>
       <BookStatusForm status={book.status} action={updateStatus.bind(null, book.id)} />
       {book.status === "finished" && <RatingForm rating={book.rating} action={saveRating.bind(null, book.id)} />}
+      {book.status === "finished" && <ReviewForm review={book.review} action={saveReview.bind(null, book.id)} />}
       <DeleteBookButton title={book.title} action={deleteBook.bind(null, book.id)} />
     </main>
   );

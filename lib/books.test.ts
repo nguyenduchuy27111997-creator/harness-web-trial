@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { formatFinishDate, insertBook, listBooks, parseNewBook, parseRating, parseStatus, parseStatusFilter, removeBook, updateBookRating, updateBookStatus } from "./books";
+import { formatFinishDate, insertBook, listBooks, parseNewBook, parseRating, parseReview, parseStatus, parseStatusFilter, removeBook, updateBookRating, updateBookReview, updateBookStatus } from "./books";
 
 function stubClient(result: { data: unknown; error: { message: string } | null }) {
   const calls: unknown[][] = [];
@@ -165,6 +165,29 @@ describe("updateBookRating", () => {
 
   it("throws on a database error", async () => {
     await expect(updateBookRating(updateClient({ data: null, error: { message: "boom" } }), "x", 4)).rejects.toThrow("boom");
+  });
+});
+
+describe("parseReview", () => {
+  it("trims and allows empty", () => {
+    expect(parseReview(form({ review: "  Loved the ending.  " }))).toEqual({ ok: true, value: "Loved the ending." });
+    expect(parseReview(form({}))).toEqual({ ok: true, value: "" });
+  });
+
+  it("accepts 2,000 characters and rejects 2,001", () => {
+    expect(parseReview(form({ review: "a".repeat(2000) })).ok).toBe(true);
+    expect(parseReview(form({ review: "a".repeat(2001) }))).toEqual({ ok: false, fieldErrors: { review: "Review must be at most 2,000 characters" } });
+  });
+});
+
+describe("updateBookReview", () => {
+  it("is true when a row changed and false when none did", async () => {
+    expect(await updateBookReview(updateClient({ data: [{ id: "x" }], error: null }), "x", "Good")).toBe(true);
+    expect(await updateBookReview(updateClient({ data: [], error: null }), "x", null)).toBe(false);
+  });
+
+  it("throws on a database error", async () => {
+    await expect(updateBookReview(updateClient({ data: null, error: { message: "boom" } }), "x", "Good")).rejects.toThrow("boom");
   });
 });
 
