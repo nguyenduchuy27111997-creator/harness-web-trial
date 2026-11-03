@@ -1,14 +1,30 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { expectAccessible } from "./a11y";
+
+async function signUp(page: Page, email: string) {
+  await page.goto("/sign-up");
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill("secret123");
+  await page.getByRole("button", { name: "Sign up" }).click();
+  await expect(page).toHaveURL(/\/books$/);
+}
+
+async function addBook(page: Page, title: string, status: string) {
+  await page.goto("/books/new");
+  await page.getByLabel("Title").fill(title);
+  await page.getByLabel("Author").fill("Some Author");
+  if (status !== "Want to read") {
+    await page.getByLabel("Status").click();
+    await page.getByRole("option", { name: status }).click();
+  }
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page).toHaveURL(/\/books$/);
+}
 
 // F013: status tabs on /books, kept in the URL. Each run uses a fresh account (golden principle 7).
 test("filter the list by status with tabs kept in the URL", async ({ page }) => {
   const tag = `${process.env.HARNESS_LANE ?? "local"}-${Date.now()}`;
-  await page.goto("/sign-up");
-  await page.getByLabel("Email").fill(`f013-${tag}@example.com`);
-  await page.getByLabel("Password").fill("secret123");
-  await page.getByRole("button", { name: "Sign up" }).click();
-  await expect(page).toHaveURL(/\/books$/);
+  await signUp(page, `f013-${tag}@example.com`);
 
   const tabs = page.getByRole("navigation", { name: "Book filter" });
   await expect(tabs.getByRole("link", { name: "All" })).toBeVisible();
@@ -19,15 +35,7 @@ test("filter the list by status with tabs kept in the URL", async ({ page }) => 
     { title: "Done Book", status: "Finished" },
   ];
   for (const book of books) {
-    await page.goto("/books/new");
-    await page.getByLabel("Title").fill(book.title);
-    await page.getByLabel("Author").fill("Some Author");
-    if (book.status !== "Want to read") {
-      await page.getByLabel("Status").click();
-      await page.getByRole("option", { name: book.status }).click();
-    }
-    await page.getByRole("button", { name: "Save" }).click();
-    await expect(page).toHaveURL(/\/books$/);
+    await addBook(page, book.title, book.status);
     await expect(page.getByRole("listitem").filter({ hasText: book.title })).toBeVisible();
   }
 
@@ -60,16 +68,8 @@ test("filter the list by status with tabs kept in the URL", async ({ page }) => 
 
   // A tab with no books: a fresh account with one book has nothing under Finished.
   await page.context().clearCookies();
-  await page.goto("/sign-up");
-  await page.getByLabel("Email").fill(`f013b-${tag}@example.com`);
-  await page.getByLabel("Password").fill("secret123");
-  await page.getByRole("button", { name: "Sign up" }).click();
-  await expect(page).toHaveURL(/\/books$/);
-  await page.goto("/books/new");
-  await page.getByLabel("Title").fill("Only Book");
-  await page.getByLabel("Author").fill("Some Author");
-  await page.getByRole("button", { name: "Save" }).click();
-  await expect(page).toHaveURL(/\/books$/);
+  await signUp(page, `f013b-${tag}@example.com`);
+  await addBook(page, "Only Book", "Want to read");
   await tabs.getByRole("link", { name: "Finished" }).click();
   await expect(page.getByText("No books here. Add one or switch tabs.")).toBeVisible();
   await expect(page.getByRole("link", { name: "Add book" })).toBeVisible();
