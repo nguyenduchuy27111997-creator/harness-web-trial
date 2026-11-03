@@ -71,6 +71,11 @@ jobs:
           EOF
           scripts/db-up.sh
           npx supabase db reset
+      - name: Wait for a quiet machine before e2e
+        # Seen for real in the web trial: with load 21-28 on 12 CPUs (or just after the Mac woke), local Supabase
+        # auth timed out after 10 s and 5-6 e2e tests failed at once, three times; fix sessions then chased a flake.
+        if: vars.HARNESS_RUNS_ON
+        run: python3 harness/quiet.py
       - run: ./scripts/check.sh
       - name: Wait for a quiet machine
         # A self-hosted runner shares the machine with the build loop's sessions: wait (up to 5 minutes) for it
