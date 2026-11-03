@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Delete button on /books/[id] opens a shadcn AlertDialog (Cancel / Delete); confirm submits deleteBook (bound id), which removes the row via RLS policy books_delete_own (migration 20261103120000) and redirects to /books. Retry after a rebase conflict: rebuilt from current main; delete UI lives in its own components/delete-book-button.tsx to keep the page diff to two lines."
+}
