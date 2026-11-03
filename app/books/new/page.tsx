@@ -5,6 +5,9 @@ import { NewBookForm } from "./new-book-form";
 
 export const metadata: Metadata = { title: "Add book · Bookshelf" };
 
+// Blocking render (design M2): no loading.tsx, so a 404 elsewhere is never committed as 200.
+export const instant = false;
+
 export default async function NewBookPage() {
   await requireUser();
   return (

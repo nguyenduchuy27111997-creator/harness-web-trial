@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Book not found page (app/books/[id]/not-found.tsx) with HTTP 404 for foreign and unknown ids. Removed app/books/loading.tsx and app/books/new/loading.tsx; header no longer in Suspense; instant = false on layout, /books and /books/new (needed by cacheComponents once streaming boundaries are gone)."
+}
