@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Review form (shadcn Textarea, 'Post review') on /books/[id], shown only while Finished. Controlled + manual submit like RatingForm (decision 0003). No maxLength on the textarea so the server error for >2,000 characters is reachable."
+}
