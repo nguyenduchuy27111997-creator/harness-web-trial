@@ -1,11 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import {
   isUuid,
   parseRating,
   parseReview,
   parseStatus,
+  removeBook,
   updateBookRating,
   updateBookReview,
   updateBookStatus,
@@ -51,6 +53,13 @@ export async function saveRating(
   revalidatePath("/books");
   revalidatePath(`/books/${id}`);
   return { saved: true };
+}
+
+export async function deleteBook(id: string, _formData: FormData): Promise<void> {
+  await requireUser();
+  if (isUuid(id)) await removeBook(await createClient(), id);
+  revalidatePath("/books");
+  redirect("/books");
 }
 
 export async function saveReview(

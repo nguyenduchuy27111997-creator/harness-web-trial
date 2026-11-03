@@ -116,6 +116,12 @@ export async function updateBookRating(supabase: SupabaseClient<Database>, id: s
   return data.length > 0;
 }
 
+export async function removeBook(supabase: SupabaseClient<Database>, id: string): Promise<boolean> {
+  const { data, error } = await supabase.from("books").delete().eq("id", id).select("id");
+  if (error) throw new Error(error.message);
+  return data.length > 0;
+}
+
 export type ReviewFormState = FormState<"review"> & { saved?: true };
 
 // Trimmed; empty is allowed and saved as null.
