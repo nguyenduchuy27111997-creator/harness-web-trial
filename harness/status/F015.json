@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Stats page at /stats (lib/stats.ts, app/stats/), header links My books and Stats, proxy guards /stats."
+}

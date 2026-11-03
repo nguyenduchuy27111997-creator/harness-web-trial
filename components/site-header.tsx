@@ -11,11 +11,19 @@ export function SiteHeader({ signedIn, signOut }: SiteHeaderProps) {
           Bookshelf
         </Link>
         {signedIn && (
-          <form action={signOut}>
-            <Button type="submit" variant="secondary">
-              Sign out
+          <nav className="flex items-center gap-2">
+            <Button asChild variant="ghost">
+              <Link href="/books">My books</Link>
             </Button>
-          </form>
+            <Button asChild variant="ghost">
+              <Link href="/stats">Stats</Link>
+            </Button>
+            <form action={signOut}>
+              <Button type="submit" variant="secondary">
+                Sign out
+              </Button>
+            </form>
+          </nav>
         )}
       </div>
     </header>
