@@ -1391,9 +1391,16 @@ class Loop:
         if git(*cmd, cwd=wt, check=False).returncode != 0 and not self.regenerate(job):
             files = git("diff", "--name-only", "--diff-filter=U", cwd=wt, check=False).stdout.split()
             git("rebase", "--abort", cwd=wt, check=False)
-            if (not job.get("revert_of") and not job.get("conflict_rounds") and self.can_start()
-                    and not self.paused()):
-                return self.resolve(job, onto, files)  # a session merges main in, rather than building it again
+            if not job.get("revert_of") and not job.get("conflict_rounds"):
+                if self.can_start() and not self.paused():
+                    return self.resolve(job, onto, files)  # a session merges main in, rather than building it again
+                if self.busy or self.paused():  # only the machine says not now: keep the PR, try on a later tick
+                    if not job.get("resolve_waits"):
+                        job["resolve_waits"] = True
+                        self.event(job["id"], f"conflict with main in {', '.join(files[:5]) or 'some files'}; "
+                                              "the session that resolves it waits for a less busy machine")
+                    return False
+            job.pop("resolve_waits", None)
             gh("pr", "close", str(job["pr"]), "--comment", "Could not rebase; the loop builds this feature again.",
                cwd=self.root, check=False)
             self.retry(job, f"conflict while rebasing onto {onto}")
@@ -1438,6 +1445,7 @@ class Loop:
     def resolve(self, job, onto, files):
         """Hand a conflict with main to a session: it merges main into the branch and resolves it, once per job."""
         job["conflict_rounds"] = 1
+        job.pop("resolve_waits", None)
         job["fix_guard_base"] = git("rev-parse", onto, cwd=job["worktree"]).stdout.strip()
         self.event(job["id"], f"conflict with main in {', '.join(files[:5]) or 'some files'}; a session resolves it")
         self.start_fix(job, f"Main moved on and this branch now conflicts with it (in: {', '.join(files) or 'unknown files'}). "
