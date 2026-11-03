@@ -71,6 +71,7 @@ test("filter the list by status with tabs kept in the URL", async ({ page }) => 
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page).toHaveURL(/\/books$/);
   await tabs.getByRole("link", { name: "Finished" }).click();
-  await expect(page.getByText("No books here")).toBeVisible();
+  await expect(page.getByText("No books here. Add one or switch tabs.")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Add book" })).toBeVisible();
   await expect(rows).toHaveCount(0);
 });
