@@ -1165,6 +1165,10 @@ class Loop:
         guard = run(["git", "show", f"{job['fix_base']}:harness/integrity.py"], cwd=wt).stdout
         # A merge of main is judged against main: the branch's own changes, not main's, must keep the rules.
         guard_base = job.get("fix_guard_base") or job["fix_base"]
+        on_main = git("merge-base", "origin/main", "HEAD", cwd=wt, check=False).stdout.strip()
+        if not job.get("fix_guard_base") and on_main and git(
+                "merge-base", "--is-ancestor", on_main, job["fix_base"], cwd=wt, check=False).returncode:
+            guard_base = on_main  # the session rebased or merged newer main itself: main's changes are not the fix's
         check = self.guard(job, guard, guard_base)
         f = next((x for x in backlog.read(wt) if x["id"] == job["id"]), {"status": "passing"} if job.get("kind") else {})
         cut = res.get("subtype") != "success"  # cut off (budget, turns) or crashed: the fix is not done
@@ -1190,8 +1194,8 @@ class Loop:
                    or f.get("notes") or "the fix did not keep the feature passing")
             return self.set_stage(job, "held", note="fix failed",
                                   question=f"{job['id']}: the automatic fix failed ({why[:300]}). What should change?")
-        if job.get("fix_guard_base"):  # main is merged in: the branch now sits on main
-            job["base"], job["base_sha"] = "main", job.pop("fix_guard_base")
+        if job.get("fix_guard_base") or guard_base != job["fix_base"]:  # main is merged in: the branch now sits on main
+            job["base"], job["base_sha"] = "main", job.pop("fix_guard_base", None) or guard_base
             job["full_review"] = True  # main's changes came in with the merge: review all of it again
         if not self.ensure_base(job):
             return
