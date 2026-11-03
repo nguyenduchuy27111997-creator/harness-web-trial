@@ -1560,6 +1560,10 @@ class Loop:
             if job and a.get("drop"):
                 job["question"] = None
                 self.set_stage(job, "dropped", note=a["text"])
+                orig = self.job(job.get("revert_of") or "")
+                if orig and orig["stage"] == "reverted":  # the revert never landed: the feature is still on main
+                    orig["question"] = None
+                    self.set_stage(orig, "merged", note=f"kept on main: the revert was dropped ({a['text']})")
                 continue
             if job and job.get("revert_of") and job["stage"] == "held":
                 # The human fixed what blocked the revert: put it on the current main and let CI run again.
