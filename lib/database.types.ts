@@ -18,6 +18,19 @@ export type Database = {
                   Relationships: [
                     
                   ]
+                },"reading_goals": {
+                  Row: {
+                    "created_at": string,"goal": number,"user_id": string,"year": number
+                  }
+                  Insert: {
+                    "created_at"?: string,"goal": number,"user_id"?: string,"year": number
+                  }
+                  Update: {
+                    "created_at"?: string,"goal"?: number,"user_id"?: string,"year"?: number
+                  }
+                  Relationships: [
+                    
+                  ]
                 }
           }
           Views: {

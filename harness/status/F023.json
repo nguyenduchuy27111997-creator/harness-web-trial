@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Migration 20261104123023_reading_goals (renamed: another lane applied a different migration as 20261104120000 in the shared DB). Change goal is F024. components/ui/progress.tsx passes value to Root (shadcn default left aria-valuenow empty). F015 baseline updated (goal invite on /stats). eslint ignores harness/office/** (separate commit)."
+}
