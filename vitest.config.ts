@@ -3,6 +3,8 @@ import { defineConfig } from "vitest/config";
 // Unit tests cover logic in lib/; pages and flows are covered by e2e/ (Playwright).
 export default defineConfig({
   test: {
+    // In the loop, each test also goes to the office's live test list (harness/reporters/, $HARNESS_TESTS).
+    reporters: process.env.HARNESS_TESTS ? ["default", "./harness/reporters/vitest.mjs"] : undefined,
     include: ["**/*.test.ts"],
     exclude: ["node_modules/**", "e2e/**", ".next/**"],
     coverage: {

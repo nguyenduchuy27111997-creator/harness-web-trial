@@ -2,14 +2,22 @@
 the lane's dev server (its ./init.sh on the lane's PORT, for a building or fixing session) and one headless Chrome
 (cam.mjs) that signs in as the office's own test user, opens the page of the file the agent is editing and
 screencasts it while someone watches that lane. The loop comes first: nothing new starts while the machine is busy,
-and frames slow down. A dev server stops with its session (the loop stops what a session leaves in its worktree)."""
+and frames slow down. A dev server stops with its session (the loop stops what a session leaves in its worktree).
+Each save leaves a still in the lane's film (<home>/film/<job>/), and a session that starts while the office is open
+gets its own headless Chrome for the Playwright MCP (over CDP), so the camera can watch QA drive it. Every session's
+test runs report each test (harness/reporters/, to $HARNESS_TESTS), and the kit's dev server logs each request: both
+go on the bus while someone watches."""
+import base64
 import collections
 import contextlib
+import datetime
 import http.client
 import json
 import os
+import re
 import secrets
 import shutil
+import socket
 import subprocess
 import threading
 import time
@@ -19,6 +27,42 @@ import stream
 
 IDLE = 180  # seconds with nobody watching before Chrome closes
 LANE_STAGES = ("building", "fixing")
+FILM_CAP = int(os.environ.get("LOOP_FILM_MB", "500")) * 1_000_000  # all films together; the oldest go first
+CHROME = ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "google-chrome", "google-chrome-stable",
+          "chromium", "chromium-browser"]
+
+
+REQUEST = re.compile(r"^\s*(GET|POST|PUT|PATCH|DELETE) (\S+) (\d{3}) in ([\d.]+)(ms|s)\b")
+ACTION = re.compile(r"^\s*\W*ƒ (\w+)\(.*\) in ([\d.]+)(ms|s)\b(?:\s+(\S+))?")
+QUIET = ("/api/harness-health", "/_next/", "/__nextjs", "/favicon")
+
+
+def request(line):
+    """A line of `next dev` output as a request (or the server action it ran), or None."""
+    m = REQUEST.match(line)
+    if m and not m.group(2).startswith(QUIET):
+        ms = float(m.group(4)) * (1000 if m.group(5) == "s" else 1)
+        return {"method": m.group(1), "path": m.group(2)[:200], "status": int(m.group(3)), "ms": round(ms)}
+    m = ACTION.match(line)
+    if m:
+        ms = float(m.group(2)) * (1000 if m.group(3) == "s" else 1)
+        return {"method": "ACTION", "path": m.group(1), "status": 0, "ms": round(ms), "file": m.group(4) or ""}
+    return None
+
+
+def test_event(line):
+    """A line a kit reporter wrote (harness/reporters/): {event, name, file, status, ms}, or None."""
+    try:
+        d = json.loads(line)
+    except ValueError:
+        return None
+    if not isinstance(d, dict) or d.get("event") not in ("begin", "end", "run"):
+        return None
+    return {k: (str(d[k])[:300] if isinstance(d[k], str) else d[k]) for k in ("event", "name", "file", "status", "ms", "runner") if k in d}
+
+
+def chrome():
+    return next((c for c in CHROME if (Path(c).exists() if c.startswith("/") else shutil.which(c))), None)
 
 
 def serving(port):
@@ -40,8 +84,10 @@ class Preview:
         self.viewers, self.seen = 0, 0.0
         self.lanes = {}  # job -> {port, wt, stage, dev, opened}
         self.watching = collections.Counter()
-        self.frames = {}  # job -> (seq, jpeg as base64, url)
-        self.cam, self.fps, self.follower = None, 0, None
+        self.frames = {}  # (job, view) -> (seq, jpeg as base64, url); view is "app" or "qa"
+        self.cam, self.fps, self.follower, self.busy = None, 0, None, None
+        self.qa = {}  # job -> (Chrome for its session's Playwright MCP, CDP endpoint)
+        self.tails = {}  # job -> its session's token: the test file (and dev server log) are followed while it holds
 
     def configure(self, root, home, browser):
         self.root, self.home = Path(root), Path(home)
@@ -61,45 +107,137 @@ class Preview:
                 self.seen = time.time()
 
     @contextlib.contextmanager
-    def watch(self, job):
+    def watch(self, job, view="app"):
+        key = (job, view)
         with self.lock:
-            self.watching[job] += 1
-            first = self.watching[job] == 1
+            self.watching[key] += 1
+            first = self.watching[key] == 1
         if first:
-            self.send({"op": "watch", "job": job, "on": True})
+            self.send({"op": "watch", "job": job, "view": view, "on": True})
         try:
             yield
         finally:
             with self.lock:
-                self.watching[job] -= 1
-                last = self.watching[job] <= 0
+                self.watching[key] -= 1
+                last = self.watching[key] <= 0
             if last:
-                self.send({"op": "watch", "job": job, "on": False})
+                self.send({"op": "watch", "job": job, "view": view, "on": False})
 
-    def frame_after(self, job, seq, timeout=15):
+    def frame_after(self, job, seq, view="app", timeout=15):
         with self.lock:
-            self.lock.wait_for(lambda: self.frames.get(job, (0,))[0] > seq, timeout)
-            return self.frames.get(job)
+            self.lock.wait_for(lambda: self.frames.get((job, view), (0,))[0] > seq, timeout)
+            return self.frames.get((job, view))
 
     # sessions ------------------------------------------------------------------------
+    def qa_browser(self, job, wt):
+        """A CDP endpoint for the session's Playwright MCP, when someone is watching and the machine has room; else None
+        (the MCP starts its own browser, as without the office)."""
+        exe = chrome()
+        with self.lock:
+            watched = self.viewers > 0
+        if not (self.enabled and watched and exe and not self.busy):
+            return None
+        port = free_port()
+        profile = self.home / "qa" / job
+        profile.mkdir(parents=True, exist_ok=True)
+        proc = subprocess.Popen([exe, "--headless=new", f"--remote-debugging-port={port}", "--remote-debugging-address=127.0.0.1",
+                                 f"--user-data-dir={profile}", "--no-first-run", "--no-default-browser-check", "about:blank"],
+                                cwd=wt, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                start_new_session=True)
+        endpoint = f"http://127.0.0.1:{port}"
+        for _ in range(50):
+            with contextlib.suppress(OSError), contextlib.closing(http.client.HTTPConnection("127.0.0.1", port, timeout=1)) as c:
+                c.request("GET", "/json/version")
+                self.qa[job] = (proc, endpoint)
+                return endpoint
+            time.sleep(0.2)
+        with contextlib.suppress(OSError):
+            os.killpg(proc.pid, 15)
+        return None
+
+    def tests_path(self, job):
+        """Where the session's test runs report each test ($HARNESS_TESTS), empty for each new session."""
+        f = self.home / "tests" / f"{job}.jsonl"
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text("")
+        return f
+
+    def follow_file(self, job, f, parse, kind):
+        """Lines added to `f` while the job's session runs, parsed and put on the bus while someone watches."""
+        token = self.tails.get(job)
+
+        def run():
+            pos = f.stat().st_size if f.exists() else 0
+            while token is not None and self.tails.get(job) is token:
+                time.sleep(0.5)
+                if not f.exists():
+                    continue
+                with f.open("rb") as fh:
+                    fh.seek(pos)
+                    chunk = fh.read()
+                cut = chunk.rfind(b"\n") + 1  # whole lines only
+                pos += cut
+                if not self.viewers:
+                    continue
+                for line in chunk[:cut].decode(errors="replace").splitlines():
+                    e = parse(line)
+                    if e:
+                        stream.BUS.publish({"job": job, "role": "main", "kind": kind, **e})
+        threading.Thread(target=run, daemon=True).start()
+
     def session_start(self, job, port, wt, stage):
+        self.tails[job] = object()
+        self.follow_file(job, self.home / "tests" / f"{job}.jsonl", test_event, "test")
         if self.enabled and stage in LANE_STAGES:
             with self.lock:
                 self.lanes[job] = {"port": port, "wt": Path(wt), "stage": stage, "dev": None, "opened": False}
+        if job in self.qa and self.cam:
+            self.send({"op": "qa", "job": job, "endpoint": self.qa[job][1]})
 
     def session_end(self, job):
+        self.tails.pop(job, None)
         with self.lock:
             lane = self.lanes.pop(job, None)
-        if lane and lane["dev"]:
+        procs = [lane["dev"] if lane else None, self.qa.pop(job, (None,))[0]]
+        for proc in filter(None, procs):
             with contextlib.suppress(OSError):
-                os.killpg(lane["dev"].pid, 15)
-        if lane and lane["opened"]:
-            self.send({"op": "close", "job": job})
+                os.killpg(proc.pid, 15)
+        self.send({"op": "close", "job": job})
+
+    # the film ------------------------------------------------------------------------
+    def still(self, job, data, url, path, view="app"):
+        """A frame after a save, kept for the lane's film: <n>.jpg, and <n>m.jpg for the phone on the same page."""
+        folder = self.home / "film" / job
+        folder.mkdir(parents=True, exist_ok=True)
+        n = sum(1 for f in folder.glob("*.jpg") if f.stem.isdigit())
+        if view == "mobile":
+            if n:
+                (folder / f"{n}m.jpg").write_bytes(base64.b64decode(data))
+                stream.BUS.publish({"job": job, "role": "main", "kind": "still", "view": "mobile", "n": n, "url": url})
+            return
+        n += 1
+        (folder / f"{n}.jpg").write_bytes(base64.b64decode(data))
+        row = {"n": n, "at": datetime.datetime.now().isoformat(timespec="seconds"), "url": url, "path": path}
+        with (folder / "index.jsonl").open("a") as f:
+            f.write(json.dumps(row) + "\n")
+        stream.BUS.publish({"job": job, "role": "main", "kind": "still", **row})
+        self.prune()
+
+    def prune(self):
+        films = sorted((d for d in (self.home / "film").iterdir() if d.is_dir()), key=lambda d: d.stat().st_mtime)
+        size = {d: sum(f.stat().st_size for f in d.iterdir()) for d in films}
+        total = sum(size.values())
+        for d in films[:-1]:  # never the film being made
+            if total <= FILM_CAP:
+                break
+            total -= size[d]
+            shutil.rmtree(d, ignore_errors=True)
 
     def tick(self, busy):
         """From the loop's tick: start what the people watching need, unless the machine is busy."""
         if not self.enabled:
             return
+        self.busy = busy
         with self.lock:
             viewers, seen, lanes = self.viewers, self.seen, dict(self.lanes)
         if not viewers:
@@ -125,8 +263,10 @@ class Preview:
         env = {**os.environ, "PORT": str(lane["port"]), "HARNESS_LANE": job}
         nice = ["nice", "-n", "10"] if shutil.which("nice") else []
         with log.open("a") as out:
-            return subprocess.Popen([*nice, "./init.sh"], cwd=lane["wt"], env=env, stdout=out, stderr=subprocess.STDOUT,
+            proc = subprocess.Popen([*nice, "./init.sh"], cwd=lane["wt"], env=env, stdout=out, stderr=subprocess.STDOUT,
                                     stdin=subprocess.DEVNULL, start_new_session=True)
+        self.follow_file(job, log, request, "request")  # the requests the app answers, while it runs for the office
+        return proc
 
     # the camera ----------------------------------------------------------------------
     def modules(self):
@@ -162,10 +302,12 @@ class Preview:
             self.follower.start()
         self.fps = 0
         self.send({"op": "login", **self.account()})
+        for job, (_, endpoint) in list(self.qa.items()):
+            self.send({"op": "qa", "job": job, "endpoint": endpoint})
         with self.lock:
-            watched = [j for j, n in self.watching.items() if n > 0]
-        for job in watched:
-            self.send({"op": "watch", "job": job, "on": True})
+            watched = [k for k, n in self.watching.items() if n > 0]
+        for job, view in watched:
+            self.send({"op": "watch", "job": job, "view": view, "on": True})
         return True
 
     def send(self, msg):
@@ -185,10 +327,14 @@ class Preview:
             except ValueError:
                 continue
             if m.get("kind") == "frame" and m.get("job"):
+                key = (m["job"], m.get("view") or "app")
                 with self.lock:
-                    seq = self.frames.get(m["job"], (0,))[0] + 1
-                    self.frames[m["job"]] = (seq, m.get("data", ""), m.get("url", ""))
+                    seq = self.frames.get(key, (0,))[0] + 1
+                    self.frames[key] = (seq, m.get("data", ""), m.get("url", ""))
                     self.lock.notify_all()
+            elif m.get("kind") == "still" and m.get("job"):
+                with contextlib.suppress(OSError, ValueError):
+                    self.still(m["job"], m.get("data", ""), m.get("url", ""), m.get("path", ""), m.get("view") or "app")
             elif m.get("kind") == "status":
                 stream.BUS.publish({"job": m.get("job") or "loop", "role": "main", "kind": "preview",
                                     "text": str(m.get("text", ""))[:300]})
@@ -217,6 +363,12 @@ class Preview:
         with self.lock:
             for lane in self.lanes.values():
                 lane["opened"] = False
+
+
+def free_port():
+    with contextlib.closing(socket.socket()) as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
 
 
 PREVIEW = Preview()

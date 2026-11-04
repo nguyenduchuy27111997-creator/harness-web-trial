@@ -104,6 +104,7 @@ RUNNER_EVERY = float(os.environ.get("LOOP_RUNNER_EVERY", "300"))  # seconds betw
 SANDBOX = os.environ.get("LOOP_SANDBOX") == "1"
 # Sessions stream what they do (stream-json) for the dashboard; LOOP_STREAM=0 goes back to one JSON at the end.
 STREAM = os.environ.get("LOOP_STREAM", "1") != "0"
+MIGRATIONS = ("supabase/migrations", "drizzle", "migrations", "db/migrations")  # where the presets keep SQL migrations
 ENV_KEEP = re.compile(r"^(PATH|HOME|USER|LOGNAME|SHELL|LANG|LC_\w+|TERM|COLORTERM|TMPDIR|TZ|XDG_\w+|ANTHROPIC_\w+"
                       r"|CLAUDE_\w+|NODE_OPTIONS|NVM_\w+|PORT|HARNESS_\w+|GIT_(AUTHOR|COMMITTER)_\w+"
                       + (f"|{os.environ['LOOP_ENV_KEEP']}" if os.environ.get("LOOP_ENV_KEEP") else "") + ")$")
@@ -761,7 +762,8 @@ class Loop:
             port = free_port(self.opts.port_base + 1, taken={j.get("port") for j in self.state["jobs"].values()})
             job["port"] = port
         env = {**os.environ, "PORT": str(port), "HARNESS_LANE": job["id"], "HARNESS_AUTONOMOUS": "1",
-               "HARNESS_STAGE": job["stage"]}
+               "HARNESS_STAGE": job["stage"],
+               "HARNESS_TESTS": str(preview.PREVIEW.tests_path(job["id"]))}  # the kit's reporters write each test here
         if lane_note:
             prompt += (f"\n\n(This lane's app runs on http://localhost:{port}: PORT is set, and ./init.sh and the "
                        "e2e tests use it. Never use port 3000 or another app's port.)")
@@ -777,7 +779,8 @@ class Loop:
             if job["stage"] in ("review", "fixing"):
                 cmd += ["--disallowedTools", "WebFetch"]
         if browser:
-            cmd += ["--mcp-config", str(self.session_mcp(job, port)) if SANDBOX else "harness/loop-mcp.json",
+            qa = preview.PREVIEW.qa_browser(job["id"], job["worktree"])  # someone watching: the office sees QA's browser
+            cmd += ["--mcp-config", str(self.session_mcp(job, port, qa)) if SANDBOX or qa else "harness/loop-mcp.json",
                     "--allowedTools", "mcp__playwright"]
         if STREAM:
             cmd += ["--verbose", "--include-partial-messages", "--forward-subagent-text"]
@@ -868,12 +871,16 @@ class Loop:
         f.write_text(json.dumps(base, indent=2))
         return f
 
-    def session_mcp(self, job, port):
-        """The browser for one session may open only this lane's app."""
+    def session_mcp(self, job, port, cdp=None):
+        """The browser for one session: in the sandbox it may open only this lane's app; with `cdp`, it is the
+        Chrome the office's camera watches (preview.qa_browser)."""
         cfg = json.loads((self.root / "harness/loop-mcp.json").read_text())
         for server in cfg.get("mcpServers", {}).values():
             if any("playwright" in a for a in server.get("args", [])):
-                server["args"] = server["args"] + ["--allowed-origins", f"http://localhost:{port};http://127.0.0.1:{port}"]
+                if SANDBOX:
+                    server["args"] = server["args"] + ["--allowed-origins", f"http://localhost:{port};http://127.0.0.1:{port}"]
+                if cdp:
+                    server["args"] = server["args"] + ["--cdp-endpoint", cdp]
         f = self.home / "sandbox" / f"{job['id']}-{job['stage']}-mcp.json"
         f.parent.mkdir(exist_ok=True)
         f.write_text(json.dumps(cfg, indent=2))
@@ -2035,9 +2042,10 @@ def serve_dashboard(home, root):
                 with preview.PREVIEW.viewer():  # someone has the office open: the lanes' apps run for it
                     self.events(int(self.headers.get("Last-Event-ID") or (after.group(1) if after else 0)))
                 return
-            if re.fullmatch(r"/cam/[A-Za-z0-9_-]+", path):  # the lane's app as the office's camera sees it
-                with preview.PREVIEW.watch(path.split("/")[2]):
-                    self.frames(path.split("/")[2])
+            if re.fullmatch(r"/cam/[A-Za-z0-9_-]+", path):  # the lane's app (or ?view=qa, QA's browser) as the camera sees it
+                view = "qa" if "view=qa" in self.path else "app"
+                with preview.PREVIEW.watch(path.split("/")[2], view):
+                    self.frames(path.split("/")[2], view)
                 return
             if path == "/":
                 body, kind = page.read_bytes(), "text/html; charset=utf-8"
@@ -2096,6 +2104,26 @@ def serve_dashboard(home, root):
                     self.send_error(404)
                     return
                 body, kind = stream.mask_whole(f.read_text(errors="replace")).encode(), "text/plain; charset=utf-8"
+            elif re.fullmatch(r"/schema/[A-Za-z0-9_-]+", path):  # the lane's migrations, for the office's schema board
+                state = json.loads((home / "state.json").read_text())
+                j = state["jobs"].get(path.split("/")[2])
+                wt = Path(j["worktree"]) if j and Path(j.get("worktree", "")).is_dir() else Path(root)
+                dirs = [d for d in MIGRATIONS if (wt / d).is_dir()]
+                changed = set(run(["git", "diff", "--name-only", (j or {}).get("base") or "main", "--", *dirs], cwd=wt, check=False).stdout.split()) if dirs else set()
+                changed |= set(run(["git", "ls-files", "--others", "--exclude-standard", "--", *dirs], cwd=wt, check=False).stdout.split()) if dirs else set()
+                files = [{"name": f.name, "sql": f.read_text(errors="replace")[:100_000], "fresh": str(f.relative_to(wt)) in changed}
+                         for d in dirs for f in sorted((wt / d).glob("*.sql"))]
+                body, kind = json.dumps({"files": files}).encode(), "application/json"
+            elif re.fullmatch(r"/film/[A-Za-z0-9_-]+\.json", path):  # the lane's film: a still after each save
+                f = home / "film" / path[6:-5] / "index.jsonl"
+                rows = [json.loads(x) for x in f.read_text().splitlines()] if f.exists() else []
+                body, kind = json.dumps(rows).encode(), "application/json"
+            elif re.fullmatch(r"/film/[A-Za-z0-9_-]+/\d+m?\.jpg", path):  # "m": the phone
+                f = home / path[1:]
+                if not f.exists():
+                    self.send_error(404)
+                    return
+                body, kind = f.read_bytes(), "image/jpeg"
             elif path == "/events":
                 f = home / "events.log"
                 body, kind = ("\n".join(f.read_text().splitlines()[-60:]).encode() if f.exists() else b""), "text/plain"
@@ -2118,7 +2146,7 @@ def serve_dashboard(home, root):
             self.end_headers()
             self.wfile.write(body)
 
-        def frames(self, job):
+        def frames(self, job, view):
             """Server-sent JPEG frames of the lane's app, while the page watches."""
             self.send_response(200)
             self.send_header("Content-Type", "text/event-stream")
@@ -2127,7 +2155,7 @@ def serve_dashboard(home, root):
             seq = 0
             try:
                 while True:
-                    f = preview.PREVIEW.frame_after(job, seq)
+                    f = preview.PREVIEW.frame_after(job, seq, view)
                     if f and f[0] > seq:
                         seq = f[0]
                         self.wfile.write(f"data: {json.dumps({'url': f[2], 'jpeg': f[1]})}\n\n".encode())

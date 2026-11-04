@@ -1,5 +1,5 @@
 {
-  "version": "5.10.0",
+  "version": "5.12.0",
   "preset": "nextjs-supabase",
   "files": {
     ".claude/agents/architect.md": "028703baff7bdfbf7e1a593438ff1ed616d359041d5c1223b37e00100de997b4",
@@ -41,7 +41,7 @@
     "e2e/styleguide.spec.ts": "eac4c7a58e2f3472b96a7baaeefa49979100f85e18859e20c529d82a08982e97",
     "harness/PRESET.md": "16283d8a928af695a75bb7b0532947094a9974957b4ec97e377a3d7b7c36b2eb",
     "harness/backlog.py": "51afa0f1c90ff902cacb492fa7313f3e30ac2717b23d3de8a0367e54279b5422",
-    "harness/cam.mjs": "0d1fd1b6b17ad887c209b2a04cb5d7531357aa1fe81c6ed6eb9981c15e307d8e",
+    "harness/cam.mjs": "908c2b458a8f7fdfe7c66158ced48f79ca16957952ccc75123413c99c0097bd9",
     "harness/ci_log.py": "ab58834fa2d556320062082beca8f900c05700768339fbddb976e1cb50dfb6dc",
     "harness/dashboard.html": "ab2a77561d1f6e8f92d61934c98eb9403e04fb09bc391be4951a916d5f087bee",
     "harness/features.json": "c86c9fc3db082a2700d29b949566705a240dbf707ec5ef022beeba74834c0d9f",
@@ -54,7 +54,7 @@
     "harness/integrity.py": "c33759731a165263b4af8410bf0f596b236818038b43eb7a2c60a760c57cfec5",
     "harness/loop-mcp.json": "10e61de4f6a91e39ec5085d6ef3c868a099002cce515f26ba6d763a39f2b85b4",
     "harness/loop-settings.json": "72420e6f742a4d2bbf89bd1bd9cfd7db41b5d09a6c4a9c321bf5031ce3acd1b6",
-    "harness/loop.py": "82203b48cb81d3ff17f8aeaf98094206e4b441b0e04b4e6d67b7ad2b8ded6090",
+    "harness/loop.py": "091ffc96b8db932916016291f26218d410ac491fa885e53bae82ab13e14f05c7",
     "harness/metrics.py": "9314593c59623a01c43aff1aff50ca26afc03775f70488c0a58e342e2d09bb90",
     "harness/next_feature.py": "67048fa47db2878ecd2fdfdffcda50ddf4201a411de553a01f500fef6c83556c",
     "harness/notify.py": "87bbeb06dda08cc1b6420406bfb1772fd245af948bf301f5e92ff1a93e0cdfbe",
@@ -122,8 +122,8 @@
     "harness/office/assets/mermaid-parser.core.esm": "b83597c4723e825226d77129d9ef42f454e43fa9b87643068461cd2a3664daed",
     "harness/office/assets/mermaid.core.esm": "c4d9b05a38e9804563e06351a41bd558e8364bbf58a96102370ce26f1153ffef",
     "harness/office/assets/mindmap-definition-6OY57UG3.esm": "c662e98f93bbcfe040258601583d84ddb560dfba585a8782e76f0b52aebf82a0",
-    "harness/office/assets/office.css": "c08f293b559ac1c2d9c1db389ed08cb58d718d79612e7d9dfe6ae8aa7d27ae1b",
-    "harness/office/assets/office.esm": "361d42b1e2f0f9d1b4a889530f71983b6fe03dad90118eeec8ffdb84e4a764b5",
+    "harness/office/assets/office.css": "a8f71f0513003b11a42e4c183a534d6643d878291e1e3adccab47011ea3050d9",
+    "harness/office/assets/office.esm": "c74075a09bd15bb52d72d5c76e1e0a0573613bc68db2094db59044eda4a9ba27",
     "harness/office/assets/packet-JDAUHWVQ.esm": "9dfa3cc0d3c09282e3d32d864ccec085be42549e977cdef21c3cd7d3e88809b8",
     "harness/office/assets/pegDiagram-ECIUJNBX.esm": "92f25b94f9d491927bd253a9f1e3e88ece6a5bd04677f2203c96f11c879e9892",
     "harness/office/assets/pie-XZMESJXO.esm": "8c98eb3dc225dcd5786c12cfd73955b0e99b5207986ea56dd4f0652baba289a4",
@@ -182,8 +182,10 @@
     "harness/office/models/table_medium.glb": "e4b11c229cb39ad3acb62183ad81e3ff75634c85eddb566f50a7dd9dd6e91587",
     "harness/office/models/table_medium_long.glb": "b79b6af067f71641d19074f332c98f9fe4f3f523cf4d0056d46333377beba75a",
     "harness/owner.py": "118c638805b7077026485e0cbececafb78f9793b898187faf799f4f4df24e200",
-    "harness/preview.py": "94bf6c522b75afa872370805d30f16b2017cef09c5e3b256005aa98d28ac4b4b",
+    "harness/preview.py": "bfbf7433b9f8a89834a8c3a778b1d747c5188668e26003c983329002c7307606",
     "harness/quiet.py": "d7b68539a86d2433865069c69916f03b297113b219cb76635c247f639bb7c3b7",
+    "harness/reporters/playwright.mjs": "fefbac79fe176235dc2b80a42b4f924d1c0492de810a441733e0d774fa659a1f",
+    "harness/reporters/vitest.mjs": "d8aae5231bff873d7accaa61979fdbdb6cc3d4ed21870f78f5125a110a5d67d6",
     "harness/runner.py": "4cd3ef03596e6c584c389408de022e721bc0131d441f6484b2adcbfbc14b8b97",
     "harness/stack.json": "3bb54c8a7c4dc853aa0ace49bf7ab8709465ad8566d4af5a4898b811f47e9b2f",
     "harness/stream.py": "5229d1b9dde70df70a435044b6c05431cff8f439cb615daebcf37e1ac7681cdf",
@@ -191,7 +193,7 @@
     "harness/validate_backlog.py": "e11c2d2f9a4d324851bd5362f3b5b921d179175085512aef21d8fbbd2d1d9894",
     "init.sh": "ecce06abea33014c055e0d491247666bcef02e55969252d2e9ad7ed7507e48f2",
     "lighthouserc.cjs": "e47c2ddc72ec0a31f197a0de1831bb07dbd798f257a6949cfa0d149dcc7dbd0c",
-    "playwright.config.ts": "76bd1348d167d1d88a4d63cb66dec5c8b699ad641125c98510299a44b439ed7d",
+    "playwright.config.ts": "64737152bc9f3e1dd7c685c3e6fab23c5d04a20c4a574367e481aab2df2100d1",
     "scripts/check.sh": "870cdb4270701865cfca5105dff57bdba2aac70db564791427fd86b36b9ba36d",
     "scripts/db-reset.sh": "1b63126d524a61e21e68e0c322bd7aa55c18c15d6b98b69f7594d18bf33afc00",
     "scripts/db-types.sh": "49e4b51cfdd784cc6d7b60c972dd7c4340ff82f140c8528d0ce4dd31ec7bfbed",
@@ -206,6 +208,6 @@
     "scripts/sast.sh": "2d4cb847905644bcb6c9a148c2cb39c0ced96d458c2d6abd10cdf393763d030f",
     "scripts/supabase_env.py": "5a313377fbeb4770310d135364dbe58694d81491a51c6ad91fb1bd2fc6f9c6a5",
     "scripts/ui-tokens.py": "ff261bb21c214f7bbc930ddd4144eb5298a9693b3c64a84cfdadb8913c888690",
-    "vitest.config.ts": "26c129cf65a88d070da59410b7fe677c2d49f3f9990c320d4e763add68249a63"
+    "vitest.config.ts": "e5917ed8970381d23d59c28eebdcaac15032c3db964978e7ae5a68f3af4034fe"
   }
 }

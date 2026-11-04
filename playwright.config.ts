@@ -10,6 +10,8 @@ const port = Number(process.env.PORT ?? 3300);
 export default defineConfig({
   testDir: "./e2e",
   timeout: 30_000,
+  // In the loop, each test also goes to the office's live test list (harness/reporters/, $HARNESS_TESTS).
+  reporter: process.env.HARNESS_TESTS ? [["list"], ["./harness/reporters/playwright.mjs"]] : undefined,
   // Visual baselines: toHaveScreenshot() images live in e2e/__screenshots__/ and are
   // committed. Rendering differs between macOS and Linux, so they are compared only
   // where agents run (this machine); CI skips them. Locally a missing baseline is
