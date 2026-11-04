@@ -340,6 +340,22 @@
         "Enter 10 and save: see '1 of 10 books finished this year' and the progress bar at 10%, also after reload",
         "Click 'Change goal', enter 366 and save: an error next to the field says the goal must be a whole number from 1 to 365, and after reload the goal is still 10"
       ]
+    },
+    {
+      "id": "F025",
+      "type": "bug",
+      "milestone": "M3",
+      "priority": 25,
+      "complexity": "M",
+      "title": "Fix: after moving between pages, hidden earlier pages leave duplicate main regions, field ids and doubled field names",
+      "depends_on": ["F002", "F010", "F018"],
+      "acceptance": [
+        "In a fresh browser open /sign-up, sign up a new account and land on /books: the document has exactly one <main> element",
+        "Click Sign out and land on /sign-in: the document has exactly one <main>, one element with id=\"email\" and one with id=\"password\", and the accessibility tree names the fields 'Email' and 'Password' (not 'Email Email')",
+        "Sign in, click Add book, add 'Midlemarch' by 'George Eliot', then click it in the list to open /books/<id> without reloading: the document has one <main> and one element with id=\"status\", and the status combobox is named 'Status', not 'Status Status'",
+        "Click Edit: the fields are named 'Title' and 'Author', not 'Title Title' and 'Author Author', and there is one element each with id=\"title\" and id=\"author\"",
+        "Click the browser Back button to /books and then Forward to the book page: the page still shows 'Midlemarch' and the counts above still hold"
+      ]
     }
   ]
 }
