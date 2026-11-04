@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "No product code: field errors next to Title/Author already came from F018 (parseBookFields + EditBookForm). Added e2e/edit-book-validation.spec.ts with baseline F019-edit-errors.png."
+}
