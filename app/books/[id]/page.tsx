@@ -14,9 +14,6 @@ import { deleteBook, editBook, saveRating, saveReview, updateStatus } from "./ac
 
 export const metadata: Metadata = { title: "Book · Bookshelf" };
 
-// Blocking render (design M2): an unknown id must be able to answer 404 before anything streams.
-export const instant = false;
-
 export default async function BookPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   await requireUser();

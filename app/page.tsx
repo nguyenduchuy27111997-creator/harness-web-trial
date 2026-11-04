@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 
-// Redirecting at request time keeps the prerender (and its instant validation) free of a thrown redirect.
+// Redirecting at request time keeps the prerender free of a thrown redirect.
 async function GoToBooks() {
   await connection();
   redirect("/books");
