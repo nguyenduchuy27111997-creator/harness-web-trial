@@ -29,7 +29,8 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
         </Button>
       )}
       {books.length > 0 && <BookList books={books} />}
-      {books.length === 0 && status && <p className="text-muted-foreground">No books here. Add one or switch tabs.</p>}
+      {books.length === 0 && q && <p className="text-muted-foreground">No books match &ldquo;{q}&rdquo;.</p>}
+      {books.length === 0 && status && !q && <p className="text-muted-foreground">No books here. Add one or switch tabs.</p>}
       {books.length === 0 && !status && !q && (
         <div className="flex flex-col items-start gap-4">
           <p className="text-muted-foreground">Your shelf is empty. Add your first book to get started.</p>

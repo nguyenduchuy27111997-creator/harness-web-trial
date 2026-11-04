@@ -69,3 +69,18 @@ test("search the shelf by title or author, kept in the URL", async ({ page }) =>
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F020-search-cleared.png");
 });
+
+// F020 review fix: a search with no matches says so, with or without a status tab.
+test("a search with no matches says no books match", async ({ page }) => {
+  const tag = `${process.env.HARNESS_LANE ?? "local"}-${Date.now()}`;
+  await signUp(page, `f020-none-${tag}@example.com`);
+  await addBook(page, "Emma", "Jane Austen", "Reading");
+
+  await page.goto("/books?q=zzzz");
+  await expect(page.getByRole("listitem")).toHaveCount(0);
+  await expect(page.getByText("No books match “zzzz”.")).toBeVisible();
+
+  await page.goto("/books?status=reading&q=zzzz");
+  await expect(page.getByText("No books match “zzzz”.")).toBeVisible();
+  await expect(page.getByText("No books here. Add one or switch tabs.")).toHaveCount(0);
+});
