@@ -60,6 +60,7 @@ import metrics  # noqa: E402
 import notify  # noqa: E402
 import owner  # noqa: E402
 import runner  # noqa: E402
+import stream  # noqa: E402
 
 CLAUDE = os.environ.get("CLAUDE_BIN", "claude")
 GH = os.environ.get("GH_BIN", "gh")
@@ -99,6 +100,8 @@ RUNNER_EVERY = float(os.environ.get("LOOP_RUNNER_EVERY", "300"))  # seconds betw
 # variables (no GH_TOKEN, cloud keys or other tokens), review and fix sessions cannot fetch the web, and the
 # browser may open only the lane's own app.
 SANDBOX = os.environ.get("LOOP_SANDBOX") == "1"
+# Sessions stream what they do (stream-json) for the dashboard; LOOP_STREAM=0 goes back to one JSON at the end.
+STREAM = os.environ.get("LOOP_STREAM", "1") != "0"
 ENV_KEEP = re.compile(r"^(PATH|HOME|USER|LOGNAME|SHELL|LANG|LC_\w+|TERM|COLORTERM|TMPDIR|TZ|XDG_\w+|ANTHROPIC_\w+"
                       r"|CLAUDE_\w+|NODE_OPTIONS|NVM_\w+|PORT|HARNESS_\w+|GIT_(AUTHOR|COMMITTER)_\w+"
                       + (f"|{os.environ['LOOP_ENV_KEEP']}" if os.environ.get("LOOP_ENV_KEEP") else "") + ")$")
@@ -173,6 +176,22 @@ def kill_group(proc, grace=10):
         os.killpg(proc.pid, signal.SIGKILL)  # whatever of the group ignored the TERM
     except (ProcessLookupError, PermissionError):
         pass
+
+
+def final_result(lines):
+    """The session's `result` object: the last line of stream-json, or the one JSON of --output-format json."""
+    for line in reversed(lines):
+        try:
+            d = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(d, dict) and d.get("type") == "result":
+            return d
+    try:  # a json result printed over several lines
+        d = json.loads("".join(lines))
+        return d if isinstance(d, dict) else None
+    except ValueError:
+        return None
 
 
 def online():
@@ -320,6 +339,7 @@ class Loop:
         with (self.home / "events.log").open("a") as f:
             f.write(line + "\n")
         print(line, flush=True)
+        stream.BUS.publish({"job": fid, "role": "loop", "kind": "event", "text": text})
 
     def job(self, fid):
         return self.state["jobs"].get(fid)
@@ -330,6 +350,8 @@ class Loop:
             job["note"] = note
         job["question"] = question
         self.event(job["id"], f"{stage}" + (f": {note}" if note else ""))
+        stream.BUS.publish({"job": job["id"], "role": "loop", "kind": "stage", "stage": stage, "note": job.get("note"),
+                            "question": question})
         if stage in WAITING_HUMAN and question:
             key = f"ask:{job['id']}:{hashlib.sha1(question.encode()).hexdigest()[:8]}"
             detail = (notify.config(self.home) or {}).get("detail")
@@ -743,7 +765,7 @@ class Loop:
                        "e2e tests use it. Never use port 3000 or another app's port.)")
         job["last_model"] = model
         cmd = (["nice", "-n", "10"] if shutil.which("nice") else []) + [CLAUDE, "-p", prompt, "--permission-mode", "auto", "--model", model, "--max-budget-usd", str(cap),
-               "--max-turns", str(turns), "--output-format", "json", "--setting-sources",
+               "--max-turns", str(turns), "--output-format", "stream-json" if STREAM else "json", "--setting-sources",
                "project" if SANDBOX else "project,local", "--strict-mcp-config",
                "--exclude-dynamic-system-prompt-sections"]  # the same system prompt in every lane: cache hits
         browser = self.stack.get("verify", "browser") == "browser"  # an API is verified with curl: no browser
@@ -755,30 +777,48 @@ class Loop:
         if browser:
             cmd += ["--mcp-config", str(self.session_mcp(job, port)) if SANDBOX else "harness/loop-mcp.json",
                     "--allowedTools", "mcp__playwright"]
+        if STREAM:
+            cmd += ["--verbose", "--include-partial-messages", "--forward-subagent-text"]
+        attempt = job.get("attempts", 0) + 1
+        live = stream.Session(job["id"], job["stage"], self.home / "streams" / f"{job['id']}-{attempt}.jsonl",
+                              evidence=Path(job["worktree"]) / "harness/evidence" / job["id"])
         proc = subprocess.Popen(cmd, cwd=job["worktree"], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                 text=True, start_new_session=True)
         self.procs.add(proc)
+        lines, errs = [], []
+
+        def pump(pipe, keep, feed=None):
+            for line in pipe:
+                keep.append(line)
+                if feed:
+                    feed(line)
+        readers = [threading.Thread(target=pump, args=(proc.stdout, lines, live.feed if STREAM else None), daemon=True),
+                   threading.Thread(target=pump, args=(proc.stderr, errs), daemon=True)]
+        for r in readers:
+            r.start()
         timed_out = False
         try:
-            out, err = proc.communicate(timeout=SESSION_TIMEOUT)
+            proc.wait(timeout=SESSION_TIMEOUT)
         except subprocess.TimeoutExpired:
             timed_out = True
             kill_group(proc)
             stop_processes_in(job["worktree"])
-            out, err = proc.communicate()
+            proc.wait()
+        for r in readers:  # a process the session left behind may hold the pipe: never wait on it for long
+            r.join(30)
         self.procs.discard(proc)
         stop_processes_in(job["worktree"])
-        log = self.home / "sessions" / f"{job['id']}-{job.get('attempts', 0) + 1}.log"
+        d = final_result(lines)
+        out, err = (json.dumps(d) if d is not None else "".join(lines)), "".join(errs)
+        log = self.home / "sessions" / f"{job['id']}-{attempt}.log"
         log.parent.mkdir(exist_ok=True)
-        with log.open("a") as f:  # every session of this attempt, in full
+        with log.open("a") as f:  # every session of this attempt: its result (the stream is in streams/), stderr
             f.write(f"=== {now()} {job['stage']} exit {proc.returncode}\n--- stdout\n{out}\n--- stderr\n{err}\n")
         if timed_out:
             with (self.home / "loop.log").open("a") as f:
                 f.write(f"{now()} {job['id']} session ran over {SESSION_TIMEOUT / 60:.0f} min; killed\n")
             return 0.0, ("timeout" if online() else "infra"), ""  # with the network down, the network stalled it
-        try:
-            d = json.loads(out)
-        except ValueError:
+        if d is None:
             tail = [x for x in err.splitlines() if x.strip() and not re.match(r"\s*(warning|ignoring)\b", x, re.I)][-5:]
             with (self.home / "loop.log").open("a") as f:
                 f.write(f"{now()} {job['id']} claude gave no result (exit {proc.returncode}): "
@@ -1194,6 +1234,10 @@ class Loop:
                    or f.get("notes") or "the fix did not keep the feature passing")
             return self.set_stage(job, "held", note="fix failed",
                                   question=f"{job['id']}: the automatic fix failed ({why[:300]}). What should change?")
+        if git("rev-parse", "HEAD", cwd=wt).stdout.strip() == job["fix_base"]:
+            # Nothing to fix: CI's failure was the machine, not the code. Seen for real: a docs-only design PR failed
+            # e2e at load 61, both fix sessions changed nothing, and the loop read the same failed run twice.
+            job.pop("ci_rerun_of", None)  # run the failed jobs again rather than spend another fix
         if job.get("fix_guard_base") or guard_base != job["fix_base"]:  # main is merged in: the branch now sits on main
             job["base"], job["base_sha"] = "main", job.pop("fix_guard_base", None) or guard_base
             job["full_review"] = True  # main's changes came in with the merge: review all of it again
@@ -1271,6 +1315,8 @@ class Loop:
             if job.get("ci_rerun_of") != head and job.get("ci_runs"):
                 # Once per commit, run the failed jobs again before spending a fix session on them.
                 # Seen for real: a rule PR that changed two docs failed a one-run Lighthouse score (0.86 < 0.9).
+                if self.machine_busy():
+                    return  # a rerun at load 61 failed the same way; rerun once the machine eases
                 job["ci_rerun_of"] = head
                 for run_id in job["ci_runs"]:
                     gh("run", "rerun", run_id, "--failed", cwd=self.root, check=False)
@@ -1960,6 +2006,7 @@ class QuietServer(http.server.ThreadingHTTPServer):
 
 def serve_dashboard(home, root):
     page = Path(__file__).resolve().parent / "dashboard.html"
+    office = Path(__file__).resolve().parent / "office"  # the 3D view, built from the kit's viewer/
 
     class Handler(http.server.BaseHTTPRequestHandler):
         def log_message(self, *_):
@@ -1967,6 +2014,14 @@ def serve_dashboard(home, root):
 
         def do_GET(self):
             path = self.path.split("?")[0]
+            host = (self.headers.get("Host") or "").rsplit(":", 1)[0]
+            if host not in ("localhost", "127.0.0.1"):  # another site's page reaching this server by DNS rebinding
+                self.send_error(403)
+                return
+            if path == "/stream":  # ?after=<id> for a page that read /snapshot.json first
+                after = re.search(r"[?&]after=(\d+)", self.path)
+                self.events(int(self.headers.get("Last-Event-ID") or (after.group(1) if after else 0)))
+                return
             if path == "/":
                 body, kind = page.read_bytes(), "text/html; charset=utf-8"
             elif path == "/state.json":
@@ -1984,6 +2039,25 @@ def serve_dashboard(home, root):
                 body = json.dumps({**(s.get("health") or {}), "last_tick": s.get("last_tick"),
                                    "running": bool(s.get("running") and alive(s.get("pid")))}).encode()
                 kind = "application/json"
+            elif path in ("/office", "/office/") or re.fullmatch(r"/office/assets/office\.(js|css)", path):
+                f = office / ("index.html" if path.rstrip("/") == "/office" else path[len("/office/"):])
+                if not f.exists():
+                    self.send_error(404)
+                    return
+                body = f.read_bytes()
+                kind = {".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css"}[f.suffix]
+            elif path == "/snapshot.json":
+                f = home / "state.json"
+                body = json.dumps({"state": json.loads(f.read_text()) if f.exists() else {}, **stream.BUS.snapshot()}).encode()
+                kind = "application/json"
+            elif re.fullmatch(r"/diff/[A-Za-z0-9_-]+", path):
+                state = json.loads((home / "state.json").read_text())
+                j = state["jobs"].get(path.split("/")[2])
+                if not j or not Path(j.get("worktree", "")).is_dir():
+                    self.send_error(404)
+                    return
+                diff = run(["git", "diff", j.get("base") or "main", "--"], cwd=j["worktree"], check=False).stdout
+                body, kind = diff[:200_000].encode(), "text/plain; charset=utf-8"
             elif path == "/events":
                 f = home / "events.log"
                 body, kind = ("\n".join(f.read_text().splitlines()[-60:]).encode() if f.exists() else b""), "text/plain"
@@ -2005,6 +2079,22 @@ def serve_dashboard(home, root):
             self.send_header("Cache-Control", "no-store")
             self.end_headers()
             self.wfile.write(body)
+
+        def events(self, last):
+            """Server-sent events from the bus, from the one after `last`, until the page goes away."""
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream")
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            try:
+                while True:
+                    batch = stream.BUS.since(last, timeout=15)
+                    chunk = "".join(f"id: {e['id']}\ndata: {json.dumps(e)}\n\n" for e in batch) or ": idle\n\n"
+                    self.wfile.write(chunk.encode())
+                    self.wfile.flush()
+                    last = batch[-1]["id"] if batch else last
+            except (BrokenPipeError, ConnectionResetError, OSError):
+                return
 
     port = free_port(8700)
     server = QuietServer(("127.0.0.1", port), Handler)

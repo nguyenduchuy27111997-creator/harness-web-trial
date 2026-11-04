@@ -33,6 +33,7 @@
   tr:last-child td { border-bottom: 0; }
   td.id { font-weight: 600; white-space: nowrap; }
   td.note { color: var(--muted); }
+  .now { color: var(--fg, inherit); font-family: ui-monospace, monospace; font-size: 12px; overflow-wrap: anywhere; }
   a { color: var(--accent); text-decoration: none; }
   .stage-building, .stage-review, .stage-fixing { color: var(--accent); }
   .stage-ci, .stage-waiting_base, .stage-merging, .stage-queued { color: var(--warn); }
@@ -59,6 +60,7 @@
   <header>
     <h1>Build loop</h1>
     <span id="run" class="pill">…</span>
+    <a class="pill" href="/office/">3D office</a>
     <span class="stat">spent <b id="spent">-</b> of <b id="budget">-</b> <span class="bar"><i id="barfill" style="width:0"></i></span></span>
     <span class="stat">lanes <b id="lanes">-</b></span>
     <span class="stat">merged <b id="merged">-</b></span>
@@ -97,7 +99,7 @@
 </main>
 <script>
 const ORDER = ["building", "review", "fixing", "ci", "merging", "waiting_base", "queued",
-               "needs_human", "held", "failed", "reverted", "merged"];
+               "needs_human", "held", "failed", "reverted", "merged", "dropped"];
 const mins = s => s ? Math.max(1, Math.round(s / 60)) + " min" : "";
 for (const t of ["now", "history"]) document.getElementById("tab-" + t).onclick = () => {
   for (const u of ["now", "history"]) {
@@ -106,6 +108,15 @@ for (const t of ["now", "history"]) document.getElementById("tab-" + t).onclick 
   }
 };
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+
+// What each lane's session is doing right now, from /stream: its last tool call, or the text it is writing.
+const doing = {}, said = {};
+new EventSource("/stream").onmessage = m => {
+  const e = JSON.parse(m.data), who = e.role && e.role !== "main" ? e.role + ": " : "";
+  if (e.kind === "tool") { said[e.job] = ""; doing[e.job] = who + e.tool + (e.what ? " " + e.what : ""); }
+  else if (e.kind === "text") { said[e.job] = ((said[e.job] || "") + e.text).slice(-160); doing[e.job] = who + said[e.job].trim(); }
+  else if (e.kind === "session_end") delete doing[e.job];
+};
 
 async function refresh() {
   try {
@@ -149,7 +160,7 @@ async function refresh() {
         <td>${j.pr_url ? `<a href="${esc(j.pr_url)}" target="_blank">#${esc(j.pr)}</a>` : ""}</td>
         <td class="hide-sm">${j.cost ? "$" + j.cost.toFixed(2) : ""}</td>
         <td class="hide-sm">${mins(j.lead_seconds || j.seconds)}${(j.sessions || []).length ? `<div class="note">${j.sessions.length} sessions</div>` : ""}</td>
-        <td class="note">${esc(j.note)}</td>
+        <td class="note">${["building", "review", "fixing"].includes(j.stage) && doing[j.id] ? `<div class="now">${esc(doing[j.id])}</div>` : ""}${esc(j.note)}</td>
       </tr>`).join("") : '<tr><td colspan="6" class="empty">No features yet.</td></tr>';
 
     const ms = Object.entries(s.milestone_spent || {});
