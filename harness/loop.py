@@ -1434,9 +1434,14 @@ class Loop:
     def rebase(self, job, onto, upstream=None):
         wt = job["worktree"]
         cmd = ["rebase", "-q", "--onto", onto, upstream] if upstream else ["rebase", "-q", onto]
-        if git(*cmd, cwd=wt, check=False).returncode != 0 and not self.regenerate(job):
+        # A branch a session merged main into takes newer main the same way: a rebase drops that merge and replays
+        # the old commits into the conflict it resolved. Seen for real: F020 and F021 were closed and built again.
+        merged_in = not upstream and git("rev-list", "--merges", "-n1", f"{onto}..HEAD", cwd=wt).stdout.strip()
+        if merged_in:
+            cmd = ["merge", "-q", "--no-edit", onto]
+        if git(*cmd, cwd=wt, check=False).returncode != 0 and (merged_in or not self.regenerate(job)):
             files = git("diff", "--name-only", "--diff-filter=U", cwd=wt, check=False).stdout.split()
-            git("rebase", "--abort", cwd=wt, check=False)
+            git("merge" if merged_in else "rebase", "--abort", cwd=wt, check=False)
             if not job.get("revert_of") and not job.get("conflict_rounds"):
                 if self.can_start() and not self.paused():
                     return self.resolve(job, onto, files)  # a session merges main in, rather than building it again
