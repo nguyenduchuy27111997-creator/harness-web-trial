@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { saveGoal } from "@/app/stats/actions";
-import { GoalForm } from "@/components/goal-form";
+import { ChangeGoal, GoalForm } from "@/components/goal-form";
 import { Progress } from "@/components/ui/progress";
 import { getReadingGoal, goalProgress } from "@/lib/goals";
 import { formatAverage, getStats } from "@/lib/stats";
@@ -28,6 +28,9 @@ export default async function StatsPage() {
             {stats.finishedThisYear} of {goal} books finished this year
           </p>
           <Progress value={goalProgress(stats.finishedThisYear, goal)} aria-label="Reading goal progress" />
+          <div>
+            <ChangeGoal goal={goal} action={saveGoal} />
+          </div>
         </section>
       )}
     </main>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useId } from "react";
+import { useActionState, useId, useState } from "react";
 import { FormField } from "@/components/form-field";
 import { Button } from "@/components/ui/button";
 import type { GoalFormState } from "@/lib/goals";
@@ -30,5 +30,32 @@ export function GoalForm({ goal, submitLabel, action }: Props) {
         </Button>
       </div>
     </form>
+  );
+}
+
+export function ChangeGoal({
+  goal,
+  action,
+}: {
+  goal: number;
+  action: Props["action"];
+}) {
+  const [open, setOpen] = useState(false);
+  if (!open)
+    return (
+      <Button type="button" variant="outline" onClick={() => setOpen(true)}>
+        Change goal
+      </Button>
+    );
+  return (
+    <GoalForm
+      goal={goal}
+      submitLabel="Save goal"
+      action={async (prev, formData) => {
+        const next = await action(prev, formData);
+        if (next.saved) setOpen(false);
+        return next;
+      }}
+    />
   );
 }
