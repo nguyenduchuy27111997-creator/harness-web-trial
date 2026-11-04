@@ -127,10 +127,14 @@ class Session:
         elif kind == "system" and sub == "thinking_tokens":
             self.emit(self.role(d), "thinking", tokens=d.get("estimated_tokens", 0))
         elif kind == "system" and sub == "task_started":
+            if d.get("task_type", "local_agent") != "local_agent":  # a Bash command run in the background, not a subagent
+                return
             self.roles[d.get("tool_use_id")] = d.get("subagent_type") or "subagent"
             self.emit(self.roles[d.get("tool_use_id")], "subagent_start", use_id=d.get("tool_use_id"),
                       description=mask(d.get("description", "")))
         elif kind == "system" and sub == "task_notification":
+            if d.get("tool_use_id") not in self.roles:  # the end of a background command, not of a subagent
+                return
             self.emit(self.roles.get(d.get("tool_use_id"), "subagent"), "subagent_end", use_id=d.get("tool_use_id"),
                       status=d.get("status"))
         elif kind == "stream_event":
