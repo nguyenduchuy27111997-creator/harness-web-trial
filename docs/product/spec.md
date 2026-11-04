@@ -23,6 +23,12 @@ One person per account, on desktop or phone. They add a book in a few seconds, m
 - `/stats` shows how many books I finished this year and my average rating.
 - Opening another user's book id, or one that does not exist, shows a "Book not found" page (404).
 
+### M3: keep the shelf tidy
+- Edit a book's title and author from its page `/books/<id>`, with the same limits and field errors as adding a book. The list shows the new values.
+- Search my shelf on `/books` by title or author (case-insensitive, any part of the word). The search is kept in the URL (`?q=`) and combines with the status tab. No matches shows one sentence and a way to clear the search.
+- Sort the list on `/books`: Newest added (default), Title A to Z, or Highest rated (unrated books last). The sort is kept in the URL (`?sort=`) and combines with the tab and the search.
+- Set a reading goal for this year on `/stats`: a number of books from 1 to 365. Stats shows "N of G books finished this year" with a progress bar. I can change the goal; without one, Stats invites me to set it.
+
 ## Out of scope
 - Book search APIs, covers, ISBN lookup, sharing, social features, import/export.
 - Password reset, social login, email confirmation.
@@ -36,3 +42,4 @@ Next.js + Supabase (the nextjs-supabase preset).
 ## Definition of done
 - M1: I can sign up, add two books, see them newest first with their status, sign out, and get sent to sign in when I open `/books`.
 - M2: I can move a book to Finished and rate it, filter by status, delete a book, see my stats, and a second account cannot open my book's URL.
+- M3: I can fix a typo in a book's title, find a book by part of its author's name, sort my finished books by rating, and see my progress toward a goal of 20 books this year.
