@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Search on /books: parseSearch, filterBooks (in memory), booksHref(status, q) in lib/books.ts; SearchForm client component (router.push, keyed by q); StatusTabs keep q. booksHref has no sort yet (F022 adds it). A search with no matches shows 'No books match “q”.' with or without a status tab (F021 adds the 'Clear search' link). Updated /books baselines for the new search form."
+}

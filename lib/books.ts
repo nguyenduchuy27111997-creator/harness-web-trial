@@ -41,6 +41,30 @@ export function parseStatusFilter(value: string | string[] | undefined): BookSta
   return typeof value === "string" && isBookStatus(value) ? value : undefined;
 }
 
+// Trimmed search text from the URL; empty means no search.
+export function parseSearch(value: string | string[] | undefined): string | undefined {
+  const q = typeof value === "string" ? value.trim() : "";
+  return q || undefined;
+}
+
+// In memory over the one user's rows, so q never reaches a query (design M3).
+export function filterBooks<T extends Book>(books: T[], q?: string): T[] {
+  if (!q) return books;
+  const needle = q.toLocaleLowerCase("en");
+  return books.filter(
+    (book) => book.title.toLocaleLowerCase("en").includes(needle) || book.author.toLocaleLowerCase("en").includes(needle),
+  );
+}
+
+// The one URL builder for /books: parameters in the order status, q.
+export function booksHref({ status, q }: { status?: BookStatus; q?: string }): string {
+  const params = new URLSearchParams();
+  if (status) params.set("status", status);
+  if (q) params.set("q", q);
+  const query = params.toString();
+  return query ? `/books?${query}` : "/books";
+}
+
 export const STATUS_LABELS: Record<BookStatus, string> = {
   want_to_read: "Want to read",
   reading: "Reading",
