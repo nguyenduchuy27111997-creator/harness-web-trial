@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { booksHref, filterBooks, formatFinishDate, parseSearch, insertBook, listBooks, parseNewBook, parseRating, parseReview, parseStatus, parseStatusFilter, removeBook, updateBookRating, updateBookReview, updateBookStatus } from "./books";
+import { booksHref, filterBooks, formatFinishDate, parseSearch, insertBook, listBooks, parseBookFields, parseNewBook, parseRating, parseReview, parseStatus, parseStatusFilter, removeBook, updateBookFields, updateBookRating, updateBookReview, updateBookStatus } from "./books";
 
 function stubClient(result: { data: unknown; error: { message: string } | null }) {
   const calls: unknown[][] = [];
@@ -235,5 +235,39 @@ describe("removeBook", () => {
 
   it("throws on a database error", async () => {
     await expect(removeBook(updateClient({ data: null, error: { message: "boom" } }), "x")).rejects.toThrow("boom");
+  });
+});
+
+describe("parseBookFields", () => {
+  it("trims title and author", () => {
+    expect(parseBookFields(form({ title: " Middlemarch ", author: " George Eliot " }))).toEqual({
+      ok: true,
+      value: { title: "Middlemarch", author: "George Eliot" },
+    });
+  });
+
+  it("reports each field's problem", () => {
+    expect(parseBookFields(form({ title: " ", author: "x".repeat(121) }))).toEqual({
+      ok: false,
+      fieldErrors: { title: "Title is required", author: "Author must be at most 120 characters" },
+    });
+    const r = parseBookFields(form({ title: "x".repeat(201), author: "" }));
+    expect(r).toEqual({
+      ok: false,
+      fieldErrors: { title: "Title must be at most 200 characters", author: "Author is required" },
+    });
+  });
+});
+
+describe("updateBookFields", () => {
+  const fields = { title: "Middlemarch", author: "George Eliot" };
+
+  it("is true when a row changed and false when none did", async () => {
+    expect(await updateBookFields(updateClient({ data: [{ id: "x" }], error: null }), "x", fields)).toBe(true);
+    expect(await updateBookFields(updateClient({ data: [], error: null }), "x", fields)).toBe(false);
+  });
+
+  it("throws on a database error", async () => {
+    await expect(updateBookFields(updateClient({ data: null, error: { message: "boom" } }), "x", fields)).rejects.toThrow("boom");
   });
 });
