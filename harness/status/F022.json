@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Sort by newest, title or rating via ?sort=, kept with status and q through booksHref. The F021 'Clear search' link is not built yet; it must pass sort to booksHref."
+}

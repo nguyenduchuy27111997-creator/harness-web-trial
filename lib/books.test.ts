@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { booksHref, filterBooks, formatFinishDate, insertBook, listBooks, parseBookFields, parseNewBook, parseRating, parseReview, parseSearch, parseStatus, parseStatusFilter, removeBook, updateBookFields, updateBookRating, updateBookReview, updateBookStatus } from "./books";
+import { booksHref, filterBooks, formatFinishDate, insertBook, listBooks, parseBookFields, parseNewBook, parseRating, parseReview, parseSearch, parseSort, parseStatus, parseStatusFilter, removeBook, sortBooks, type ShelfBook, updateBookFields, updateBookRating, updateBookReview, updateBookStatus } from "./books";
 
 function stubClient(result: { data: unknown; error: { message: string } | null }) {
   const calls: unknown[][] = [];
@@ -270,5 +270,44 @@ describe("booksHref", () => {
     expect(booksHref({ status: "reading" })).toBe("/books?status=reading");
     expect(booksHref({ q: "a&b c" })).toBe("/books?q=a%26b+c");
     expect(booksHref({ status: "reading", q: "eliot" })).toBe("/books?status=reading&q=eliot");
+  });
+
+  it("adds sort last and omits the default", () => {
+    expect(booksHref({ status: "reading", q: "a", sort: "rating" })).toBe("/books?status=reading&q=a&sort=rating");
+    expect(booksHref({ sort: "title" })).toBe("/books?sort=title");
+    expect(booksHref({ sort: "newest" })).toBe("/books");
+  });
+});
+
+describe("parseSort", () => {
+  it("accepts title and rating, else newest", () => {
+    expect(parseSort("title")).toBe("title");
+    expect(parseSort("rating")).toBe("rating");
+    expect(parseSort("nope")).toBe("newest");
+    expect(parseSort(["title", "rating"])).toBe("newest");
+    expect(parseSort(undefined)).toBe("newest");
+  });
+});
+
+describe("sortBooks", () => {
+  const book = (title: string, status: ShelfBook["status"], rating: number | null): ShelfBook => ({
+    id: title, title, author: "x", created_at: "", status, rating,
+  });
+  // newest first, as listBooks returns them
+  const books = [book("Delta", "reading", 4), book("Charlie", "finished", null), book("Alpha", "finished", 5), book("bravo", "finished", 3)];
+  const titles = (list: ShelfBook[]) => list.map((b) => b.title);
+
+  it("keeps the input order for newest, in a new array", () => {
+    const sorted = sortBooks(books, "newest");
+    expect(titles(sorted)).toEqual(["Delta", "Charlie", "Alpha", "bravo"]);
+    expect(sorted).not.toBe(books);
+  });
+
+  it("sorts by title ignoring case", () => {
+    expect(titles(sortBooks(books, "title"))).toEqual(["Alpha", "bravo", "Charlie", "Delta"]);
+  });
+
+  it("sorts by rating, unrated and not-Finished last, ties newest first", () => {
+    expect(titles(sortBooks(books, "rating"))).toEqual(["Alpha", "bravo", "Delta", "Charlie"]);
   });
 });

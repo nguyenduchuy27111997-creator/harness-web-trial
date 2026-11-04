@@ -7,15 +7,17 @@ export type BookStatus = (typeof BOOK_STATUSES)[number];
 
 export type Book = Pick<Tables<"books">, "id" | "title" | "author" | "created_at"> & { status: BookStatus };
 
+export type ShelfBook = Book & Pick<Tables<"books">, "rating">;
+
 export type BookDetail = Book & Pick<Tables<"books">, "finished_on" | "rating" | "review">;
 
 // Row Level Security limits the rows to the signed-in user's own.
-export async function listBooks(supabase: SupabaseClient<Database>, status?: BookStatus): Promise<Book[]> {
-  let query = supabase.from("books").select("id, title, author, status, created_at");
+export async function listBooks(supabase: SupabaseClient<Database>, status?: BookStatus): Promise<ShelfBook[]> {
+  let query = supabase.from("books").select("id, title, author, status, created_at, rating");
   if (status) query = query.eq("status", status);
   const { data, error } = await query.order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
-  return data as Book[];
+  return data as ShelfBook[];
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -56,11 +58,33 @@ export function filterBooks<T extends Book>(books: T[], q?: string): T[] {
   );
 }
 
-// The one URL builder for /books: parameters in the order status, q.
-export function booksHref({ status, q }: { status?: BookStatus; q?: string }): string {
+export type BookSort = "newest" | "title" | "rating";
+
+export const SORT_LABELS: Record<BookSort, string> = {
+  newest: "Newest added",
+  title: "Title A to Z",
+  rating: "Highest rated",
+};
+
+// A known sort from the URL, else newest.
+export function parseSort(value: string | string[] | undefined): BookSort {
+  return value === "title" || value === "rating" ? value : "newest";
+}
+
+// A new array, stable over the newest-first input, so ties stay newest first. Only Finished books count as rated.
+export function sortBooks(books: ShelfBook[], sort: BookSort): ShelfBook[] {
+  const rated = (b: ShelfBook) => (b.status === "finished" ? (b.rating ?? 0) : 0);
+  if (sort === "title") return [...books].sort((a, b) => a.title.localeCompare(b.title, "en", { sensitivity: "base" }));
+  if (sort === "rating") return [...books].sort((a, b) => rated(b) - rated(a));
+  return [...books];
+}
+
+// The one URL builder for /books: parameters in the order status, q, sort.
+export function booksHref({ status, q, sort }: { status?: BookStatus; q?: string; sort?: BookSort }): string {
   const params = new URLSearchParams();
   if (status) params.set("status", status);
   if (q) params.set("q", q);
+  if (sort && sort !== "newest") params.set("sort", sort);
   const query = params.toString();
   return query ? `/books?${query}` : "/books";
 }
