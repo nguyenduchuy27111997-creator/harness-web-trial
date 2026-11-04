@@ -7,6 +7,9 @@ export async function proxy(request: NextRequest) {
   if (request.nextUrl.pathname === "/") {
     return NextResponse.redirect(new URL(user ? "/books" : "/sign-in", request.url));
   }
+  if (user && (request.nextUrl.pathname === "/sign-in" || request.nextUrl.pathname === "/sign-up")) {
+    return NextResponse.redirect(new URL("/books", request.url));
+  }
   if (!user && (request.nextUrl.pathname.startsWith("/books") || request.nextUrl.pathname.startsWith("/stats"))) {
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }

@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "proxy.ts redirects signed-in users from /sign-in and /sign-up to /books. Regression test e2e/signed-in-auth-pages.spec.ts."
+}
