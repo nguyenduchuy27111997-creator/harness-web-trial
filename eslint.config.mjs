@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Bundled harness-kit dashboard, not project code:
+    "harness/office/**",
   ]),
 ]);
 
