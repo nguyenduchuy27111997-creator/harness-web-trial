@@ -41,6 +41,27 @@ export function parseStatusFilter(value: string | string[] | undefined): BookSta
   return typeof value === "string" && isBookStatus(value) ? value : undefined;
 }
 
+// A trimmed search from the URL, else undefined (no search).
+export function parseSearch(value: string | string[] | undefined): string | undefined {
+  return (typeof value === "string" && value.trim()) || undefined;
+}
+
+// Rows whose title or author contains q, ignoring case.
+export function filterBooks<T extends Book>(books: T[], q?: string): T[] {
+  if (!q) return books;
+  const needle = q.toLocaleLowerCase("en");
+  return books.filter((b) => `${b.title}\n${b.author}`.toLocaleLowerCase("en").includes(needle));
+}
+
+// The one builder for /books links: parameters in the order status, q.
+export function booksHref({ status, q }: { status?: BookStatus; q?: string }): string {
+  const params = new URLSearchParams();
+  if (status) params.set("status", status);
+  if (q) params.set("q", q);
+  const query = params.toString();
+  return query ? `/books?${query}` : "/books";
+}
+
 export const STATUS_LABELS: Record<BookStatus, string> = {
   want_to_read: "Want to read",
   reading: "Reading",

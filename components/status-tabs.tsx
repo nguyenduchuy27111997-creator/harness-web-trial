@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { BOOK_STATUSES, STATUS_LABELS, type BookStatus } from "@/lib/books";
+import { BOOK_STATUSES, STATUS_LABELS, booksHref, type BookStatus } from "@/lib/books";
 import { cn } from "@/lib/utils";
 
 const TABS: { label: string; status?: BookStatus }[] = [
@@ -8,7 +8,7 @@ const TABS: { label: string; status?: BookStatus }[] = [
   ...BOOK_STATUSES.map((status) => ({ label: STATUS_LABELS[status], status })),
 ];
 
-export function StatusTabs({ current }: { current?: BookStatus }) {
+export function StatusTabs({ current, q }: { current?: BookStatus; q?: string }) {
   return (
     <nav aria-label="Book filter" className="flex flex-wrap gap-2">
       {TABS.map(({ label, status }) => (
@@ -22,7 +22,7 @@ export function StatusTabs({ current }: { current?: BookStatus }) {
           )}
         >
           <Link
-            href={status ? `/books?status=${status}` : "/books"}
+            href={booksHref({ status, q })}
             aria-current={status === current ? "page" : undefined}
           >
             {label}

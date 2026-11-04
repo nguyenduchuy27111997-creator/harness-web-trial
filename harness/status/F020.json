@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Search by title or author via ?q=, in memory (filterBooks), kept with status through booksHref. Baselines of /books pages updated (search form added). Sort (F022) and the Clear search link (F021) not included; booksHref has no sort yet. check.sh e2e is flaky under heavy machine load (timeouts); passes when the machine is quiet."
+}

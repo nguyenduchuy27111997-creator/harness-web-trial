@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { formatFinishDate, insertBook, listBooks, parseNewBook, parseRating, parseReview, parseStatus, parseStatusFilter, removeBook, updateBookRating, updateBookReview, updateBookStatus } from "./books";
+import { booksHref, filterBooks, formatFinishDate, parseSearch, insertBook, listBooks, parseNewBook, parseRating, parseReview, parseStatus, parseStatusFilter, removeBook, updateBookRating, updateBookReview, updateBookStatus } from "./books";
 
 function stubClient(result: { data: unknown; error: { message: string } | null }) {
   const calls: unknown[][] = [];
@@ -52,6 +52,42 @@ describe("parseStatusFilter", () => {
     expect(parseStatusFilter("nope")).toBeUndefined();
     expect(parseStatusFilter(["reading", "finished"])).toBeUndefined();
     expect(parseStatusFilter(undefined)).toBeUndefined();
+  });
+});
+
+describe("parseSearch", () => {
+  it("trims and drops an empty or repeated search", () => {
+    expect(parseSearch("  eliot ")).toBe("eliot");
+    expect(parseSearch("   ")).toBeUndefined();
+    expect(parseSearch(["a", "b"])).toBeUndefined();
+    expect(parseSearch(undefined)).toBeUndefined();
+  });
+});
+
+describe("filterBooks", () => {
+  const books = [
+    { id: "1", title: "Middlemarch", author: "George Eliot", status: "finished" as const, created_at: "" },
+    { id: "2", title: "Emma", author: "Jane Austen", status: "reading" as const, created_at: "" },
+  ];
+
+  it("keeps every row without a search", () => {
+    expect(filterBooks(books)).toBe(books);
+  });
+
+  it("matches any part of title or author, ignoring case", () => {
+    expect(filterBooks(books, "ELIO").map((b) => b.id)).toEqual(["1"]);
+    expect(filterBooks(books, "march").map((b) => b.id)).toEqual(["1"]);
+    expect(filterBooks(books, "austen").map((b) => b.id)).toEqual(["2"]);
+    expect(filterBooks(books, "nothing")).toEqual([]);
+  });
+});
+
+describe("booksHref", () => {
+  it("builds the URL from the set parameters, encoding q", () => {
+    expect(booksHref({})).toBe("/books");
+    expect(booksHref({ status: "reading" })).toBe("/books?status=reading");
+    expect(booksHref({ q: "a&b c" })).toBe("/books?q=a%26b+c");
+    expect(booksHref({ status: "reading", q: "eliot" })).toBe("/books?status=reading&q=eliot");
   });
 });
 
