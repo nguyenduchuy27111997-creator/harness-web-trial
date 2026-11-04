@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { SearchForm } from "@/components/search-form";
 import { SortSelect } from "@/components/sort-select";
 import { StatusTabs } from "@/components/status-tabs";
-import { filterBooks, listBooks, parseSearch, parseSort, parseStatusFilter, sortBooks } from "@/lib/books";
+import { booksHref, filterBooks, listBooks, parseSearch, parseSort, parseStatusFilter, sortBooks } from "@/lib/books";
 import { createClient, requireUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "My books · Bookshelf" };
@@ -32,7 +32,14 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
         </Button>
       )}
       {books.length > 0 && <BookList books={books} />}
-      {books.length === 0 && q && <p className="text-muted-foreground">No books match &ldquo;{q}&rdquo;.</p>}
+      {books.length === 0 && q && (
+        <div className="flex flex-col items-start gap-2">
+          <p className="text-muted-foreground">No books match &ldquo;{q}&rdquo;.</p>
+          <Button asChild variant="link" className="h-auto p-0">
+            <Link href={booksHref({ status, sort })}>Clear search</Link>
+          </Button>
+        </div>
+      )}
       {books.length === 0 && status && !q && <p className="text-muted-foreground">No books here. Add one or switch tabs.</p>}
       {books.length === 0 && !status && !q && (
         <div className="flex flex-col items-start gap-4">

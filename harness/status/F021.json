@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Clear search link (booksHref({ status, sort })) under the no-match sentence on /books. Rebuilt on main after F020/F022 merged; previous branch conflicted on rebase."
+}
