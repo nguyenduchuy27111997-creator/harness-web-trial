@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useId, useState } from "react";
+import { useActionState, useEffect, useId, useRef, useState } from "react";
 import { FormField } from "@/components/form-field";
 import { Button } from "@/components/ui/button";
 import type { GoalFormState } from "@/lib/goals";
@@ -9,9 +9,10 @@ type Props = {
   goal: number | null;
   submitLabel: string;
   action: (prev: GoalFormState, formData: FormData) => Promise<GoalFormState>;
+  onCancel?: () => void;
 };
 
-export function GoalForm({ goal, submitLabel, action }: Props) {
+export function GoalForm({ goal, submitLabel, action, onCancel }: Props) {
   const id = useId();
   const [state, formAction, pending] = useActionState(action, {} as GoalFormState);
   return (
@@ -24,10 +25,15 @@ export function GoalForm({ goal, submitLabel, action }: Props) {
         defaultValue={state.values?.goal ?? goal ?? ""}
         error={state.fieldErrors?.goal ?? state.formError}
       />
-      <div>
+      <div className="flex gap-2">
         <Button type="submit" disabled={pending}>
           {pending ? "Saving…" : submitLabel}
         </Button>
+        {onCancel && (
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+        )}
       </div>
     </form>
   );
@@ -41,9 +47,20 @@ export function ChangeGoal({
   action: Props["action"];
 }) {
   const [open, setOpen] = useState(false);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (wasOpen.current && !open) trigger.current?.focus();
+    wasOpen.current = open;
+  }, [open]);
   if (!open)
     return (
-      <Button type="button" variant="outline" onClick={() => setOpen(true)}>
+      <Button
+        ref={trigger}
+        type="button"
+        variant="outline"
+        onClick={() => setOpen(true)}
+      >
         Change goal
       </Button>
     );
@@ -51,6 +68,7 @@ export function ChangeGoal({
     <GoalForm
       goal={goal}
       submitLabel="Save goal"
+      onCancel={() => setOpen(false)}
       action={async (prev, formData) => {
         const next = await action(prev, formData);
         if (next.saved) setOpen(false);

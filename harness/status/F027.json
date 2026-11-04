@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Added Cancel to the open Change goal form on /stats (onCancel prop on GoalForm); focus returns to the Change goal button. F024 baseline updated (form now shows Cancel)."
+}
