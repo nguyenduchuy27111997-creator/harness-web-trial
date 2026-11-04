@@ -236,6 +236,110 @@
         "While signed in, open /sign-up: end up on /books, not the sign-up form",
         "Click Sign out, then open /sign-in and /sign-up: each still shows its form"
       ]
+    },
+    {
+      "id": "F018",
+      "milestone": "M3",
+      "priority": 18,
+      "complexity": "M",
+      "title": "Edit a book's title and author from its page",
+      "depends_on": ["F009"],
+      "acceptance": [
+        "Signed in, add 'Midlemarch' by 'George Eliot' and open its page /books/<id>",
+        "Click Edit: Title and Author fields appear filled with the current values, with Save and Cancel buttons",
+        "Click Cancel: the fields close and the page still shows 'Midlemarch'",
+        "Click Edit, change the title to 'Middlemarch', click Save: the page heading shows 'Middlemarch', also after reload",
+        "Open /books: the list shows 'Middlemarch' by 'George Eliot' and no longer 'Midlemarch'"
+      ],
+      "owner_check": true
+    },
+    {
+      "id": "F019",
+      "milestone": "M3",
+      "priority": 19,
+      "complexity": "S",
+      "title": "Edit-book validation errors next to the field",
+      "depends_on": ["F018"],
+      "acceptance": [
+        "On a book's page click Edit, clear Title and Author, click Save: 'Title is required' shows next to Title and 'Author is required' next to Author",
+        "Enter a 201-character title: an error next to Title says it must be at most 200 characters",
+        "Enter a 121-character author: an error next to Author says it must be at most 120 characters",
+        "Reload the page: the book still has its old title and author",
+        "Fix both and Save: the page and /books show the new values"
+      ]
+    },
+    {
+      "id": "F020",
+      "milestone": "M3",
+      "priority": 20,
+      "complexity": "M",
+      "title": "Search my shelf by title or author, kept in the URL",
+      "depends_on": ["F013"],
+      "acceptance": [
+        "Sign up a new account and add 'Middlemarch' by 'George Eliot' (Finished), 'Silas Marner' by 'George Eliot' (Reading) and 'Emma' by 'Jane Austen' (Reading)",
+        "On /books type 'ELIO' in the search field and submit: the URL becomes /books?q=ELIO and only Middlemarch and Silas Marner show",
+        "Search 'march': only Middlemarch shows",
+        "Search 'eliot', then click the Reading tab: the URL keeps q=eliot with status=reading and only Silas Marner shows",
+        "Reload the page: the search field still shows 'eliot', the Reading tab is selected and only Silas Marner shows",
+        "Clear the search field and submit: the URL has no q and all Reading books show"
+      ]
+    },
+    {
+      "id": "F021",
+      "milestone": "M3",
+      "priority": 21,
+      "complexity": "S",
+      "title": "Search with no matches offers to clear the search",
+      "depends_on": ["F020"],
+      "acceptance": [
+        "Signed in with at least one book, open /books?q=zzzz: one sentence says no books match 'zzzz' and a 'Clear search' link shows",
+        "Click 'Clear search': the URL is /books and all books show",
+        "Open /books?status=reading&q=zzzz and click 'Clear search': the URL is /books?status=reading and the Reading tab stays selected"
+      ]
+    },
+    {
+      "id": "F022",
+      "milestone": "M3",
+      "priority": 22,
+      "complexity": "M",
+      "title": "Sort the list by newest, title or rating, kept in the URL",
+      "depends_on": ["F011", "F020"],
+      "acceptance": [
+        "Sign up a new account and add, in this order, 'Bravo' (Finished, rated 3), 'Alpha' (Finished, rated 5), 'Charlie' (Finished, no rating), 'Delta' (Reading)",
+        "Open /books: the sort control shows 'Newest added' and the order is Delta, Charlie, Alpha, Bravo",
+        "Choose 'Title A to Z': the URL has sort=title and the order is Alpha, Bravo, Charlie, Delta",
+        "Choose 'Highest rated': the URL has sort=rating and the order is Alpha, Bravo, then the unrated Delta and Charlie last",
+        "Click the Finished tab: the URL keeps sort=rating and the order is Alpha, Bravo, Charlie; reload keeps the tab, the sort and the order",
+        "Search 'a' with sort=rating: the URL keeps both q and sort, and the results are in rating order"
+      ]
+    },
+    {
+      "id": "F023",
+      "milestone": "M3",
+      "priority": 23,
+      "complexity": "M",
+      "title": "Set a reading goal for this year on Stats",
+      "depends_on": ["F015"],
+      "acceptance": [
+        "Sign up a new account and open /stats: a sentence invites me to set a reading goal for this year, with a number field and a 'Set goal' button",
+        "Finish one book today, then on /stats enter 20 and click 'Set goal': see '1 of 20 books finished this year' and a progress bar at 5%",
+        "Reload /stats: the goal and progress are still shown",
+        "Enter 0, then 366, then 2.5 and submit each: an error next to the field says the goal must be a whole number from 1 to 365, and no goal is saved"
+      ],
+      "owner_check": true
+    },
+    {
+      "id": "F024",
+      "milestone": "M3",
+      "priority": 24,
+      "complexity": "S",
+      "title": "Change this year's reading goal",
+      "depends_on": ["F023"],
+      "acceptance": [
+        "With a goal of 20 and one book finished this year, on /stats click 'Change goal': the number field shows 20",
+        "Enter 10 and save: see '1 of 10 books finished this year' and the progress bar at 10%, also after reload",
+        "Click 'Change goal', enter 366 and save: an error next to the field says the goal must be a whole number from 1 to 365, and after reload the goal is still 10"
+      ]
     }
   ]
 }
