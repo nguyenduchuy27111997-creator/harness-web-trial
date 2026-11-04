@@ -1,0 +1,8 @@
+import{r as e,t}from"./chunk-NQOKRVIF.esm";import"./chunk-VQ5W62QI.esm";import"./mermaid.core.esm";import"./chunk-55XCU76K.esm";import"./chunk-HNE4Q36P.esm";import"./chunk-WQQL4CDK.esm";import"./chunk-ZAUX2LTX.esm";import"./chunk-HAGFOTED.esm";import"./chunk-UHW7PFBP.esm";import"./chunk-AQDTSKZB.esm";import"./chunk-YZO67HFG.esm";import"./chunk-7S6XSTFO.esm";import"./chunk-DSNLSHJZ.esm";import"./d3-selection.esm";import{n}from"./chunk-Y2CYZVJY.esm";var r=t({styles:n(t=>`${e(t)}
+  .swimlane.cluster:not([data-color-id]) rect {
+    stroke: ${t.clusterBorder} !important;
+  }
+  [data-look="neo"].cluster rect {
+    filter: none;
+  }
+`,`getStyles`)});export{r as diagram};

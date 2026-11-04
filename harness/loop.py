@@ -2041,13 +2041,13 @@ def serve_dashboard(home, root):
                 body = json.dumps({**(s.get("health") or {}), "last_tick": s.get("last_tick"),
                                    "running": bool(s.get("running") and alive(s.get("pid")))}).encode()
                 kind = "application/json"
-            elif path in ("/office", "/office/") or re.fullmatch(r"/office/(assets/[\w.-]+\.(js|css)|models/\w+\.(glb|png))", path):
+            elif path in ("/office", "/office/") or re.fullmatch(r"/office/(assets/[\w.-]+\.(esm|css)|models/\w+\.(glb|png))", path):
                 f = office / ("index.html" if path.rstrip("/") == "/office" else path[len("/office/"):])
                 if not f.exists():
                     self.send_error(404)
                     return
                 body = f.read_bytes()
-                kind = {".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css",
+                kind = {".html": "text/html; charset=utf-8", ".esm": "text/javascript", ".css": "text/css",
                         ".glb": "model/gltf-binary", ".png": "image/png"}[f.suffix]
             elif path == "/snapshot.json":
                 f = home / "state.json"
