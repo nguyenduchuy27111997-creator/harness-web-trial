@@ -356,6 +356,22 @@
         "Click Edit: the fields are named 'Title' and 'Author', not 'Title Title' and 'Author Author', and there is one element each with id=\"title\" and id=\"author\"",
         "Click the browser Back button to /books and then Forward to the book page: the page still shows 'Midlemarch' and the counts above still hold"
       ]
+    },
+    {
+      "id": "F026",
+      "type": "bug",
+      "milestone": "M3",
+      "priority": 26,
+      "complexity": "S",
+      "title": "Fix: with the edit form open, a book page has two buttons both named 'Save', so a screen reader user cannot tell them apart",
+      "depends_on": ["F010", "F018"],
+      "acceptance": [
+        "Signed in, add 'Midlemarch' by 'George Eliot' and open its page /books/<id>",
+        "Click Edit: the Title and Author fields appear, and no two buttons on the page have the same accessible name",
+        "The button that saves title and author and the button that saves the status each have an accessible name that says what it saves (for example 'Save title and author' and 'Save status'), not just 'Save'",
+        "Change the title to 'Middlemarch' and click the title-and-author save button: the heading shows 'Middlemarch' and the status is unchanged",
+        "Pick 'Reading' in Status and click the status save button: the page shows 'Reading', also after reload"
+      ]
     }
   ]
 }
