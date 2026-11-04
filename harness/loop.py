@@ -1852,6 +1852,8 @@ class Loop:
             return True
         if self.ready() or (self.state.get("paused_until") and any(j["stage"] == "review" for j in self.state["jobs"].values())):
             return False  # work waits for the usage limit to reset
+        if any(self.home.glob("answer-*.json")):
+            return False  # an answer waits for a lane, budget or a quiet machine; seen for real: the loop stopped at load 28
         if not self.state["stop_reason"]:
             waiting = [j["id"] for j in self.state["jobs"].values() if j["stage"] in WAITING_HUMAN]
             waiting += [f"{ms} budget" for ms in self.state["milestone_over"]]
