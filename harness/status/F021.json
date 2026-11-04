@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "No-match state on /books shows the sentence plus a 'Clear search' link built with booksHref({ status }). F022 (sort) must add sort to that href per design M3."
+}
