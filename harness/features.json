@@ -221,6 +221,21 @@
         "Sign out, sign in as account B and open that URL: see a 'Book not found' page with a link back to /books, served with HTTP status 404",
         "Open /books/00000000-0000-0000-0000-000000000000: the same 'Book not found' page with status 404"
       ]
+    },
+    {
+      "id": "F017",
+      "type": "bug",
+      "milestone": "M1",
+      "priority": 17,
+      "complexity": "S",
+      "title": "Fix: signed-in user sees the sign-in or sign-up form instead of their books",
+      "depends_on": ["F003"],
+      "acceptance": [
+        "Sign up a new account: land on /books with Sign out in the header",
+        "While signed in, open /sign-in: end up on /books, not the sign-in form",
+        "While signed in, open /sign-up: end up on /books, not the sign-up form",
+        "Click Sign out, then open /sign-in and /sign-up: each still shows its form"
+      ]
     }
   ]
 }
