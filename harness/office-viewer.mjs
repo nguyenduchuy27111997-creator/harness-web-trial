@@ -18,9 +18,20 @@ export async function signIn(page, { email, password }) {
   return false;
 }
 
-/** Sample data, added once per loop through the app's own forms (seed(page)), so pages with an [id] have something
- *  to show. Empty until the app has data worth showing. */
-export async function seed() {}
+/** Sample data, added once per loop through the app's own forms, so pages with an [id] have something to show.
+ *  Bookshelf: three books, through "Add a book" (as e2e/add-book.spec.ts does); only the ones not on the shelf yet. */
+const BOOKS = [["Middlemarch", "George Eliot"], ["Dune", "Frank Herbert"], ["The Left Hand of Darkness", "Ursula K. Le Guin"]];
+export async function seed(page) {
+  await page.goto("/books", { timeout: 60_000 });
+  const shelf = await page.locator("main").innerText();
+  for (const [title, author] of BOOKS.filter(([title]) => !shelf.includes(title))) {
+    await page.goto("/books/new", { timeout: 60_000 });
+    await page.getByLabel("Title").fill(title);
+    await page.getByLabel("Author").fill(author);
+    await page.getByRole("button", { name: "Save" }).click();
+    await page.waitForURL(/\/books$/, { timeout: 60_000 });  // the first save compiles the action
+  }
+}
 
 /** The page a file belongs to (App Router): app/(group)/books/[id]/page.tsx -> /books/[id]. Null keeps the page. */
 export function routeOf(path) {
