@@ -4,13 +4,16 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   isUuid,
+  parseBookFields,
   parseRating,
   parseReview,
   parseStatus,
   removeBook,
+  updateBookFields,
   updateBookRating,
   updateBookReview,
   updateBookStatus,
+  type EditBookFormState,
   type RatingFormState,
   type ReviewFormState,
   type StatusFormState,
@@ -73,6 +76,30 @@ export async function saveReview(
   if (!isUuid(id)) return { formError: "Book not found" };
   try {
     if (!(await updateBookReview(await createClient(), id, parsed.value || null))) return { formError: "Book not found" };
+  } catch {
+    return { formError: "Could not save. Try again." };
+  }
+  revalidatePath("/books");
+  revalidatePath(`/books/${id}`);
+  return { saved: true };
+}
+
+export async function editBook(
+  id: string,
+  _prev: EditBookFormState,
+  formData: FormData,
+): Promise<EditBookFormState> {
+  await requireUser();
+  const parsed = parseBookFields(formData);
+  if (!parsed.ok) {
+    return {
+      fieldErrors: parsed.fieldErrors,
+      values: { title: String(formData.get("title") ?? ""), author: String(formData.get("author") ?? "") },
+    };
+  }
+  if (!isUuid(id)) return { formError: "Book not found" };
+  try {
+    if (!(await updateBookFields(await createClient(), id, parsed.value))) return { formError: "Book not found" };
   } catch {
     return { formError: "Could not save. Try again." };
   }

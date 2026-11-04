@@ -41,19 +41,22 @@ export function parseStatusFilter(value: string | string[] | undefined): BookSta
   return typeof value === "string" && isBookStatus(value) ? value : undefined;
 }
 
-// A trimmed search from the URL, else undefined (no search).
+// Trimmed search text from the URL; empty means no search.
 export function parseSearch(value: string | string[] | undefined): string | undefined {
-  return (typeof value === "string" && value.trim()) || undefined;
+  const q = typeof value === "string" ? value.trim() : "";
+  return q || undefined;
 }
 
-// Rows whose title or author contains q, ignoring case.
+// In memory over the one user's rows, so q never reaches a query (design M3).
 export function filterBooks<T extends Book>(books: T[], q?: string): T[] {
   if (!q) return books;
   const needle = q.toLocaleLowerCase("en");
-  return books.filter((b) => `${b.title}\n${b.author}`.toLocaleLowerCase("en").includes(needle));
+  return books.filter(
+    (book) => book.title.toLocaleLowerCase("en").includes(needle) || book.author.toLocaleLowerCase("en").includes(needle),
+  );
 }
 
-// The one builder for /books links: parameters in the order status, q.
+// The one URL builder for /books: parameters in the order status, q.
 export function booksHref({ status, q }: { status?: BookStatus; q?: string }): string {
   const params = new URLSearchParams();
   if (status) params.set("status", status);
@@ -72,19 +75,26 @@ export type BookFormState = FormState<"title" | "author" | "status">;
 
 type NewBook = { title: string; author: string; status: BookStatus };
 
-export function parseNewBook(formData: FormData): Parsed<NewBook, "title" | "author" | "status"> {
+export function parseBookFields(formData: FormData): Parsed<{ title: string; author: string }, "title" | "author"> {
   const title = String(formData.get("title") ?? "").trim();
   const author = String(formData.get("author") ?? "").trim();
-  const rawStatus = formData.get("status");
-  const status = rawStatus === null || rawStatus === "" ? "want_to_read" : String(rawStatus);
-  const fieldErrors: FieldErrors<"title" | "author" | "status"> = {};
+  const fieldErrors: FieldErrors<"title" | "author"> = {};
   if (!title) fieldErrors.title = "Title is required";
   else if (title.length > 200) fieldErrors.title = "Title must be at most 200 characters";
   if (!author) fieldErrors.author = "Author is required";
   else if (author.length > 120) fieldErrors.author = "Author must be at most 120 characters";
+  if (Object.keys(fieldErrors).length > 0) return { ok: false, fieldErrors };
+  return { ok: true, value: { title, author } };
+}
+
+export function parseNewBook(formData: FormData): Parsed<NewBook, "title" | "author" | "status"> {
+  const fields = parseBookFields(formData);
+  const rawStatus = formData.get("status");
+  const status = rawStatus === null || rawStatus === "" ? "want_to_read" : String(rawStatus);
+  const fieldErrors: FieldErrors<"title" | "author" | "status"> = fields.ok ? {} : { ...fields.fieldErrors };
   if (!isBookStatus(status)) fieldErrors.status = "Choose a status";
-  if (Object.keys(fieldErrors).length > 0 || !isBookStatus(status)) return { ok: false, fieldErrors };
-  return { ok: true, value: { title, author, status } };
+  if (!fields.ok || !isBookStatus(status)) return { ok: false, fieldErrors };
+  return { ok: true, value: { ...fields.value, status } };
 }
 
 function isBookStatus(value: string): value is BookStatus {
@@ -155,6 +165,19 @@ export function parseReview(formData: FormData): Parsed<string, "review"> {
 // false when no row changed: missing, someone else's (RLS), or not Finished.
 export async function updateBookReview(supabase: SupabaseClient<Database>, id: string, review: string | null): Promise<boolean> {
   const { data, error } = await supabase.from("books").update({ review }).eq("id", id).eq("status", "finished").select("id");
+  if (error) throw new Error(error.message);
+  return data.length > 0;
+}
+
+export type EditBookFormState = FormState<"title" | "author"> & { saved?: true };
+
+// false when no row changed: missing, or someone else's (RLS).
+export async function updateBookFields(
+  supabase: SupabaseClient<Database>,
+  id: string,
+  { title, author }: { title: string; author: string },
+): Promise<boolean> {
+  const { data, error } = await supabase.from("books").update({ title, author }).eq("id", id).select("id");
   if (error) throw new Error(error.message);
   return data.length > 0;
 }

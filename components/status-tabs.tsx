@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { BOOK_STATUSES, STATUS_LABELS, booksHref, type BookStatus } from "@/lib/books";
+import { BOOK_STATUSES, booksHref, STATUS_LABELS, type BookStatus } from "@/lib/books";
 import { cn } from "@/lib/utils";
 
 const TABS: { label: string; status?: BookStatus }[] = [

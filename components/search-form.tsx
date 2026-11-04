@@ -1,14 +1,16 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useId } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { booksHref, parseSearch, type BookStatus } from "@/lib/books";
 
-// Navigates instead of a plain GET form, so an empty search leaves no q= in the URL.
+// Navigates instead of a GET form so an empty search leaves no q in the URL (design M3).
 export function SearchForm({ status, q }: { status?: BookStatus; q?: string }) {
   const router = useRouter();
+  const id = useId();
   return (
     <form
       role="search"
@@ -16,14 +18,16 @@ export function SearchForm({ status, q }: { status?: BookStatus; q?: string }) {
       onSubmit={(event) => {
         event.preventDefault();
         const value = new FormData(event.currentTarget).get("q");
-        router.push(booksHref({ status, q: parseSearch(String(value ?? "")) }));
+        router.push(booksHref({ status, q: parseSearch(typeof value === "string" ? value : undefined) }));
       }}
     >
       <div className="flex flex-1 flex-col gap-2">
-        <Label htmlFor="q">Search</Label>
-        <Input id="q" name="q" type="search" defaultValue={q} placeholder="Title or author" />
+        <Label htmlFor={id}>Search</Label>
+        <Input id={id} name="q" type="search" defaultValue={q} />
       </div>
-      <Button type="submit">Search</Button>
+      <Button type="submit" variant="outline">
+        Search
+      </Button>
     </form>
   );
 }

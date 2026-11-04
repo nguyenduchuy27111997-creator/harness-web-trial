@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { booksHref, filterBooks, formatFinishDate, parseSearch, insertBook, listBooks, parseNewBook, parseRating, parseReview, parseStatus, parseStatusFilter, removeBook, updateBookRating, updateBookReview, updateBookStatus } from "./books";
+import { booksHref, filterBooks, formatFinishDate, insertBook, listBooks, parseBookFields, parseNewBook, parseRating, parseReview, parseSearch, parseStatus, parseStatusFilter, removeBook, updateBookFields, updateBookRating, updateBookReview, updateBookStatus } from "./books";
 
 function stubClient(result: { data: unknown; error: { message: string } | null }) {
   const calls: unknown[][] = [];
@@ -52,42 +52,6 @@ describe("parseStatusFilter", () => {
     expect(parseStatusFilter("nope")).toBeUndefined();
     expect(parseStatusFilter(["reading", "finished"])).toBeUndefined();
     expect(parseStatusFilter(undefined)).toBeUndefined();
-  });
-});
-
-describe("parseSearch", () => {
-  it("trims and drops an empty or repeated search", () => {
-    expect(parseSearch("  eliot ")).toBe("eliot");
-    expect(parseSearch("   ")).toBeUndefined();
-    expect(parseSearch(["a", "b"])).toBeUndefined();
-    expect(parseSearch(undefined)).toBeUndefined();
-  });
-});
-
-describe("filterBooks", () => {
-  const books = [
-    { id: "1", title: "Middlemarch", author: "George Eliot", status: "finished" as const, created_at: "" },
-    { id: "2", title: "Emma", author: "Jane Austen", status: "reading" as const, created_at: "" },
-  ];
-
-  it("keeps every row without a search", () => {
-    expect(filterBooks(books)).toBe(books);
-  });
-
-  it("matches any part of title or author, ignoring case", () => {
-    expect(filterBooks(books, "ELIO").map((b) => b.id)).toEqual(["1"]);
-    expect(filterBooks(books, "march").map((b) => b.id)).toEqual(["1"]);
-    expect(filterBooks(books, "austen").map((b) => b.id)).toEqual(["2"]);
-    expect(filterBooks(books, "nothing")).toEqual([]);
-  });
-});
-
-describe("booksHref", () => {
-  it("builds the URL from the set parameters, encoding q", () => {
-    expect(booksHref({})).toBe("/books");
-    expect(booksHref({ status: "reading" })).toBe("/books?status=reading");
-    expect(booksHref({ q: "a&b c" })).toBe("/books?q=a%26b+c");
-    expect(booksHref({ status: "reading", q: "eliot" })).toBe("/books?status=reading&q=eliot");
   });
 });
 
@@ -235,5 +199,76 @@ describe("removeBook", () => {
 
   it("throws on a database error", async () => {
     await expect(removeBook(updateClient({ data: null, error: { message: "boom" } }), "x")).rejects.toThrow("boom");
+  });
+});
+
+describe("parseBookFields", () => {
+  it("trims title and author", () => {
+    expect(parseBookFields(form({ title: " Middlemarch ", author: " George Eliot " }))).toEqual({
+      ok: true,
+      value: { title: "Middlemarch", author: "George Eliot" },
+    });
+  });
+
+  it("reports each field's problem", () => {
+    expect(parseBookFields(form({ title: " ", author: "x".repeat(121) }))).toEqual({
+      ok: false,
+      fieldErrors: { title: "Title is required", author: "Author must be at most 120 characters" },
+    });
+    const r = parseBookFields(form({ title: "x".repeat(201), author: "" }));
+    expect(r).toEqual({
+      ok: false,
+      fieldErrors: { title: "Title must be at most 200 characters", author: "Author is required" },
+    });
+  });
+});
+
+describe("updateBookFields", () => {
+  const fields = { title: "Middlemarch", author: "George Eliot" };
+
+  it("is true when a row changed and false when none did", async () => {
+    expect(await updateBookFields(updateClient({ data: [{ id: "x" }], error: null }), "x", fields)).toBe(true);
+    expect(await updateBookFields(updateClient({ data: [], error: null }), "x", fields)).toBe(false);
+  });
+
+  it("throws on a database error", async () => {
+    await expect(updateBookFields(updateClient({ data: null, error: { message: "boom" } }), "x", fields)).rejects.toThrow("boom");
+  });
+});
+
+describe("parseSearch", () => {
+  it("trims the text", () => {
+    expect(parseSearch("  eliot ")).toBe("eliot");
+  });
+
+  it("treats empty, blank, missing and repeated values as no search", () => {
+    expect(parseSearch("")).toBeUndefined();
+    expect(parseSearch("   ")).toBeUndefined();
+    expect(parseSearch(undefined)).toBeUndefined();
+    expect(parseSearch(["a", "b"])).toBeUndefined();
+  });
+});
+
+describe("filterBooks", () => {
+  const book = (title: string, author: string) => ({ id: title, title, author, status: "reading" as const, created_at: "" });
+  const books = [book("Middlemarch", "George Eliot"), book("Silas Marner", "George Eliot"), book("Emma", "Jane Austen")];
+
+  it("returns every book without a search", () => {
+    expect(filterBooks(books)).toEqual(books);
+  });
+
+  it("matches title or author ignoring case", () => {
+    expect(filterBooks(books, "ELIO").map((b) => b.title)).toEqual(["Middlemarch", "Silas Marner"]);
+    expect(filterBooks(books, "march").map((b) => b.title)).toEqual(["Middlemarch"]);
+    expect(filterBooks(books, "zzz")).toEqual([]);
+  });
+});
+
+describe("booksHref", () => {
+  it("builds /books with status then q, encoding q", () => {
+    expect(booksHref({})).toBe("/books");
+    expect(booksHref({ status: "reading" })).toBe("/books?status=reading");
+    expect(booksHref({ q: "a&b c" })).toBe("/books?q=a%26b+c");
+    expect(booksHref({ status: "reading", q: "eliot" })).toBe("/books?status=reading&q=eliot");
   });
 });
