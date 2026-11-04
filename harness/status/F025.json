@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Fixed by turning cacheComponents off (decision 0006, M2 and M3 design reworded, architect PASS): routes unmount on navigation, so one main and unique ids. Fixed field ids kept."
+}

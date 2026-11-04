@@ -6,9 +6,6 @@ import { cn } from "@/lib/utils";
 import { getUser } from "@/lib/supabase/server";
 import { signOut } from "./(auth)/actions";
 
-// Blocking render (design M2): a page's notFound() must be able to answer 404 before anything streams.
-export const instant = false;
-
 // Headings and book titles; body text uses the system sans stack from globals.css.
 const lora = Lora({ subsets: ["latin"], variable: "--font-serif" });
 

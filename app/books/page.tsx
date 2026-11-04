@@ -10,9 +10,6 @@ import { createClient, requireUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "My books · Bookshelf" };
 
-// Blocking render (design M2): no loading.tsx, so a 404 elsewhere is never committed as 200.
-export const instant = false;
-
 export default async function BooksPage({ searchParams }: { searchParams: Promise<{ status?: string | string[]; q?: string | string[]; sort?: string | string[] }> }) {
   await requireUser();
   const params = await searchParams;
