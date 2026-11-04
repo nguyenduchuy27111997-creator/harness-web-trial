@@ -2041,17 +2041,27 @@ def serve_dashboard(home, root):
                 body = json.dumps({**(s.get("health") or {}), "last_tick": s.get("last_tick"),
                                    "running": bool(s.get("running") and alive(s.get("pid")))}).encode()
                 kind = "application/json"
-            elif path in ("/office", "/office/") or re.fullmatch(r"/office/assets/office\.(js|css)", path):
+            elif path in ("/office", "/office/") or re.fullmatch(r"/office/(assets/[\w.-]+\.(js|css)|models/\w+\.(glb|png))", path):
                 f = office / ("index.html" if path.rstrip("/") == "/office" else path[len("/office/"):])
                 if not f.exists():
                     self.send_error(404)
                     return
                 body = f.read_bytes()
-                kind = {".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css"}[f.suffix]
+                kind = {".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css",
+                        ".glb": "model/gltf-binary", ".png": "image/png"}[f.suffix]
             elif path == "/snapshot.json":
                 f = home / "state.json"
                 body = json.dumps({"state": json.loads(f.read_text()) if f.exists() else {}, **stream.BUS.snapshot()}).encode()
                 kind = "application/json"
+            elif re.fullmatch(r"/design/[A-Za-z0-9_-]+", path):  # the lane's design doc as it is now, for the whiteboard
+                state = json.loads((home / "state.json").read_text())
+                j = state["jobs"].get(path.split("/")[2])
+                wt = Path(j["worktree"]) if j and Path(j.get("worktree", "")).is_dir() else Path(root)
+                docs = sorted((wt / "docs/design").glob("*.md"), key=lambda f: f.stat().st_mtime)
+                if not docs:
+                    self.send_error(404)
+                    return
+                body, kind = docs[-1].read_bytes()[:200_000], "text/markdown; charset=utf-8"
             elif re.fullmatch(r"/diff/[A-Za-z0-9_-]+", path):
                 state = json.loads((home / "state.json").read_text())
                 j = state["jobs"].get(path.split("/")[2])
