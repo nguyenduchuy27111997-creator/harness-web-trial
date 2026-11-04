@@ -32,7 +32,7 @@ export function BookStatusForm({ status, action }: Props) {
           </SelectContent>
         </Select>
         <Button type="submit" disabled={pending}>
-          {pending ? "Saving…" : "Save"}
+          {pending ? "Saving…" : "Save status"}
         </Button>
       </div>
       {state.fieldErrors?.status && <p className="text-sm text-destructive">{state.fieldErrors.status}</p>}

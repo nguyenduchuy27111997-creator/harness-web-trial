@@ -27,7 +27,7 @@ test("edit a book's title and author", async ({ page }) => {
 
   await page.getByRole("button", { name: "Edit" }).click();
   await title.fill("Middlemarch");
-  await page.getByRole("button", { name: "Save", exact: true }).first().click();
+  await page.getByRole("button", { name: "Save details" }).click();
   await expect(page.getByRole("heading", { name: "Middlemarch" })).toBeVisible();
   await expect(title).toHaveCount(0);
   await page.reload();
