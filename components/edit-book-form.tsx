@@ -44,7 +44,7 @@ function OpenForm({ title, author, action, onClose }: Props & { onClose: () => v
       <FormField id="author" label="Author" defaultValue={state.values?.author ?? author} error={state.fieldErrors?.author} />
       <div className="flex gap-3">
         <Button type="submit" disabled={pending}>
-          {pending ? "Saving…" : "Save"}
+          {pending ? "Saving…" : "Save details"}
         </Button>
         <Button type="button" variant="outline" onClick={onClose}>
           Cancel

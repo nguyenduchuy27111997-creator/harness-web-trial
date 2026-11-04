@@ -15,7 +15,7 @@ test("edit-book validation errors appear next to the field", async ({ page }) =>
 
   const title = page.getByRole("textbox", { name: "Title" });
   const author = page.getByRole("textbox", { name: "Author" });
-  const save = page.getByRole("button", { name: "Save", exact: true }).first();
+  const save = page.getByRole("button", { name: "Save details" });
   await page.getByRole("button", { name: "Edit" }).click();
 
   await title.fill("");
