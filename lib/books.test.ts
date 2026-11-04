@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { booksHref, filterBooks, formatFinishDate, parseSearch, parseSort, sortBooks, type ShelfBook, insertBook, listBooks, parseNewBook, parseRating, parseReview, parseStatus, parseStatusFilter, removeBook, updateBookRating, updateBookReview, updateBookStatus } from "./books";
+import { booksHref, filterBooks, formatFinishDate, insertBook, listBooks, parseBookFields, parseNewBook, parseRating, parseReview, parseSearch, parseSort, parseStatus, parseStatusFilter, removeBook, sortBooks, type ShelfBook, updateBookFields, updateBookRating, updateBookReview, updateBookStatus } from "./books";
 
 function stubClient(result: { data: unknown; error: { message: string } | null }) {
   const calls: unknown[][] = [];
@@ -52,81 +52,6 @@ describe("parseStatusFilter", () => {
     expect(parseStatusFilter("nope")).toBeUndefined();
     expect(parseStatusFilter(["reading", "finished"])).toBeUndefined();
     expect(parseStatusFilter(undefined)).toBeUndefined();
-  });
-});
-
-describe("parseSearch", () => {
-  it("trims and drops an empty or repeated search", () => {
-    expect(parseSearch("  eliot ")).toBe("eliot");
-    expect(parseSearch("   ")).toBeUndefined();
-    expect(parseSearch(["a", "b"])).toBeUndefined();
-    expect(parseSearch(undefined)).toBeUndefined();
-  });
-});
-
-describe("filterBooks", () => {
-  const books = [
-    { id: "1", title: "Middlemarch", author: "George Eliot", status: "finished" as const, created_at: "" },
-    { id: "2", title: "Emma", author: "Jane Austen", status: "reading" as const, created_at: "" },
-  ];
-
-  it("keeps every row without a search", () => {
-    expect(filterBooks(books)).toBe(books);
-  });
-
-  it("matches any part of title or author, ignoring case", () => {
-    expect(filterBooks(books, "ELIO").map((b) => b.id)).toEqual(["1"]);
-    expect(filterBooks(books, "march").map((b) => b.id)).toEqual(["1"]);
-    expect(filterBooks(books, "austen").map((b) => b.id)).toEqual(["2"]);
-    expect(filterBooks(books, "nothing")).toEqual([]);
-  });
-});
-
-describe("booksHref", () => {
-  it("builds the URL from the set parameters, encoding q", () => {
-    expect(booksHref({})).toBe("/books");
-    expect(booksHref({ status: "reading" })).toBe("/books?status=reading");
-    expect(booksHref({ q: "a&b c" })).toBe("/books?q=a%26b+c");
-    expect(booksHref({ status: "reading", q: "eliot" })).toBe("/books?status=reading&q=eliot");
-  });
-
-  it("adds sort last and omits the default", () => {
-    expect(booksHref({ status: "reading", q: "a", sort: "rating" })).toBe("/books?status=reading&q=a&sort=rating");
-    expect(booksHref({ sort: "title" })).toBe("/books?sort=title");
-    expect(booksHref({ sort: "newest" })).toBe("/books");
-  });
-});
-
-describe("parseSort", () => {
-  it("accepts title and rating, else newest", () => {
-    expect(parseSort("title")).toBe("title");
-    expect(parseSort("rating")).toBe("rating");
-    expect(parseSort("nope")).toBe("newest");
-    expect(parseSort(["title", "rating"])).toBe("newest");
-    expect(parseSort(undefined)).toBe("newest");
-  });
-});
-
-describe("sortBooks", () => {
-  const book = (title: string, status: ShelfBook["status"], rating: number | null): ShelfBook => ({
-    id: title, title, author: "x", created_at: "", status, rating,
-  });
-  // newest first, as listBooks returns them
-  const books = [book("Delta", "reading", 4), book("Charlie", "finished", null), book("Alpha", "finished", 5), book("bravo", "finished", 3)];
-  const titles = (list: ShelfBook[]) => list.map((b) => b.title);
-
-  it("keeps the input order for newest, in a new array", () => {
-    const sorted = sortBooks(books, "newest");
-    expect(titles(sorted)).toEqual(["Delta", "Charlie", "Alpha", "bravo"]);
-    expect(sorted).not.toBe(books);
-  });
-
-  it("sorts by title ignoring case", () => {
-    expect(titles(sortBooks(books, "title"))).toEqual(["Alpha", "bravo", "Charlie", "Delta"]);
-  });
-
-  it("sorts by rating, unrated and not-Finished last, ties newest first", () => {
-    expect(titles(sortBooks(books, "rating"))).toEqual(["Alpha", "bravo", "Delta", "Charlie"]);
   });
 });
 
@@ -274,5 +199,115 @@ describe("removeBook", () => {
 
   it("throws on a database error", async () => {
     await expect(removeBook(updateClient({ data: null, error: { message: "boom" } }), "x")).rejects.toThrow("boom");
+  });
+});
+
+describe("parseBookFields", () => {
+  it("trims title and author", () => {
+    expect(parseBookFields(form({ title: " Middlemarch ", author: " George Eliot " }))).toEqual({
+      ok: true,
+      value: { title: "Middlemarch", author: "George Eliot" },
+    });
+  });
+
+  it("reports each field's problem", () => {
+    expect(parseBookFields(form({ title: " ", author: "x".repeat(121) }))).toEqual({
+      ok: false,
+      fieldErrors: { title: "Title is required", author: "Author must be at most 120 characters" },
+    });
+    const r = parseBookFields(form({ title: "x".repeat(201), author: "" }));
+    expect(r).toEqual({
+      ok: false,
+      fieldErrors: { title: "Title must be at most 200 characters", author: "Author is required" },
+    });
+  });
+});
+
+describe("updateBookFields", () => {
+  const fields = { title: "Middlemarch", author: "George Eliot" };
+
+  it("is true when a row changed and false when none did", async () => {
+    expect(await updateBookFields(updateClient({ data: [{ id: "x" }], error: null }), "x", fields)).toBe(true);
+    expect(await updateBookFields(updateClient({ data: [], error: null }), "x", fields)).toBe(false);
+  });
+
+  it("throws on a database error", async () => {
+    await expect(updateBookFields(updateClient({ data: null, error: { message: "boom" } }), "x", fields)).rejects.toThrow("boom");
+  });
+});
+
+describe("parseSearch", () => {
+  it("trims the text", () => {
+    expect(parseSearch("  eliot ")).toBe("eliot");
+  });
+
+  it("treats empty, blank, missing and repeated values as no search", () => {
+    expect(parseSearch("")).toBeUndefined();
+    expect(parseSearch("   ")).toBeUndefined();
+    expect(parseSearch(undefined)).toBeUndefined();
+    expect(parseSearch(["a", "b"])).toBeUndefined();
+  });
+});
+
+describe("filterBooks", () => {
+  const book = (title: string, author: string) => ({ id: title, title, author, status: "reading" as const, created_at: "" });
+  const books = [book("Middlemarch", "George Eliot"), book("Silas Marner", "George Eliot"), book("Emma", "Jane Austen")];
+
+  it("returns every book without a search", () => {
+    expect(filterBooks(books)).toEqual(books);
+  });
+
+  it("matches title or author ignoring case", () => {
+    expect(filterBooks(books, "ELIO").map((b) => b.title)).toEqual(["Middlemarch", "Silas Marner"]);
+    expect(filterBooks(books, "march").map((b) => b.title)).toEqual(["Middlemarch"]);
+    expect(filterBooks(books, "zzz")).toEqual([]);
+  });
+});
+
+describe("booksHref", () => {
+  it("builds /books with status then q, encoding q", () => {
+    expect(booksHref({})).toBe("/books");
+    expect(booksHref({ status: "reading" })).toBe("/books?status=reading");
+    expect(booksHref({ q: "a&b c" })).toBe("/books?q=a%26b+c");
+    expect(booksHref({ status: "reading", q: "eliot" })).toBe("/books?status=reading&q=eliot");
+  });
+
+  it("adds sort last and omits the default", () => {
+    expect(booksHref({ status: "reading", q: "a", sort: "rating" })).toBe("/books?status=reading&q=a&sort=rating");
+    expect(booksHref({ sort: "title" })).toBe("/books?sort=title");
+    expect(booksHref({ sort: "newest" })).toBe("/books");
+  });
+});
+
+describe("parseSort", () => {
+  it("accepts title and rating, else newest", () => {
+    expect(parseSort("title")).toBe("title");
+    expect(parseSort("rating")).toBe("rating");
+    expect(parseSort("nope")).toBe("newest");
+    expect(parseSort(["title", "rating"])).toBe("newest");
+    expect(parseSort(undefined)).toBe("newest");
+  });
+});
+
+describe("sortBooks", () => {
+  const book = (title: string, status: ShelfBook["status"], rating: number | null): ShelfBook => ({
+    id: title, title, author: "x", created_at: "", status, rating,
+  });
+  // newest first, as listBooks returns them
+  const books = [book("Delta", "reading", 4), book("Charlie", "finished", null), book("Alpha", "finished", 5), book("bravo", "finished", 3)];
+  const titles = (list: ShelfBook[]) => list.map((b) => b.title);
+
+  it("keeps the input order for newest, in a new array", () => {
+    const sorted = sortBooks(books, "newest");
+    expect(titles(sorted)).toEqual(["Delta", "Charlie", "Alpha", "bravo"]);
+    expect(sorted).not.toBe(books);
+  });
+
+  it("sorts by title ignoring case", () => {
+    expect(titles(sortBooks(books, "title"))).toEqual(["Alpha", "bravo", "Charlie", "Delta"]);
+  });
+
+  it("sorts by rating, unrated and not-Finished last, ties newest first", () => {
+    expect(titles(sortBooks(books, "rating"))).toEqual(["Alpha", "bravo", "Delta", "Charlie"]);
   });
 });

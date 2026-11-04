@@ -1,4 +1,4 @@
 {
   "status": "passing",
-  "notes": "Search by title or author via ?q=, in memory (filterBooks), kept with status through booksHref. Baselines of /books pages updated (search form added). Sort (F022) and the Clear search link (F021) not included; booksHref has no sort yet. check.sh e2e is flaky under heavy machine load (timeouts); passes when the machine is quiet."
+  "notes": "Search on /books: parseSearch, filterBooks (in memory), booksHref(status, q) in lib/books.ts; SearchForm client component (router.push, keyed by q); StatusTabs keep q. booksHref has no sort yet (F022 adds it). A search with no matches shows 'No books match “q”.' with or without a status tab (F021 adds the 'Clear search' link). Updated /books baselines for the new search form."
 }

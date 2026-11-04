@@ -23,7 +23,7 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:p-8">
       <h1 className="font-heading text-4xl font-semibold tracking-tight">My books</h1>
-      <SearchForm key={q ?? ""} status={status} q={q} sort={sort} />
+      <SearchForm key={q} status={status} q={q} sort={sort} />
       <SortSelect status={status} q={q} sort={sort} />
       <StatusTabs current={status} q={q} sort={sort} />
       {(books.length > 0 || status || q) && (
@@ -33,7 +33,7 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
       )}
       {books.length > 0 && <BookList books={books} />}
       {books.length === 0 && q && <p className="text-muted-foreground">No books match &ldquo;{q}&rdquo;.</p>}
-      {books.length === 0 && !q && status && <p className="text-muted-foreground">No books here. Add one or switch tabs.</p>}
+      {books.length === 0 && status && !q && <p className="text-muted-foreground">No books here. Add one or switch tabs.</p>}
       {books.length === 0 && !status && !q && (
         <div className="flex flex-col items-start gap-4">
           <p className="text-muted-foreground">Your shelf is empty. Add your first book to get started.</p>
