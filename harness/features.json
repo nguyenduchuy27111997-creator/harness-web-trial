@@ -372,6 +372,22 @@
         "Change the title to 'Middlemarch' and click the title-and-author save button: the heading shows 'Middlemarch' and the status is unchanged",
         "Pick 'Reading' in Status and click the status save button: the page shows 'Reading', also after reload"
       ]
+    },
+    {
+      "id": "F027",
+      "type": "bug",
+      "milestone": "M3",
+      "priority": 27,
+      "complexity": "S",
+      "title": "Fix: once 'Change goal' is open on Stats there is no way to close it without saving or reloading",
+      "depends_on": ["F024"],
+      "acceptance": [
+        "Signed in with a reading goal of 20, open /stats: see '0 of 20 books finished this year' and a 'Change goal' button",
+        "Click 'Change goal': the Reading goal field shows 20, and next to 'Save goal' there is a 'Cancel' button",
+        "Enter 5 in the field and click 'Cancel': the form closes without saving, the page still shows '0 of 20 books finished this year' and the 'Change goal' button is back",
+        "Click 'Change goal' again: the field shows 20, not 5",
+        "Reload the page: it still shows '0 of 20 books finished this year'"
+      ]
     }
   ]
 }
