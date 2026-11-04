@@ -20,7 +20,12 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "hooks"))
-from audit import mask  # noqa: E402
+from audit import SECRET, mask  # noqa: E402
+
+
+def mask_whole(text):
+    """mask() without its 2000-character cut, for a whole file shown in the office."""
+    return SECRET.sub(lambda m: (m.group(2) or "") + "***", text)
 
 EDITS = ("Write", "Edit", "MultiEdit")
 SUBAGENT_TOOLS = ("Agent", "Task")

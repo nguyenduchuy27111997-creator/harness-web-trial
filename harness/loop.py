@@ -49,6 +49,7 @@ import subprocess
 import sys
 import threading
 import time
+import urllib.parse
 import zoneinfo
 from pathlib import Path
 
@@ -59,6 +60,7 @@ import health  # noqa: E402
 import metrics  # noqa: E402
 import notify  # noqa: E402
 import owner  # noqa: E402
+import preview  # noqa: E402
 import runner  # noqa: E402
 import stream  # noqa: E402
 
@@ -785,6 +787,7 @@ class Loop:
         proc = subprocess.Popen(cmd, cwd=job["worktree"], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                 text=True, start_new_session=True)
         self.procs.add(proc)
+        preview.PREVIEW.session_start(job["id"], port, job["worktree"], job["stage"])  # the office's live app
         lines, errs = [], []
 
         def pump(pipe, keep, feed=None):
@@ -807,6 +810,7 @@ class Loop:
         for r in readers:  # a process the session left behind may hold the pipe: never wait on it for long
             r.join(30)
         self.procs.discard(proc)
+        preview.PREVIEW.session_end(job["id"])
         stop_processes_in(job["worktree"])
         d = final_result(lines)
         out, err = (json.dumps(d) if d is not None else "".join(lines)), "".join(errs)
@@ -1754,6 +1758,7 @@ class Loop:
             self.event("loop", f"waiting: {self.busy}; no new session until it eases (CI and merges go on)")
         elif was and not self.busy:
             self.event("loop", "the machine can take sessions again")
+        preview.PREVIEW.tick(self.busy)
         self.poll_comments()
         self.apply_answers()
         self.collect()
@@ -2027,7 +2032,12 @@ def serve_dashboard(home, root):
                 return
             if path == "/stream":  # ?after=<id> for a page that read /snapshot.json first
                 after = re.search(r"[?&]after=(\d+)", self.path)
-                self.events(int(self.headers.get("Last-Event-ID") or (after.group(1) if after else 0)))
+                with preview.PREVIEW.viewer():  # someone has the office open: the lanes' apps run for it
+                    self.events(int(self.headers.get("Last-Event-ID") or (after.group(1) if after else 0)))
+                return
+            if re.fullmatch(r"/cam/[A-Za-z0-9_-]+", path):  # the lane's app as the office's camera sees it
+                with preview.PREVIEW.watch(path.split("/")[2]):
+                    self.frames(path.split("/")[2])
                 return
             if path == "/":
                 body, kind = page.read_bytes(), "text/html; charset=utf-8"
@@ -2075,6 +2085,17 @@ def serve_dashboard(home, root):
                     return
                 diff = run(["git", "diff", j.get("base") or "main", "--"], cwd=j["worktree"], check=False).stdout
                 body, kind = diff[:200_000].encode(), "text/plain; charset=utf-8"
+            elif re.fullmatch(r"/file/[A-Za-z0-9_-]+", path):  # a file in the lane's worktree, for the office's editor
+                state = json.loads((home / "state.json").read_text())
+                j = state["jobs"].get(path.split("/")[2])
+                q = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get("path", [""])[0]
+                wt = Path(j["worktree"]).resolve() if j and Path(j.get("worktree", "")).is_dir() else None
+                f = (wt / q).resolve() if wt and q else None
+                if not f or not f.is_relative_to(wt) or ".git" in f.relative_to(wt).parts or f.name.startswith(".env") \
+                        or not f.is_file() or f.stat().st_size > 200_000:
+                    self.send_error(404)
+                    return
+                body, kind = stream.mask_whole(f.read_text(errors="replace")).encode(), "text/plain; charset=utf-8"
             elif path == "/events":
                 f = home / "events.log"
                 body, kind = ("\n".join(f.read_text().splitlines()[-60:]).encode() if f.exists() else b""), "text/plain"
@@ -2096,6 +2117,25 @@ def serve_dashboard(home, root):
             self.send_header("Cache-Control", "no-store")
             self.end_headers()
             self.wfile.write(body)
+
+        def frames(self, job):
+            """Server-sent JPEG frames of the lane's app, while the page watches."""
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream")
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            seq = 0
+            try:
+                while True:
+                    f = preview.PREVIEW.frame_after(job, seq)
+                    if f and f[0] > seq:
+                        seq = f[0]
+                        self.wfile.write(f"data: {json.dumps({'url': f[2], 'jpeg': f[1]})}\n\n".encode())
+                    else:
+                        self.wfile.write(b": idle\n\n")
+                    self.wfile.flush()
+            except (BrokenPipeError, ConnectionResetError, OSError):
+                return
 
         def events(self, last):
             """Server-sent events from the bus, from the one after `last`, until the page goes away."""
@@ -2214,6 +2254,7 @@ def cmd_start(root, a):
         os.dup2(log.fileno(), 2)
         os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
     loop = Loop(root, a)
+    preview.PREVIEW.configure(root, loop.home, loop.stack.get("verify", "browser") == "browser")
     loop.state["dashboard"] = serve_dashboard(loop.home, root) if not a.no_dashboard else ""
     loop.save()
     loop.run()
