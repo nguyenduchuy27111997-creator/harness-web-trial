@@ -16,6 +16,7 @@ async function addBook(page: Page, title: string, author: string, status: string
 
 // F020: search on /books by title or author, kept in the URL. Fresh account per run (golden principle 7).
 test("search the shelf by title or author, kept in the URL", async ({ page }) => {
+  test.slow(); // three books added through the form before the search starts
   await signUpAs(page, `f020-${process.env.HARNESS_LANE ?? "local"}-${Date.now()}@example.com`);
   await addBook(page, "Middlemarch", "George Eliot", "Finished");
   await addBook(page, "Silas Marner", "George Eliot", "Reading");
