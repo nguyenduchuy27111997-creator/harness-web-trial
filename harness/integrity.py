@@ -122,7 +122,11 @@ def check(base, head, override, rule=False, agent=False):
             problems.append(f"{path}: a rule PR may change only {', '.join(sorted(RULE_FILES))}")
         problems += rule_lines(base, head)
     if agent:
-        for path in sorted(p for p in changed if PROTECTED.match(p) and not (rule and p in RULE_FILES)):
+        # Merging main in brings main's protected files (a kit upgrade, say): those are not the agent's edits.
+        # Seen for real: F031's resolved conflict was refused for main's loop.py and the feature built again.
+        merging = head == ":" and git("rev-parse", "-q", "--verify", "MERGE_HEAD") is not None
+        for path in sorted(p for p in changed if PROTECTED.match(p) and not (rule and p in RULE_FILES)
+                           and not (merging and show(":", p) == show("MERGE_HEAD", p))):
             problems.append(f"{path}: a protected harness file; an agent may not change it (a human-led session can)")
     old, new = features(base), features(head)
     old_defs, new_defs = definitions(base), definitions(head)
