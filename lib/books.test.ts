@@ -296,7 +296,7 @@ describe("parseSort", () => {
 
 describe("sortBooks", () => {
   const book = (title: string, status: ShelfBook["status"], rating: number | null): ShelfBook => ({
-    id: title, title, author: "x", created_at: "", status, rating,
+    id: title, title, author: "x", created_at: "", status, rating, total_pages: null, current_page: null,
   });
   // newest first, as listBooks returns them
   const books = [book("Delta", "reading", 4), book("Charlie", "finished", null), book("Alpha", "finished", 5), book("bravo", "finished", 3)];

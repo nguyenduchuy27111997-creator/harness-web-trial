@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "listBooks selects total_pages/current_page; BookList shows N% and a Progress bar for Reading books with progress."
+}

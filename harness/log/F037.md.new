@@ -1,0 +1,5 @@
+## 2026-11-05 15:00 · passing
+- Did: ShelfBook and listBooks carry total_pages/current_page; BookList shows "N%" and shadcn Progress (named "Reading progress for <title>") for Reading books with progress. New e2e list-progress with a baseline; fixed a unit-test fixture type.
+- Verified by: check.sh green, reviewer found no bugs, verifier PASS (harness/evidence/F037.md).
+- Next session should know: F038 adds the finish trigger; the list will then show 100% for no Finished rows (only Reading rows show the bar).
+

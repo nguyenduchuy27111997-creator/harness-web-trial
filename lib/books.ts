@@ -7,13 +7,13 @@ export type BookStatus = (typeof BOOK_STATUSES)[number];
 
 export type Book = Pick<Tables<"books">, "id" | "title" | "author" | "created_at"> & { status: BookStatus };
 
-export type ShelfBook = Book & Pick<Tables<"books">, "rating">;
+export type ShelfBook = Book & Pick<Tables<"books">, "rating" | "total_pages" | "current_page">;
 
 export type BookDetail = Book & Pick<Tables<"books">, "finished_on" | "rating" | "review" | "total_pages" | "current_page">;
 
 // Row Level Security limits the rows to the signed-in user's own.
 export async function listBooks(supabase: SupabaseClient<Database>, status?: BookStatus): Promise<ShelfBook[]> {
-  let query = supabase.from("books").select("id, title, author, status, created_at, rating");
+  let query = supabase.from("books").select("id, title, author, status, created_at, rating, total_pages, current_page");
   if (status) query = query.eq("status", status);
   const { data, error } = await query.order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
