@@ -22,7 +22,7 @@ test("change status and finish date", async ({ page }) => {
   const setStatus = async (name: string) => {
     await page.getByRole("combobox", { name: "Status" }).click();
     await page.getByRole("option", { name }).click();
-    await page.getByRole("button", { name: "Save" }).click();
+    await page.getByRole("button", { name: "Save status" }).click();
     await expect(page.getByRole("status")).toHaveText("Saved");
     await expect(page.getByRole("combobox", { name: "Status" })).toHaveText(name);
   };

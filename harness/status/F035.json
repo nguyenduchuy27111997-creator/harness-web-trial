@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Migration 20261105120000_book_reading_progress adds total_pages/current_page; ProgressForm shows only while Reading."
+}
