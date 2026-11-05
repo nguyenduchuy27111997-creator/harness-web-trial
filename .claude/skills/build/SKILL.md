@@ -1,7 +1,7 @@
 ---
 name: build
-description: Run the build loop from chat. It builds ready features in parallel (3 lanes by default), opens one PR per feature, and merges each PR itself when CI is green, the verifier passed and review found no bugs. Use when the human asks to build, run or start the loop, for its status, to answer its questions, or to stop it.
-argument-hint: "[start|status|stop|stop now|budget M1 20] [--lanes 3] [--budget 10] [--milestone M1] [--milestone-budget M1=20]"
+description: Run the build loop from chat. It builds ready features in parallel (up to 4 lanes by default, 2 on a busy machine), opens one PR per feature, and merges each PR itself when CI is green, the verifier passed and review found no bugs. Use when the human asks to build, run or start the loop, for its status, to answer its questions, or to stop it.
+argument-hint: "[start|status|stop|stop now|budget M1 20] [--lanes 4] [--budget 10] [--milestone M1] [--milestone-budget M1=20]"
 ---
 
 # Build loop
@@ -13,7 +13,7 @@ The human does not read code or use a terminal. Everything goes through you and 
 ## Start (the default when the loop is not running)
 1. Run `python3 harness/loop.py status`. If it is already running, go to Status.
 2. Unless the human gave a budget, run `python3 harness/loop.py forecast` (add `--milestone M1` when they named one) and propose the `--budget` it suggests, with its estimate, in one line; use what they answer.
-   Run `python3 harness/loop.py start --lanes 3 --budget 10` plus any options from the request (`--milestone`, `--lanes`, `--budget`, `--milestone-budget M1=20` for a budget that spans runs). The loop detaches and keeps running if this session ends.
+   Run `python3 harness/loop.py start --budget 10` plus any options from the request (`--milestone`, `--lanes`, `--budget`, `--milestone-budget M1=20` for a budget that spans runs). The loop detaches and keeps running if this session ends.
 3. If it prints `Cannot start: ...`, explain the fix in one plain sentence each. Uncommitted changes: show what they are and ask before committing them. No GitHub remote or `gh` not signed in: the human must set that up; say how.
 4. Open the dashboard URL it prints in the built-in browser so the human can watch.
 4b. Phone (once per project): if `python3 harness/loop.py notify test` says pushes are not set up, offer them. On yes, run

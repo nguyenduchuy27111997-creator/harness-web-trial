@@ -411,7 +411,10 @@ class Stages:
                   f"keep harness/status/{job['id']}.json passing only if the verifier passes (set it blocked with "
                   f"blocked_reason failed otherwise), add a short entry at the top of harness/log/{job['id']}.md, "
                   "and commit everything.")
-        cost, subtype, text = self.claude(job, prompt, self.fix_model(job))
+        if job.get("fix_guard_base"):  # a conflict with main: the merger, as the session itself
+            cost, subtype, text = self.claude(job, prompt, self.agent_model(job, "merger"), agent="merger", solo=True)
+        else:
+            cost, subtype, text = self.claude(job, prompt, self.fix_model(job))
         return {"cost": cost + extra, "subtype": subtype, "text": text}
 
     def record_fix(self, job):

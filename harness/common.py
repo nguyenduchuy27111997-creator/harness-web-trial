@@ -106,6 +106,9 @@ LIMIT_PAUSE = os.environ.get("LOOP_LIMIT_PAUSE")  # seconds to pause instead of 
 # The least a Claude session may start with. A real run kept starting sessions with a few cents left;
 # each was cut off at once and counted as a failed attempt, until the feature was given up.
 MIN_SESSION = float(os.environ.get("LOOP_MIN_SESSION", "1.0"))
+MIN_LANES = int(os.environ.get("LOOP_MIN_LANES", "2"))  # --lanes is the most; a loaded machine gets this many
+DAILY_BUDGET = float(os.environ.get("LOOP_DAILY_BUDGET", "100"))  # dollars a day across runs; 0: no daily cap
+DAY_SHED = (0.7, 0.85)  # of the daily cap: fewer lanes from the first, no large model from the second
 MAX_ERRORS = int(os.environ.get("LOOP_MAX_ERRORS", "30"))  # ticks in a row that may fail (network) before stopping
 
 

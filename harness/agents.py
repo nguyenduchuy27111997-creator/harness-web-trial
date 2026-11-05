@@ -13,7 +13,7 @@ from common import (  # noqa: F401
     api_reachable, final_result, free_port, git, health, kill_group, lang, limit_resume, metrics, now, online,
     preview, run, stop_processes_in, stream, API_DOWN, CLAUDE, ENV_KEEP, FEATURE_FLOOR, FEATURE_ID, FIX_SONNET,
     INFRA_PAUSE, LIMIT, MAX_LOAD, MIN_DISK_GB, MIN_SESSION, OFFLINE_MAX, PORT_LOCK, PRIOR_COST, PROBE_EVERY,
-    PROBE_MAX, Path, SANDBOX, SESSION_TIMEOUT, STAGE_CAPS, STREAM,
+    PROBE_MAX, Path, SANDBOX, SESSION_TIMEOUT, STAGE_CAPS, STREAM, DAILY_BUDGET, DAY_SHED, MIN_LANES,
 )
 
 
@@ -23,12 +23,55 @@ class Agents:
         return self.state["budget"] - self.state["spent"] - sum(self.caps.values())
 
     def can_start(self):
-        """Enough budget left to start a Claude session worth having, on a machine that can take it."""
-        return self.free_budget() >= MIN_SESSION and not self.busy
+        """Enough budget left to start a Claude session worth having, on a machine that can take it, within the day's cap."""
+        return self.free_budget() >= MIN_SESSION and not self.busy and not self.day_full()
+
+    def spent_today(self):
+        """Dollars spent today, by every run (each session's cost, by the day it ended), and held by running sessions."""
+        today = now()[:10]
+        done = sum(s.get("cost", 0) for j in self.state["jobs"].values() for s in j.get("sessions", [])
+                   if str(s.get("ended", "")).startswith(today))
+        return done + sum(self.caps.values())
+
+    def day_share(self):
+        return self.spent_today() / DAILY_BUDGET if DAILY_BUDGET > 0 else 0.0
+
+    def day_full(self):
+        """The daily cap is reached: no new session until tomorrow; CI and merges go on (DESIGN.md 15.5, P29)."""
+        full = self.day_share() >= 1.0
+        day = now()[:10]
+        if full and self.state.get("day_full") != day:
+            self.state["day_full"] = day
+            self.event("loop", f"daily cap: ${self.spent_today():.2f} of ${DAILY_BUDGET:.0f} spent today; no new "
+                               "session until tomorrow (CI and merges go on)")
+            self.push(f"daycap:{day}", lang.say("Daily cap reached"),
+                      lang.say("${spent} of ${cap} spent today; new sessions wait for tomorrow.",
+                               spent=f"{self.spent_today():.2f}", cap=f"{DAILY_BUDGET:.0f}"))
+        return full
+
+    def lane_limit(self):
+        """Lanes for new work now: --lanes on a quiet machine, fewer as the load or memory rise or as the day's
+        spend nears its cap, never under LOOP_MIN_LANES (or --lanes, if that is lower)."""
+        top = self.opts.lanes
+        low = min(MIN_LANES, top)
+        h = getattr(self, "health_now", None) or {}
+        per = h["load"] / h["cpus"] if h.get("load") is not None and h.get("cpus") else 0.0
+        if per >= 1.0 or h.get("memory") not in (None, "normal") or self.day_share() >= DAY_SHED[0]:
+            n = low
+        elif per >= 0.6:
+            n = (low + top + 1) // 2
+        else:
+            n = top
+        if n != self.state.get("lane_limit"):
+            if self.state.get("lane_limit") is not None:
+                self.event("loop", f"lanes: {n} of {top} (load {per:.1f} per CPU, memory {h.get('memory') or '?'}, "
+                                   f"{self.day_share():.0%} of the daily cap)")
+            self.state["lane_limit"] = n
+        return n
 
     def machine_busy(self):
         """Why no new session should start (load, critical memory, disk, a failing probe), else None."""
-        h = health.snapshot(self.state, self.root)
+        h = self.health_now = health.snapshot(self.state, self.root)
         if h["load"] is not None and h["cpus"] and h["load"] / h["cpus"] > MAX_LOAD:
             return f"load {h['load']} on {h['cpus']} CPUs"
         if h["memory"] == "critical":
@@ -115,10 +158,11 @@ class Agents:
         self.threads[job["id"]] = (t, holder, job["stage"])  # the result is for this stage, whatever happens meanwhile
         t.start()
 
-    def claude(self, job, prompt, model, turns=200, lane_note=True, agent=None, cap=None):
+    def claude(self, job, prompt, model, turns=200, lane_note=True, agent=None, cap=None, solo=False):
         """One headless Claude run in the job's worktree. Returns (cost, subtype, text). With `agent`, that
-        subagent runs as the session itself (`--agent`, no relay session, no browser), and several may run at
-        once for one job, each with its own share of the stage's cap."""
+        subagent runs as the session itself (`--agent`, no relay session): read-only lenses without a browser,
+        several at once for one job; `solo`, an agent that works in the worktree alone, as a build does (the merger)."""
+        lens = agent and not solo
         cap = cap or self.caps[job["id"]]
         with PORT_LOCK:
             port = free_port(self.opts.port_base + 1, taken={j.get("port") for j in self.state["jobs"].values()})
@@ -137,7 +181,7 @@ class Agents:
                "--exclude-dynamic-system-prompt-sections"]  # the same system prompt in every lane: cache hits
         if agent:
             cmd += ["--agent", agent]
-        browser = not agent and self.stack.get("verify", "browser") == "browser"  # an API is verified with curl: no browser
+        browser = not lens and self.stack.get("verify", "browser") == "browser"  # an API is verified with curl: no browser
         if SANDBOX:
             env = {k: v for k, v in env.items() if ENV_KEEP.match(k) or k in self.stack.get("env_allow", [])}
             cmd += ["--settings", str(self.session_settings(job))]
@@ -156,7 +200,7 @@ class Agents:
         proc = subprocess.Popen(cmd, cwd=job["worktree"], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                 text=True, start_new_session=True)
         self.procs.add(proc)
-        if not agent:
+        if not lens:
             preview.PREVIEW.session_start(job["id"], port, job["worktree"], job["stage"])  # the office's live app
         lines, errs = [], []
 
@@ -180,7 +224,7 @@ class Agents:
         for r in readers:  # a process the session left behind may hold the pipe: never wait on it for long
             r.join(30)
         self.procs.discard(proc)
-        if not agent:
+        if not lens:
             preview.PREVIEW.session_end(job["id"])
             stop_processes_in(job["worktree"])
         d = final_result(lines)
@@ -260,7 +304,10 @@ class Agents:
 
     def model_for(self, job):
         f = self.main.get(job["id"], {})
-        return self.opts.large_model if job.get("kind") or f.get("complexity") == "L" or job.get("attempts", 0) else self.opts.model
+        large = job.get("kind") or f.get("complexity") == "L" or job.get("attempts", 0)
+        if large and job.get("kind") != "design" and self.day_share() >= DAY_SHED[1]:
+            return self.opts.model  # near the daily cap: the default model; a design still gets the large one
+        return self.opts.large_model if large else self.opts.model
 
     def fix_model(self, job):
         """The large model fixes, except (LOOP_FIX_SONNET=1) a first fix of an S/M feature's review or CI bugs:
@@ -272,6 +319,8 @@ class Agents:
                 and self.main.get(job["id"], {}).get("complexity", "M") in ("S", "M")):
             job["fixed_by_default_model"] = True
             return self.opts.model
+        if job.get("kind") != "design" and self.day_share() >= DAY_SHED[1]:
+            return self.opts.model  # near the daily cap
         return self.opts.large_model
 
     def infra_wait(self):

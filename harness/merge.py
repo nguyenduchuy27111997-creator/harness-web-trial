@@ -78,7 +78,7 @@ class Merge:
                 for run_id in job["ci_runs"]:
                     gh("run", "rerun", run_id, "--failed", cwd=self.root, check=False)
                 return self.set_stage(job, "ci", note="CI failed; running the failed jobs again in case it was a flake")
-            if self.lanes_busy() >= self.opts.lanes:
+            if self.lanes_busy() >= self.lane_limit():
                 return  # no lane free for the fix yet; look again next tick
             if job["fix_rounds"] >= 2:
                 return self.set_stage(job, "held", note="CI still fails after 2 fixes",

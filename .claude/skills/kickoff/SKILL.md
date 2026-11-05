@@ -22,6 +22,7 @@ Goal: leave the repo so that any later session can start work in under a minute 
    - `priority`: integer, lower runs first, unique across the file. Order by milestone, then dependency, then value.
    - `type`: `feature` (default), `bug`, or `chore` (work with no new user-visible behavior, such as a baseline test).
    - `depends_on`: ids that must be `passing` before this one can be built and verified. The loop never starts a feature whose dependencies are not passing. Leave it out when there are none.
+   - `touches`: the files or globs the feature will most likely change (for example `["src/app/shelves/**", "src/lib/shelves.ts"]`). The loop builds two features that share a file one on top of the other instead of side by side, so they do not conflict at merge. Name the files you are fairly sure of; leave it out when you cannot tell.
    - `complexity`: `S`, `M` or `L`. `L` means a session on the default model is unlikely to finish it; the loop runs `L` features on the large model. Prefer splitting an `L` feature over keeping it.
    - `owner_check: true` (optional): the human checks it against what they meant once it merges, because a passing test cannot tell (the look of a key screen, the wording of a flow). The loop also picks the first UI feature of each milestone and about one in four.
    - Leave out `status` and `notes`: every feature starts failing, and its state lives in `harness/status/<id>.json` once a session works on it.

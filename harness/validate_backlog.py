@@ -3,7 +3,8 @@
 
 Definitions (harness/features.json) need: id, milestone, priority (int), title,
 acceptance (list); optional: type, complexity, depends_on, owner_check (bool: the owner checks
-it against what they meant once it merges). Each feature's state
+it against what they meant once it merges), touches (list of file globs it will change: the loop
+builds two features that share a file one on the other, not side by side). Each feature's state
 (harness/status/<id>.json, see backlog.py) has status, notes, and optionally
 blocked_reason and attempts; no file means failing.
 """
@@ -44,6 +45,8 @@ def problems(features):
         for key, allowed in ENUMS.items():
             if key in f and f[key] not in allowed:
                 out.append(f"{fid}: `{key}` is {f[key]!r}, expected one of {sorted(allowed)}")
+        if "touches" in f and not (isinstance(f["touches"], list) and all(isinstance(g, str) and g for g in f["touches"])):
+            out.append(f"{fid}: `touches` must be a list of file globs")
         if "owner_check" in f and not isinstance(f["owner_check"], bool):
             out.append(f"{fid}: `owner_check` must be true or false")
         if "attempts" in f and (not isinstance(f["attempts"], int) or f["attempts"] < 0):

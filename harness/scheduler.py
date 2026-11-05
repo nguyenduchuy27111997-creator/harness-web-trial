@@ -1,5 +1,6 @@
 """What runs next: the ready queue, milestones and their budgets, failures, answers, one tick. A mixin of loop.Loop."""
 
+import fnmatch
 import hashlib
 import json
 import re
@@ -7,6 +8,12 @@ import re
 from common import (  # noqa: F401
     backlog, git, health, lang, now, preview, DONE, GIT_LOCK, MIN_SESSION, Path, TRANSIENT, WAITING_HUMAN,
 )
+
+
+
+def overlap(globs, files):
+    """Whether a feature's `touches` globs and another job's files (or globs) share a file."""
+    return any(f == g or fnmatch.fnmatch(f, g) or fnmatch.fnmatch(g, f) for g in globs for f in files)
 
 
 class Scheduler:
@@ -122,9 +129,41 @@ class Scheduler:
             if ok and on_main and base != "main" and git(
                     "merge-base", "--is-ancestor", "origin/main", f"origin/{base}", cwd=self.root, check=False).returncode:
                 ok = False  # a dependency that merged since that PR branched off is not on it: wait for its rebase
+            if ok and base == "main" and f.get("touches"):
+                ok, base = self.lease(f)
             if ok:
                 out.append((f, base))
         return out
+
+    # leases: one writer per file (DESIGN.md 15.5, P29) ----------------------------------
+    def footprint(self, job):
+        """The files an open job holds: what its feature says it touches, and what its branch has changed."""
+        files = set(self.main.get(job["id"], {}).get("touches", []))
+        wt = job.get("worktree")
+        if job["stage"] != "building" and wt and Path(wt).exists():
+            head = git("rev-parse", "HEAD", cwd=wt, check=False).stdout.strip()
+            if (job.get("footprint") or [None])[0] != head:  # read once per commit
+                changed = git("diff", "--name-only", f"{job.get('base_sha') or 'origin/main'}...HEAD", cwd=wt,
+                              check=False).stdout.split()
+                job["footprint"] = [head, changed]
+            files |= set(job["footprint"][1])
+        return files
+
+    def lease(self, f):
+        """(ok, base) for a feature that says which files it touches: free, it builds on main; held by one open PR,
+        it stacks on that PR's branch; held by a lane still building, or by two PRs, it waits."""
+        holders = [j for j in self.state["jobs"].values() if j["id"] != f["id"] and not j.get("kind")
+                   and j["stage"] in ("building", "review", "fixing", "ci", "waiting_base", "merging")
+                   and overlap(f["touches"], self.footprint(j))]
+        if not holders:
+            return True, "main"
+        if len(holders) == 1 and holders[0]["stage"] != "building":
+            return True, holders[0]["branch"]
+        why = ", ".join(j["id"] for j in holders)
+        if self.state.setdefault("lease_waits", {}).get(f["id"]) != why:
+            self.state["lease_waits"][f["id"]] = why
+            self.event(f["id"], f"waits: {why} holds files it touches")
+        return False, "main"
 
     def needs_design(self, f):
         return (f.get("type") != "bug" and f.get("status") != "passing" and f.get("milestone")
@@ -170,7 +209,7 @@ class Scheduler:
                                    note=f"budget +${job['budget_extra']:.2f}; going on")
             elif job and job["stage"] == "held" and job.get("pr"):
                 # Its PR is open with committed work: fix the branch with the answer, never rebuild it.
-                if self.lanes_busy() >= self.opts.lanes or not self.can_start() or self.paused():
+                if self.lanes_busy() >= self.lane_limit() or not self.can_start() or self.paused():
                     path.write_text(json.dumps(a))  # no lane or budget yet: apply it on a later tick
                     continue
                 job.setdefault("answers", []).append(a["text"])
@@ -258,7 +297,7 @@ class Scheduler:
         # Waiting reviews resume next run.
         paused = self.paused()  # Claude's usage limit: CI and merges go on, Claude work waits for the reset
         for job in self.state["jobs"].values():
-            if self.lanes_busy() >= self.opts.lanes or not self.can_start() or paused:
+            if self.lanes_busy() >= self.lane_limit() or not self.can_start() or paused:
                 break
             if job["stage"] == "review" and job["id"] not in self.threads:
                 if job.get("fix_waiting"):
@@ -275,8 +314,12 @@ class Scheduler:
         if not self.stopping and not paused and not self.state["ci_blocked"] and not self.state.get("ci_stalled"):
             # nothing new while CI cannot run
             for f, base in self.ready():
-                if self.lanes_busy() >= self.opts.lanes or not self.can_start():
+                if self.lanes_busy() >= self.lane_limit() or not self.can_start():
                     break
+                if base == "main" and f.get("touches"):  # a build started earlier in this tick may hold its files now
+                    ok, base = self.lease(f)
+                    if not ok:
+                        continue
                 self.start_build(f, base)
         self.state["health"] = health.snapshot(self.state, self.root)
         self.state["last_tick"] = now()

@@ -2,7 +2,7 @@
 """The build loop: builds ready features in parallel, one branch and one PR per
 feature, and merges each PR itself once it is green. See DESIGN.md section 10.
 
-  loop.py start [--lanes 3] [--budget 10] [--milestone M1] [--foreground]
+  loop.py start [--lanes 4] [--budget 10] [--milestone M1] [--foreground]
   loop.py status [--json]          what is running, PRs, cost, questions waiting
   loop.py answer F012 "text"       answer a question; the feature goes back in the queue (a held PR gets a fix)
   loop.py drop L-1f2e3d "why"      stop waiting on a job for good (a rule proposal already done, a feature dropped)
@@ -1008,7 +1008,7 @@ def main():
     p = argparse.ArgumentParser(prog="loop.py")
     sub = p.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("start")
-    s.add_argument("--lanes", type=int, default=3)
+    s.add_argument("--lanes", type=int, default=4)  # the most: a loaded machine gets LOOP_MIN_LANES (2)
     s.add_argument("--budget", type=float, default=10.0)
     s.add_argument("--milestone")
     s.add_argument("--milestone-budget", action="append", default=[], metavar="M1=20")
