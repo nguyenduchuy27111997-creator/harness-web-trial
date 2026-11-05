@@ -3,10 +3,13 @@ import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
 import {
   addBookToShelf,
+  filterByShelf,
   insertShelf,
+  listShelfBookIds,
   listBookShelfIds,
   listShelves,
   parseShelfChoice,
+  parseShelfFilter,
   parseShelfName,
   updateShelfName,
 } from "./shelves";
@@ -154,5 +157,56 @@ describe("addBookToShelf", () => {
   });
   it("throws on other errors", async () => {
     await expect(addBookToShelf(stub({ code: "XX", message: "boom" }), BOOK, SHELF)).rejects.toThrow("boom");
+  });
+});
+
+describe("parseShelfFilter", () => {
+  const shelves = [{ id: SHELF, name: "Travel" }];
+  it("keeps the id of one of the shelves", () => {
+    expect(parseShelfFilter(SHELF, shelves)).toBe(SHELF);
+  });
+  it("ignores unknown, malformed, repeated and missing values", () => {
+    expect(parseShelfFilter(BOOK, shelves)).toBeUndefined();
+    expect(parseShelfFilter("nope", shelves)).toBeUndefined();
+    expect(parseShelfFilter([SHELF, SHELF], shelves)).toBeUndefined();
+    expect(parseShelfFilter(undefined, shelves)).toBeUndefined();
+  });
+});
+
+describe("filterByShelf", () => {
+  const books = [{ id: "a" }, { id: "b" }, { id: "c" }] as Parameters<typeof filterByShelf>[0];
+  it("returns the books unchanged without ids", () => {
+    expect(filterByShelf(books)).toBe(books);
+  });
+  it("keeps the books in the ids, in order", () => {
+    expect(filterByShelf(books, ["c", "a"]).map((b) => b.id)).toEqual(["a", "c"]);
+  });
+});
+
+describe("listShelfBookIds", () => {
+  it("returns the book ids of the shelf", async () => {
+    const calls: unknown[][] = [];
+    const supabase = {
+      from: (table: string) => {
+        calls.push(["from", table]);
+        return {
+          select: () => ({
+            eq: (column: string, value: string) => {
+              calls.push(["eq", column, value]);
+              return Promise.resolve({ data: [{ book_id: BOOK }], error: null });
+            },
+          }),
+        };
+      },
+    } as unknown as SupabaseClient<Database>;
+    expect(await listShelfBookIds(supabase, SHELF)).toEqual([BOOK]);
+    expect(calls).toEqual([
+      ["from", "book_shelves"],
+      ["eq", "shelf_id", SHELF],
+    ]);
+  });
+  it("is empty for a malformed id without querying", async () => {
+    const supabase = { from: () => { throw new Error("queried"); } } as unknown as SupabaseClient<Database>;
+    expect(await listShelfBookIds(supabase, "nope")).toEqual([]);
   });
 });

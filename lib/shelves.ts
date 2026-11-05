@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { isUuid } from "./books";
+import { isUuid, type Book } from "./books";
 import type { Database, Tables } from "@/lib/database.types";
 import type { FormState, Parsed } from "@/lib/forms";
 
@@ -68,4 +68,22 @@ export async function addBookToShelf(
   if (!error || error.code === "23505") return "ok";
   if (error.code === "23503" || error.code === "42501") return "missing";
   throw new Error(error.message);
+}
+
+// A value that is not the id of one of the user's own shelves is ignored, so it never reaches a query.
+export function parseShelfFilter(value: string | string[] | undefined, shelves: Shelf[]): string | undefined {
+  return typeof value === "string" && shelves.some((shelf) => shelf.id === value) ? value : undefined;
+}
+
+export async function listShelfBookIds(supabase: SupabaseClient<Database>, shelfId: string): Promise<string[]> {
+  if (!isUuid(shelfId)) return [];
+  const { data, error } = await supabase.from("book_shelves").select("book_id").eq("shelf_id", shelfId);
+  if (error) throw new Error(error.message);
+  return data.map((row) => row.book_id);
+}
+
+export function filterByShelf<T extends Book>(books: T[], bookIds?: string[]): T[] {
+  if (!bookIds) return books;
+  const ids = new Set(bookIds);
+  return books.filter((book) => ids.has(book.id));
 }
