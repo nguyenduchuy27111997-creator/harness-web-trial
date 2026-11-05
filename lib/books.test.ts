@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { booksHref, filterBooks, formatFinishDate, insertBook, listBooks, parseBookFields, parseNewBook, parseProgress, parseRating, parseReview, parseSearch, parseSort, parseStatus, parseStatusFilter, formatProgress, progressPercent, removeBook, sortBooks, type ShelfBook, updateBookFields, updateBookProgress, updateBookRating, updateBookReview, updateBookStatus } from "./books";
+import { booksHref, countByStatus, filterBooks, formatFinishDate, insertBook, listBooks, parseBookFields, parseNewBook, parseProgress, parseRating, parseReview, parseSearch, parseSort, parseStatus, parseStatusFilter, formatProgress, progressPercent, removeBook, sortBooks, type ShelfBook, updateBookFields, updateBookProgress, updateBookRating, updateBookReview, updateBookStatus } from "./books";
 
 function stubClient(result: { data: unknown; error: { message: string } | null }) {
   const calls: unknown[][] = [];
@@ -356,5 +356,12 @@ describe("progress formatting", () => {
     expect(progressPercent(100, 250)).toBe(40);
     expect(progressPercent(0, 250)).toBe(0);
     expect(formatProgress(100, 250)).toBe("Page 100 of 250 (40%)");
+  });
+});
+
+describe("countByStatus", () => {
+  it("counts all and each status", () => {
+    const book = (status: "want_to_read" | "reading" | "finished") => ({ id: status, title: "t", author: "a", created_at: "", status });
+    expect(countByStatus([book("reading"), book("finished"), book("finished")])).toEqual({ all: 3, want_to_read: 0, reading: 1, finished: 2 });
   });
 });

@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Tabs show counts computed after shelf and search filters; /books loads all books once and filters by status in memory. 13 visual baselines regenerated because every /books screenshot now shows counts in the tabs."
+}
