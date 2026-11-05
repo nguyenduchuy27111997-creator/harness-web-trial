@@ -1,0 +1,5 @@
+## 2026-11-05 13:00 · passing
+- Did: migration shelves (RLS, unique lower(name) index), lib/shelves.ts, createShelf action, /shelves page, ShelfForm, header link (header wraps on phones); refreshed all baselines.
+- Verified by: verifier PASS (twice, after designer tweaks), reviewer no bugs, designer gap-3 and muted empty state fixed, check.sh green.
+- Next session should know: designer suggestions skipped (shelf rows as cards, active nav state, ragged left edge when header wraps); F030/F033 will add rename/delete to the list rows.
+
