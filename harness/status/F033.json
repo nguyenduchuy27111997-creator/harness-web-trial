@@ -1,4 +1,4 @@
 {
   "status": "passing",
-  "notes": "Delete shelf with confirm dialog (shared ConfirmDeleteDialog, also used by DeleteBookButton). e2e/shelves-create.spec.ts row assertion loosened to regex because rows now include a Delete button; its baseline updated. Parallel e2e runs under check.sh flake at 30s on unrelated specs; they pass alone."
+  "notes": "Delete shelf with confirm dialog (shared ConfirmDeleteDialog, also used by DeleteBookButton). On main's RenameShelfList each row has Rename and a small Delete; F028/F029/F030 baselines updated for it, their specs unchanged."
 }
