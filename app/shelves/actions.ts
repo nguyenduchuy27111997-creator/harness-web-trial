@@ -1,7 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { insertShelf, parseShelfName, SHELF_NAME_TAKEN, type ShelfFormState } from "@/lib/shelves";
+import { isUuid } from "@/lib/books";
+import {
+  insertShelf,
+  parseShelfName,
+  SHELF_NAME_TAKEN,
+  type ShelfFormState,
+  updateShelfName,
+} from "@/lib/shelves";
 import { createClient, requireUser } from "@/lib/supabase/server";
 
 export async function createShelf(_prev: ShelfFormState, formData: FormData): Promise<ShelfFormState> {
@@ -17,5 +24,23 @@ export async function createShelf(_prev: ShelfFormState, formData: FormData): Pr
     return { formError: "Could not save. Try again.", values };
   }
   revalidatePath("/shelves");
+  return { saved: true };
+}
+
+export async function renameShelf(id: string, _prev: ShelfFormState, formData: FormData): Promise<ShelfFormState> {
+  await requireUser();
+  const parsed = parseShelfName(formData);
+  const values = { name: String(formData.get("name") ?? "") };
+  if (!parsed.ok) return { fieldErrors: parsed.fieldErrors, values };
+  if (!isUuid(id)) return { formError: "Shelf not found", values };
+  try {
+    const result = await updateShelfName(await createClient(), id, parsed.value);
+    if (result === "taken") return { fieldErrors: { name: SHELF_NAME_TAKEN }, values };
+    if (result === "missing") return { formError: "Shelf not found", values };
+  } catch {
+    return { formError: "Could not save. Try again.", values };
+  }
+  revalidatePath("/shelves");
+  revalidatePath("/books", "layout");
   return { saved: true };
 }

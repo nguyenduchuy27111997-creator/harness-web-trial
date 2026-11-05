@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Rename in place on /shelves (RenameShelfList keeps one form open at a time). F028/F029 e2e row assertions loosened to toContainText and their baselines regenerated because rows now hold a Rename button."
+}
