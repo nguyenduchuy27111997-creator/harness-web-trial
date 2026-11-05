@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "parseShelfFilter, listShelfBookIds, filterByShelf in lib/shelves.ts; booksHref gains shelf (last); ShelfSelect on /books (only when the user has shelves); search, sort, tabs and Clear search keep shelf. No migration."
+}

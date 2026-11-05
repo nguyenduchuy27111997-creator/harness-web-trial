@@ -277,6 +277,11 @@ describe("booksHref", () => {
     expect(booksHref({ sort: "title" })).toBe("/books?sort=title");
     expect(booksHref({ sort: "newest" })).toBe("/books");
   });
+
+  it("adds shelf after sort", () => {
+    expect(booksHref({ shelf: "s1" })).toBe("/books?shelf=s1");
+    expect(booksHref({ status: "reading", q: "a", sort: "title", shelf: "s1" })).toBe("/books?status=reading&q=a&sort=title&shelf=s1");
+  });
 });
 
 describe("parseSort", () => {

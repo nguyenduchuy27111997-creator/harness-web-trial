@@ -79,12 +79,13 @@ export function sortBooks(books: ShelfBook[], sort: BookSort): ShelfBook[] {
   return [...books];
 }
 
-// The one URL builder for /books: parameters in the order status, q, sort.
-export function booksHref({ status, q, sort }: { status?: BookStatus; q?: string; sort?: BookSort }): string {
+// The one URL builder for /books: parameters in the order status, q, sort, shelf.
+export function booksHref({ status, q, sort, shelf }: { status?: BookStatus; q?: string; sort?: BookSort; shelf?: string }): string {
   const params = new URLSearchParams();
   if (status) params.set("status", status);
   if (q) params.set("q", q);
   if (sort && sort !== "newest") params.set("sort", sort);
+  if (shelf) params.set("shelf", shelf);
   const query = params.toString();
   return query ? `/books?${query}` : "/books";
 }
