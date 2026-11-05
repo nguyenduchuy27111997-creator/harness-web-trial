@@ -1,7 +1,18 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { insertShelf, listShelves, parseShelfName, updateShelfName } from "./shelves";
+import {
+  addBookToShelf,
+  insertShelf,
+  listBookShelfIds,
+  listShelves,
+  parseShelfChoice,
+  parseShelfName,
+  updateShelfName,
+} from "./shelves";
+
+const BOOK = "11111111-1111-4111-8111-111111111111";
+const SHELF = "22222222-2222-4222-8222-222222222222";
 
 function form(name?: string) {
   const f = new FormData();
@@ -78,5 +89,70 @@ describe("updateShelfName", () => {
   });
   it("throws on other errors", async () => {
     await expect(updateShelfName(stub({ error: { code: "XX", message: "boom" } }), "a", "Trips")).rejects.toThrow("boom");
+  });
+});
+
+describe("listBookShelfIds", () => {
+  const stub = (result: { data: unknown; error: { message: string } | null }) => {
+    const calls: unknown[][] = [];
+    const supabase = {
+      from: (table: string) => {
+        calls.push(["from", table]);
+        return {
+          select: () => ({
+            eq: (column: string, value: string) => {
+              calls.push(["eq", column, value]);
+              return Promise.resolve(result);
+            },
+          }),
+        };
+      },
+    } as unknown as SupabaseClient<Database>;
+    return { supabase, calls };
+  };
+  it("returns the shelf ids of the book", async () => {
+    const { supabase, calls } = stub({ data: [{ shelf_id: SHELF }], error: null });
+    expect(await listBookShelfIds(supabase, BOOK)).toEqual([SHELF]);
+    expect(calls).toEqual([
+      ["from", "book_shelves"],
+      ["eq", "book_id", BOOK],
+    ]);
+  });
+  it("is empty for a malformed id without querying", async () => {
+    const { supabase, calls } = stub({ data: null, error: { message: "boom" } });
+    expect(await listBookShelfIds(supabase, "nope")).toEqual([]);
+    expect(calls).toEqual([]);
+  });
+  it("throws on a database error", async () => {
+    await expect(listBookShelfIds(stub({ data: null, error: { message: "boom" } }).supabase, BOOK)).rejects.toThrow("boom");
+  });
+});
+
+describe("parseShelfChoice", () => {
+  const choice = (shelf?: string) => {
+    const f = new FormData();
+    if (shelf !== undefined) f.set("shelf", shelf);
+    return f;
+  };
+  it("accepts a uuid", () => {
+    expect(parseShelfChoice(choice(SHELF))).toEqual({ ok: true, value: SHELF });
+  });
+  it.each([undefined, "", "travel"])("asks to choose a shelf for %s", (value) => {
+    expect(parseShelfChoice(choice(value))).toEqual({ ok: false, fieldErrors: { shelf: "Choose a shelf" } });
+  });
+});
+
+describe("addBookToShelf", () => {
+  const stub = (error: { code?: string; message: string } | null) =>
+    ({ from: () => ({ insert: () => Promise.resolve({ error }) }) }) as unknown as SupabaseClient<Database>;
+  it("is ok on success or when already on the shelf", async () => {
+    expect(await addBookToShelf(stub(null), BOOK, SHELF)).toBe("ok");
+    expect(await addBookToShelf(stub({ code: "23505", message: "dup" }), BOOK, SHELF)).toBe("ok");
+  });
+  it.each(["23503", "42501"])("is missing on %s", async (code) => {
+    expect(await addBookToShelf(stub({ code, message: "no" }), BOOK, SHELF)).toBe("missing");
+  });
+  it("throws on other errors", async () => {
+    await expect(addBookToShelf(stub({ code: "XX", message: "boom" }), BOOK, SHELF)).rejects.toThrow("boom");
   });
 });

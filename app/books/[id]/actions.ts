@@ -21,6 +21,7 @@ import {
   type ReviewFormState,
   type StatusFormState,
 } from "@/lib/books";
+import { addBookToShelf, parseShelfChoice, type AddToShelfFormState } from "@/lib/shelves";
 import { createClient, requireUser } from "@/lib/supabase/server";
 
 export async function updateStatus(
@@ -135,5 +136,26 @@ export async function saveProgress(
   }
   revalidatePath("/books");
   revalidatePath(`/books/${id}`);
+  return { saved: true };
+}
+
+export async function addToShelf(
+  bookId: string,
+  _prev: AddToShelfFormState,
+  formData: FormData,
+): Promise<AddToShelfFormState> {
+  await requireUser();
+  const parsed = parseShelfChoice(formData);
+  if (!parsed.ok) return { fieldErrors: parsed.fieldErrors };
+  if (!isUuid(bookId)) return { formError: "Shelf not found" };
+  try {
+    if ((await addBookToShelf(await createClient(), bookId, parsed.value)) === "missing") {
+      return { formError: "Shelf not found" };
+    }
+  } catch {
+    return { formError: "Could not save. Try again." };
+  }
+  revalidatePath("/books");
+  revalidatePath(`/books/${bookId}`);
   return { saved: true };
 }
