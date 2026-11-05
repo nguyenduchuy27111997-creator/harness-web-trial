@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatFinishDate, getBook } from "@/lib/books";
 import { listBookShelfIds, listShelves } from "@/lib/shelves";
 import { createClient, requireUser } from "@/lib/supabase/server";
-import { addToShelf, deleteBook, editBook, saveRating, saveReview, updateStatus } from "./actions";
+import { addToShelf, deleteBook, editBook, removeFromShelf, saveRating, saveReview, updateStatus } from "./actions";
 
 export const metadata: Metadata = { title: "Book · Bookshelf" };
 
@@ -39,7 +39,12 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
       <BookStatusForm status={book.status} action={updateStatus.bind(null, book.id)} />
       {book.status === "finished" && <RatingForm rating={book.rating} action={saveRating.bind(null, book.id)} />}
       {book.status === "finished" && <ReviewForm review={book.review} action={saveReview.bind(null, book.id)} />}
-      <BookShelves shelves={shelves} shelfIds={shelfIds} action={addToShelf.bind(null, book.id)} />
+      <BookShelves
+        shelves={shelves}
+        shelfIds={shelfIds}
+        action={addToShelf.bind(null, book.id)}
+        removeAction={removeFromShelf.bind(null, book.id)}
+      />
       <DeleteBookButton title={book.title} action={deleteBook.bind(null, book.id)} />
     </main>
   );

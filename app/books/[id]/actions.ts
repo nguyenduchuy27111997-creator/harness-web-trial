@@ -18,7 +18,7 @@ import {
   type ReviewFormState,
   type StatusFormState,
 } from "@/lib/books";
-import { addBookToShelf, parseShelfChoice, type AddToShelfFormState } from "@/lib/shelves";
+import { addBookToShelf, parseShelfChoice, removeBookFromShelf, type AddToShelfFormState } from "@/lib/shelves";
 import { createClient, requireUser } from "@/lib/supabase/server";
 
 export async function updateStatus(
@@ -128,4 +128,11 @@ export async function addToShelf(
   revalidatePath("/books");
   revalidatePath(`/books/${bookId}`);
   return { saved: true };
+}
+
+export async function removeFromShelf(bookId: string, shelfId: string, _formData: FormData): Promise<void> {
+  await requireUser();
+  if (isUuid(bookId) && isUuid(shelfId)) await removeBookFromShelf(await createClient(), bookId, shelfId);
+  revalidatePath("/books");
+  revalidatePath(`/books/${bookId}`);
 }

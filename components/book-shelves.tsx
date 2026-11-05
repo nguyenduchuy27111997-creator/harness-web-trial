@@ -1,5 +1,6 @@
 "use client";
 
+import { XIcon } from "lucide-react";
 import Link from "next/link";
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
@@ -12,9 +13,10 @@ type Props = {
   shelves: Shelf[];
   shelfIds: string[];
   action: (prev: AddToShelfFormState, formData: FormData) => Promise<AddToShelfFormState>;
+  removeAction: (shelfId: string, formData: FormData) => Promise<void>;
 };
 
-export function BookShelves({ shelves, shelfIds, action }: Props) {
+export function BookShelves({ shelves, shelfIds, action, removeAction }: Props) {
   const [state, formAction, pending] = useActionState(action, {} as AddToShelfFormState);
   const on = shelves.filter((s) => shelfIds.includes(s.id));
   const available = shelves.filter((s) => !shelfIds.includes(s.id));
@@ -27,7 +29,14 @@ export function BookShelves({ shelves, shelfIds, action }: Props) {
         ) : (
           <ul className="flex flex-col gap-1">
             {on.map((s) => (
-              <li key={s.id}>{s.name}</li>
+              <li key={s.id} className="flex items-center gap-2">
+                {s.name}
+                <form action={removeAction.bind(null, s.id)}>
+                  <Button type="submit" variant="ghost" size="icon-sm" aria-label={`Remove from ${s.name}`}>
+                    <XIcon />
+                  </Button>
+                </form>
+              </li>
             ))}
           </ul>
         )}

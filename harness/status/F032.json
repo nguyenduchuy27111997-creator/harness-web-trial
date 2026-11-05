@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Icon button 'Remove from <name>' (aria-label) next to each shelf in BookShelves; removeBookFromShelf + removeFromShelf action; no migration. F031 baseline refreshed."
+}

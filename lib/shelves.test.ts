@@ -1,7 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { addBookToShelf, insertShelf, listBookShelfIds, listShelves, parseShelfChoice, parseShelfName } from "./shelves";
+import {
+  addBookToShelf,
+  insertShelf,
+  listBookShelfIds,
+  listShelves,
+  parseShelfChoice,
+  parseShelfName,
+  removeBookFromShelf,
+} from "./shelves";
 
 function form(name?: string) {
   const f = new FormData();
@@ -106,5 +114,29 @@ describe("addBookToShelf", () => {
   });
   it("throws on other errors", async () => {
     await expect(addBookToShelf(stub({ code: "XX", message: "boom" }), "b", "s")).rejects.toThrow("boom");
+  });
+});
+
+describe("removeBookFromShelf", () => {
+  const stub = (error: { message: string } | null, calls: [string, string][] = []) =>
+    ({
+      from: () => ({
+        delete: () => ({
+          eq: (c1: string, v1: string) => ({
+            eq: (c2: string, v2: string) => {
+              calls.push([`${c1}=${v1}`, `${c2}=${v2}`]);
+              return Promise.resolve({ error });
+            },
+          }),
+        }),
+      }),
+    }) as unknown as SupabaseClient<Database>;
+  it("deletes the link by book and shelf", async () => {
+    const calls: [string, string][] = [];
+    await removeBookFromShelf(stub(null, calls), "b", "s");
+    expect(calls).toEqual([["book_id=b", "shelf_id=s"]]);
+  });
+  it("throws on an error", async () => {
+    await expect(removeBookFromShelf(stub({ message: "boom" }), "b", "s")).rejects.toThrow("boom");
   });
 });

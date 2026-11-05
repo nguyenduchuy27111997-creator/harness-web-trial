@@ -58,3 +58,12 @@ export async function addBookToShelf(
   if (error) throw new Error(error.message);
   return "ok";
 }
+
+export async function removeBookFromShelf(
+  supabase: SupabaseClient<Database>,
+  bookId: string,
+  shelfId: string,
+): Promise<void> {
+  const { error } = await supabase.from("book_shelves").delete().eq("book_id", bookId).eq("shelf_id", shelfId);
+  if (error) throw new Error(error.message);
+}
