@@ -50,6 +50,7 @@ test("progress validation errors", async ({ page }) => {
   await save.click();
   await expect(page.getByText("Page 0 of 250 (0%)")).toBeVisible();
   await page.mouse.move(0, 0);
+  await page.evaluate(() => window.scrollTo(0, 0));
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F036-progress-validation.png", { stylePath: "e2e/hide-dev-overlay.css" });
 });
