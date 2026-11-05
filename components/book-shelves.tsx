@@ -1,5 +1,6 @@
 "use client";
 
+import { XIcon } from "lucide-react";
 import Link from "next/link";
 import { useActionState, useId } from "react";
 import { Button } from "@/components/ui/button";
@@ -11,9 +12,10 @@ type Props = {
   shelves: Shelf[];
   onShelfIds: string[];
   action: (prev: AddToShelfFormState, formData: FormData) => Promise<AddToShelfFormState>;
+  removeAction: (shelfId: string, formData: FormData) => Promise<void>;
 };
 
-export function BookShelves({ shelves, onShelfIds, action }: Props) {
+export function BookShelves({ shelves, onShelfIds, action, removeAction }: Props) {
   const id = useId();
   const [state, formAction, pending] = useActionState(action, {} as AddToShelfFormState);
   const on = shelves.filter((shelf) => onShelfIds.includes(shelf.id));
@@ -36,8 +38,14 @@ export function BookShelves({ shelves, onShelfIds, action }: Props) {
           ) : (
             <ul aria-label="Shelves this book is on" className="flex flex-col gap-1">
               {on.map((shelf) => (
-                <li key={shelf.id} className="break-words">
-                  {shelf.name}
+                <li key={shelf.id} className="flex items-center justify-between gap-3">
+                  <span className="min-w-0 break-words">{shelf.name}</span>
+                  <form action={removeAction.bind(null, shelf.id)}>
+                    {/* Icon only: the item's text stays the shelf name. */}
+                    <Button type="submit" variant="ghost" size="icon" aria-label={`Remove from ${shelf.name}`}>
+                      <XIcon aria-hidden />
+                    </Button>
+                  </form>
                 </li>
               ))}
             </ul>

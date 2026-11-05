@@ -11,6 +11,7 @@ import {
   parseShelfChoice,
   parseShelfFilter,
   parseShelfName,
+  removeBookFromShelf,
   updateShelfName,
 } from "./shelves";
 
@@ -157,6 +158,34 @@ describe("addBookToShelf", () => {
   });
   it("throws on other errors", async () => {
     await expect(addBookToShelf(stub({ code: "XX", message: "boom" }), BOOK, SHELF)).rejects.toThrow("boom");
+  });
+});
+
+describe("removeBookFromShelf", () => {
+  function stub(error: { message: string } | null) {
+    const calls: unknown[][] = [];
+    const supabase = {
+      from: (table: string) => {
+        calls.push(["from", table]);
+        const chain = {
+          delete: () => chain,
+          eq: (column: string, value: string) => {
+            calls.push(["eq", column, value]);
+            return calls.length === 3 ? Promise.resolve({ error }) : chain;
+          },
+        };
+        return chain;
+      },
+    } as unknown as SupabaseClient<Database>;
+    return { supabase, calls };
+  }
+  it("deletes the link of the book and the shelf", async () => {
+    const { supabase, calls } = stub(null);
+    await removeBookFromShelf(supabase, BOOK, SHELF);
+    expect(calls).toEqual([["from", "book_shelves"], ["eq", "book_id", BOOK], ["eq", "shelf_id", SHELF]]);
+  });
+  it("throws on errors", async () => {
+    await expect(removeBookFromShelf(stub({ message: "boom" }).supabase, BOOK, SHELF)).rejects.toThrow("boom");
   });
 });
 

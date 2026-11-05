@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Icon-only remove button (XIcon) with aria-label 'Remove from <name>' so list item text stays the shelf name (F031's test asserts it). F031 baseline updated for the new buttons."
+}
