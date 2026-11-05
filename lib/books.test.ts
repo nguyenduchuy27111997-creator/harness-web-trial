@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { booksHref, filterBooks, formatFinishDate, insertBook, listBooks, parseBookFields, parseNewBook, parseRating, parseReview, parseSearch, parseSort, parseStatus, parseStatusFilter, removeBook, sortBooks, type ShelfBook, updateBookFields, updateBookRating, updateBookReview, updateBookStatus } from "./books";
+import { booksHref, filterBooks, formatFinishDate, insertBook, listBooks, parseBookFields, parseNewBook, parseProgress, parseRating, parseReview, parseSearch, parseSort, parseStatus, parseStatusFilter, formatProgress, progressPercent, removeBook, sortBooks, type ShelfBook, updateBookFields, updateBookProgress, updateBookRating, updateBookReview, updateBookStatus } from "./books";
 
 function stubClient(result: { data: unknown; error: { message: string } | null }) {
   const calls: unknown[][] = [];
@@ -309,5 +309,47 @@ describe("sortBooks", () => {
 
   it("sorts by rating, unrated and not-Finished last, ties newest first", () => {
     expect(titles(sortBooks(books, "rating"))).toEqual(["Alpha", "bravo", "Delta", "Charlie"]);
+  });
+});
+
+describe("parseProgress", () => {
+  const form = (total: string, current: string) => {
+    const f = new FormData();
+    f.set("total_pages", total);
+    f.set("current_page", current);
+    return f;
+  };
+
+  it("accepts whole numbers with the current page within the total", () => {
+    expect(parseProgress(form("250", "100"))).toEqual({ ok: true, value: { totalPages: 250, currentPage: 100 } });
+    expect(parseProgress(form(" 250 ", "0"))).toEqual({ ok: true, value: { totalPages: 250, currentPage: 0 } });
+  });
+
+  it("refuses a total outside 1 to 10,000", () => {
+    for (const bad of ["", "0", "2.5", "-1", "10001"]) expect(parseProgress(form(bad, "1")).ok).toBe(false);
+  });
+
+  it("refuses a current page outside 0 to the total", () => {
+    expect(parseProgress(form("250", "251"))).toEqual({
+      ok: false,
+      fieldErrors: { current_page: "Current page must be a whole number from 0 to 250" },
+    });
+    expect(parseProgress(form("250", "")).ok).toBe(false);
+  });
+});
+
+describe("updateBookProgress", () => {
+  it("is true when a row changed and false when none did", async () => {
+    const input = { totalPages: 250, currentPage: 100 };
+    expect(await updateBookProgress(updateClient({ data: [{ id: "x" }], error: null }), "x", input)).toBe(true);
+    expect(await updateBookProgress(updateClient({ data: [], error: null }), "x", input)).toBe(false);
+  });
+});
+
+describe("progress formatting", () => {
+  it("rounds the percentage", () => {
+    expect(progressPercent(100, 250)).toBe(40);
+    expect(progressPercent(0, 250)).toBe(0);
+    expect(formatProgress(100, 250)).toBe("Page 100 of 250 (40%)");
   });
 });

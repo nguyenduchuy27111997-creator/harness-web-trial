@@ -28,7 +28,7 @@ test("rate a finished book", async ({ page }) => {
 
   await page.getByRole("combobox", { name: "Status" }).click();
   await page.getByRole("option", { name: "Finished" }).click();
-  await page.getByRole("button", { name: "Save" }).click();
+  await page.getByRole("button", { name: "Save status" }).click();
   await expect(group).toBeVisible();
   await expect(group.getByRole("radio", { checked: true })).toHaveCount(0);
 

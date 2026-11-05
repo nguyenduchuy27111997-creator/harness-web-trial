@@ -9,7 +9,7 @@ export type Book = Pick<Tables<"books">, "id" | "title" | "author" | "created_at
 
 export type ShelfBook = Book & Pick<Tables<"books">, "rating">;
 
-export type BookDetail = Book & Pick<Tables<"books">, "finished_on" | "rating" | "review">;
+export type BookDetail = Book & Pick<Tables<"books">, "finished_on" | "rating" | "review" | "total_pages" | "current_page">;
 
 // Row Level Security limits the rows to the signed-in user's own.
 export async function listBooks(supabase: SupabaseClient<Database>, status?: BookStatus): Promise<ShelfBook[]> {
@@ -31,7 +31,7 @@ export async function getBook(supabase: SupabaseClient<Database>, id: string): P
   if (!isUuid(id)) return null;
   const { data, error } = await supabase
     .from("books")
-    .select("id, title, author, status, created_at, finished_on, rating, review")
+    .select("id, title, author, status, created_at, finished_on, rating, review, total_pages, current_page")
     .eq("id", id)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -204,4 +204,46 @@ export async function updateBookFields(
   const { data, error } = await supabase.from("books").update({ title, author }).eq("id", id).select("id");
   if (error) throw new Error(error.message);
   return data.length > 0;
+}
+
+export type ProgressFormState = FormState<"total_pages" | "current_page"> & { saved?: true };
+
+export function parseProgress(
+  formData: FormData,
+): Parsed<{ totalPages: number; currentPage: number }, "total_pages" | "current_page"> {
+  const rawTotal = String(formData.get("total_pages") ?? "").trim();
+  const rawCurrent = String(formData.get("current_page") ?? "").trim();
+  const total = /^\d+$/.test(rawTotal) ? Number(rawTotal) : NaN;
+  if (!(total >= 1 && total <= 10000)) {
+    return { ok: false, fieldErrors: { total_pages: "Total pages must be a whole number from 1 to 10,000" } };
+  }
+  const current = /^\d+$/.test(rawCurrent) ? Number(rawCurrent) : NaN;
+  if (!(current >= 0 && current <= total)) {
+    return { ok: false, fieldErrors: { current_page: `Current page must be a whole number from 0 to ${total}` } };
+  }
+  return { ok: true, value: { totalPages: total, currentPage: current } };
+}
+
+// false when no row changed: missing, someone else's (RLS), or not Reading.
+export async function updateBookProgress(
+  supabase: SupabaseClient<Database>,
+  id: string,
+  { totalPages, currentPage }: { totalPages: number; currentPage: number },
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("books")
+    .update({ total_pages: totalPages, current_page: currentPage })
+    .eq("id", id)
+    .eq("status", "reading")
+    .select("id");
+  if (error) throw new Error(error.message);
+  return data.length > 0;
+}
+
+export function progressPercent(current: number, total: number): number {
+  return Math.round((current / total) * 100);
+}
+
+export function formatProgress(current: number, total: number): string {
+  return `Page ${current} of ${total} (${progressPercent(current, total)}%)`;
 }
