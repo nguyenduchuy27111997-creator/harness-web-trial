@@ -5,7 +5,32 @@ export type Database = {
   
   "public": {
           Tables: {
-            "books": {
+            "book_shelves": {
+                  Row: {
+                    "book_id": string,"created_at": string,"shelf_id": string,"user_id": string
+                  }
+                  Insert: {
+                    "book_id": string,"created_at"?: string,"shelf_id": string,"user_id"?: string
+                  }
+                  Update: {
+                    "book_id"?: string,"created_at"?: string,"shelf_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "book_shelves_book_id_user_id_fkey"
+      columns: ["book_id","user_id"]
+isOneToOne: false
+      referencedRelation: "books"
+      referencedColumns: ["id","user_id"]
+    },{
+      foreignKeyName: "book_shelves_shelf_id_user_id_fkey"
+      columns: ["shelf_id","user_id"]
+isOneToOne: false
+      referencedRelation: "shelves"
+      referencedColumns: ["id","user_id"]
+    }
+                  ]
+                },"books": {
                   Row: {
                     "author": string,"created_at": string,"current_page": number | null,"finished_on": string | null,"id": string,"rating": number | null,"review": string | null,"status": string,"title": string,"total_pages": number | null,"user_id": string
                   }

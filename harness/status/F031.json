@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Migration 2 (book_shelves), listBookShelfIds/parseShelfChoice/addBookToShelf, addToShelf action, book-shelves section on /books/[id]. Ten existing book-page baselines updated for the new Shelves section."
+}
