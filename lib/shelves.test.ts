@@ -12,6 +12,7 @@ import {
   parseShelfFilter,
   parseShelfName,
   removeBookFromShelf,
+  removeShelf,
   updateShelfName,
 } from "./shelves";
 
@@ -93,6 +94,22 @@ describe("updateShelfName", () => {
   });
   it("throws on other errors", async () => {
     await expect(updateShelfName(stub({ error: { code: "XX", message: "boom" } }), "a", "Trips")).rejects.toThrow("boom");
+  });
+});
+
+describe("removeShelf", () => {
+  const stub = (res: { data?: { id: string }[]; error?: { message: string } | null }) =>
+    ({
+      from: () => ({ delete: () => ({ eq: () => ({ select: () => Promise.resolve({ error: null, ...res }) }) }) }),
+    }) as unknown as SupabaseClient<Database>;
+  it("is true when a row was deleted", async () => {
+    expect(await removeShelf(stub({ data: [{ id: "a" }] }), "a")).toBe(true);
+  });
+  it("is false when no row matched", async () => {
+    expect(await removeShelf(stub({ data: [] }), "a")).toBe(false);
+  });
+  it("throws on errors", async () => {
+    await expect(removeShelf(stub({ error: { message: "boom" } }), "a")).rejects.toThrow("boom");
   });
 });
 

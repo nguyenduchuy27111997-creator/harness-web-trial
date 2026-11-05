@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "removeShelf + deleteShelf action; DeleteShelfButton (alert dialog) in each /shelves row. Book links go by the FK cascade. Shared ConfirmDeleteButton (decision 0008). F028/F029/F030 /shelves baselines updated for the new Delete button."
+}

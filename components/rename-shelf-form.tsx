@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { DeleteShelfButton } from "@/components/delete-shelf-button";
 import { FormField } from "@/components/form-field";
 import { Button } from "@/components/ui/button";
 import type { ShelfFormState } from "@/lib/shelves";
@@ -11,7 +12,7 @@ type Props = {
   action: (prev: ShelfFormState, formData: FormData) => Promise<ShelfFormState>;
 };
 
-type Row = Pick<Props, "id" | "name" | "action">;
+type Row = Pick<Props, "id" | "name" | "action"> & { deleteAction: (formData: FormData) => Promise<void> };
 
 // The list of shelves: at most one rename form is open at a time.
 export function RenameShelfList({ shelves }: { shelves: Row[] }) {
@@ -32,9 +33,9 @@ export function RenameShelfList({ shelves }: { shelves: Row[] }) {
   );
 }
 
-type RowProps = Props & { open: boolean; onOpen: () => void; onClose: () => void };
+type RowProps = Row & { open: boolean; onOpen: () => void; onClose: () => void };
 
-function RenameShelfForm({ open, onOpen, onClose, ...props }: RowProps) {
+function RenameShelfForm({ open, onOpen, onClose, deleteAction, ...props }: RowProps) {
   if (!open) {
     return (
       <div className="flex items-center gap-3">
@@ -42,6 +43,7 @@ function RenameShelfForm({ open, onOpen, onClose, ...props }: RowProps) {
         <Button type="button" variant="outline" size="sm" onClick={onOpen}>
           Rename
         </Button>
+        <DeleteShelfButton name={props.name} action={deleteAction} />
       </div>
     );
   }

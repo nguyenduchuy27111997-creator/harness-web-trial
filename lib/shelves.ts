@@ -42,6 +42,12 @@ export async function updateShelfName(
   return data.length === 0 ? "missing" : "ok";
 }
 
+export async function removeShelf(supabase: SupabaseClient<Database>, id: string): Promise<boolean> {
+  const { data, error } = await supabase.from("shelves").delete().eq("id", id).select("id");
+  if (error) throw new Error(error.message);
+  return data.length > 0;
+}
+
 // A malformed id matches no book, so it has no shelves (and never reaches Postgres as a bad uuid).
 export async function listBookShelfIds(supabase: SupabaseClient<Database>, bookId: string): Promise<string[]> {
   if (!isUuid(bookId)) return [];
