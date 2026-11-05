@@ -58,6 +58,14 @@ export function filterBooks<T extends Book>(books: T[], q?: string): T[] {
   );
 }
 
+export type StatusCounts = Record<BookStatus | "all", number>;
+
+export function countByStatus(books: Book[]): StatusCounts {
+  const counts: StatusCounts = { all: books.length, want_to_read: 0, reading: 0, finished: 0 };
+  for (const book of books) counts[book.status] += 1;
+  return counts;
+}
+
 export type BookSort = "newest" | "title" | "rating";
 
 export const SORT_LABELS: Record<BookSort, string> = {

@@ -41,7 +41,7 @@ test("filter the list by status with tabs kept in the URL", async ({ page }) => 
 
   const rows = page.getByRole("listitem");
   for (const name of ["All", "Want to read", "Reading", "Finished"]) {
-    await expect(tabs.getByRole("link", { name, exact: true })).toBeVisible();
+    await expect(tabs.getByRole("link", { name: new RegExp(`^${name} \\(\\d+\\)$`) })).toBeVisible();
   }
   await expect(tabs.getByRole("link", { name: "All" })).toHaveAttribute("aria-current", "page");
   await expect(rows).toHaveCount(3);

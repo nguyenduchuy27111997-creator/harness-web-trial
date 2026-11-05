@@ -6,7 +6,7 @@ import { SearchForm } from "@/components/search-form";
 import { ShelfSelect } from "@/components/shelf-select";
 import { SortSelect } from "@/components/sort-select";
 import { StatusTabs } from "@/components/status-tabs";
-import { booksHref, filterBooks, listBooks, parseSearch, parseSort, parseStatusFilter, sortBooks } from "@/lib/books";
+import { booksHref, countByStatus, filterBooks, listBooks, parseSearch, parseSort, parseStatusFilter, sortBooks } from "@/lib/books";
 import { filterByShelf, listShelfBookIds, listShelves, parseShelfFilter } from "@/lib/shelves";
 import { createClient, requireUser } from "@/lib/supabase/server";
 
@@ -19,16 +19,18 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
   const q = parseSearch(params.q);
   const sort = parseSort(params.sort);
   const supabase = await createClient();
-  const [rows, shelves] = await Promise.all([listBooks(supabase, status), listShelves(supabase)]);
+  const [rows, shelves] = await Promise.all([listBooks(supabase), listShelves(supabase)]);
   const shelf = parseShelfFilter(params.shelf, shelves);
-  const books = sortBooks(filterBooks(filterByShelf(rows, shelf ? await listShelfBookIds(supabase, shelf) : undefined), q), sort);
+  const visible = filterBooks(filterByShelf(rows, shelf ? await listShelfBookIds(supabase, shelf) : undefined), q);
+  const counts = countByStatus(visible);
+  const books = sortBooks(status ? visible.filter((book) => book.status === status) : visible, sort);
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:p-8">
       <h1 className="font-heading text-4xl font-semibold tracking-tight">My books</h1>
       <SearchForm key={q} status={status} q={q} sort={sort} shelf={shelf} />
       {shelves.length > 0 && <ShelfSelect status={status} q={q} sort={sort} shelf={shelf} shelves={shelves} />}
       <SortSelect status={status} q={q} sort={sort} shelf={shelf} />
-      <StatusTabs current={status} q={q} sort={sort} shelf={shelf} />
+      <StatusTabs current={status} counts={counts} q={q} sort={sort} shelf={shelf} />
       {(books.length > 0 || status || shelf || q) && (
         <Button asChild className="self-start">
           <Link href="/books/new">Add book</Link>

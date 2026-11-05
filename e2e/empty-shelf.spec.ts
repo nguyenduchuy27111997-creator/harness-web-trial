@@ -15,6 +15,7 @@ test("empty shelf on /books", async ({ page }) => {
   await expect(page.getByText("Your shelf is empty. Add your first book to get started.")).toBeVisible();
   await expect(page.getByRole("link", { name: "Add book" })).toBeVisible();
   await expectAccessible(page);
+  await page.mouse.move(0, 0);
   await expect(page).toHaveScreenshot("F004-empty-shelf.png");
 
   await page.getByRole("link", { name: "Add book" }).click();
