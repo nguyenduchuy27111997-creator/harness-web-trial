@@ -237,12 +237,17 @@ class Preview:
             if self.cam and time.time() - seen > IDLE:
                 self.stop()
             return
+        # A lane someone has open in Focus gets its app even on a busy machine, at 1 fps (the owner's choice, 05/11/2026):
+        # the office's own lanes nobody looks at still wait. LOOP_OFFICE_BUSY_CAM=0 keeps the camera off while busy.
+        with self.lock:
+            focused = {j for (j, v), n in self.watching.items() if n > 0 and v == "app"}
+        let = lambda job: not busy or (job in focused and os.environ.get("LOOP_OFFICE_BUSY_CAM", "1") != "0")  # noqa: E731
         for job, lane in lanes.items():
             if not serving(lane["port"]):
-                if not busy and not lane["dev"] and (lane["wt"] / "init.sh").exists():
+                if let(job) and not lane["dev"] and (lane["wt"] / "init.sh").exists():
                     lane["dev"] = self.dev(job, lane)
                 continue
-            if not lane["opened"] and (self.cam or not busy) and self.camera():
+            if not lane["opened"] and (self.cam or let(job)) and self.camera():
                 lane["opened"] = True
                 self.send({"op": "open", "job": job, "port": lane["port"]})
         fps = 1 if busy else 4

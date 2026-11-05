@@ -57,6 +57,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import backlog  # noqa: E402
 import ci_log  # noqa: E402
 import health  # noqa: E402
+import github  # noqa: E402
 import history  # noqa: E402
 import lang  # noqa: E402
 import metrics  # noqa: E402
@@ -2143,6 +2144,16 @@ def serve_dashboard(home, root):
                         ".glb": "model/gltf-binary", ".png": "image/png"}[f.suffix]
             elif path == "/history/days.json":  # the days the office can replay (history.py)
                 body, kind = json.dumps(history.days(home)).encode(), "application/json"
+            elif re.fullmatch(r"/(ci|pr)/[A-Za-z0-9_-]+\.json", path):  # a lane's CI steps or its PR (github.py), while Focus shows it
+                f = home / "state.json"
+                j = (json.loads(f.read_text()) if f.exists() else {}).get("jobs", {}).get(path.split("/")[2][:-5])
+                ask = lambda *a: gh(*a, cwd=root, check=False)  # noqa: E731
+                found = j and (github.ci(ask, j["branch"], log="log=1" in self.path) if path.startswith("/ci/") and j.get("branch")
+                               else github.pr(ask, j["pr"]) if path.startswith("/pr/") and j.get("pr") else None)
+                if not found:
+                    self.send_error(404)
+                    return
+                body, kind = json.dumps(found).encode(), "application/json"
             elif path == "/tree.json":  # the files and their lines, of main or of a lane's worktree (?job=F020)
                 job = re.search(r"[?&]job=([A-Za-z0-9_-]+)", self.path)
                 f = home / "state.json"
