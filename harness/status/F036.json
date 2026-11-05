@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Validation messages shipped with F035 (parseProgress); this feature adds the independent e2e test progress-validation.spec.ts."
+}
