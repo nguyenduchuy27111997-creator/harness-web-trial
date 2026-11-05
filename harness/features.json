@@ -388,6 +388,161 @@
         "Click 'Change goal' again: the field shows 20, not 5",
         "Reload the page: it still shows '0 of 20 books finished this year'"
       ]
+    },
+    {
+      "id": "F028",
+      "milestone": "M4",
+      "priority": 28,
+      "complexity": "M",
+      "title": "Shelves page: make a named shelf",
+      "depends_on": ["F008"],
+      "acceptance": [
+        "Sign up a new account: the header has a 'Shelves' link; click it and land on /shelves, where one sentence says I have no shelves yet, with a Name field and a 'Create shelf' button",
+        "Enter 'Travel' and click 'Create shelf': 'Travel' shows in the list of shelves, also after reload",
+        "Create 'Book club': both shelves are listed",
+        "Sign out, sign up a second account and open /shelves: it shows no shelves"
+      ],
+      "owner_check": true
+    },
+    {
+      "id": "F029",
+      "milestone": "M4",
+      "priority": 29,
+      "complexity": "S",
+      "title": "Shelf name validation: required, at most 40 characters, unique",
+      "depends_on": ["F028"],
+      "acceptance": [
+        "On /shelves click 'Create shelf' with an empty name: 'Name is required' shows next to the field and no shelf is created",
+        "Enter a 41-character name: an error next to the field says it must be at most 40 characters, and no shelf is created",
+        "Create 'Travel', then try to create 'travel' (any case, with spaces around it): an error next to the field says I already have a shelf with that name, and the list still has one 'Travel'",
+        "A second account can create its own 'Travel' shelf without an error"
+      ]
+    },
+    {
+      "id": "F030",
+      "milestone": "M4",
+      "priority": 30,
+      "complexity": "S",
+      "title": "Rename a shelf on /shelves",
+      "depends_on": ["F029"],
+      "acceptance": [
+        "With shelves 'Travel' and 'Book club', click 'Rename' next to 'Travel': a Name field shows prefilled with 'Travel', with Save and Cancel buttons",
+        "Change it to 'Trips' and save: the list shows 'Trips' and 'Book club', also after reload",
+        "Rename 'Trips' to 'book club': an error next to the field says I already have a shelf with that name; after reload the shelf is still 'Trips'",
+        "Rename 'Trips' to an empty name: 'Name is required' shows next to the field",
+        "Click 'Rename', change the name, then click 'Cancel': the form closes and the name is unchanged"
+      ]
+    },
+    {
+      "id": "F031",
+      "milestone": "M4",
+      "priority": 31,
+      "complexity": "S",
+      "title": "Put a book on my shelves from its page, which lists its shelves",
+      "depends_on": ["F028", "F009"],
+      "acceptance": [
+        "With shelves 'Travel' and 'Book club' and a book 'Middlemarch', open /books/<id>: a Shelves section says the book is on no shelves, with a shelf picker and an 'Add to shelf' button",
+        "Choose 'Travel' and click 'Add to shelf': the section lists 'Travel', also after reload",
+        "Add it to 'Book club' too: the section lists both shelves, and the picker no longer offers a shelf the book is already on",
+        "A user with no shelves sees one sentence with a link to /shelves instead of the picker"
+      ]
+    },
+    {
+      "id": "F032",
+      "milestone": "M4",
+      "priority": 32,
+      "complexity": "S",
+      "title": "Take a book off a shelf",
+      "depends_on": ["F031"],
+      "acceptance": [
+        "With 'Middlemarch' on 'Travel' and 'Book club', on its page click the remove button next to 'Travel' (named 'Remove from Travel'): only 'Book club' is listed, also after reload",
+        "The book is still on /books, and 'Travel' is still listed on /shelves and offered again in the picker"
+      ]
+    },
+    {
+      "id": "F033",
+      "milestone": "M4",
+      "priority": 33,
+      "complexity": "S",
+      "title": "Delete a shelf after confirming, keeping its books",
+      "depends_on": ["F031"],
+      "acceptance": [
+        "With 'Middlemarch' on 'Travel', on /shelves click 'Delete' next to 'Travel': a confirm dialog names the shelf and says its books are kept",
+        "Click Cancel: 'Travel' is still listed",
+        "Click 'Delete' again and confirm: 'Travel' is gone from /shelves, also after reload",
+        "Open /books: 'Middlemarch' is still there; its page lists no 'Travel' shelf"
+      ]
+    },
+    {
+      "id": "F034",
+      "milestone": "M4",
+      "priority": 34,
+      "complexity": "M",
+      "title": "Filter the list by shelf, kept in the URL with tab, search and sort",
+      "depends_on": ["F031", "F013", "F020", "F022"],
+      "acceptance": [
+        "Sign up a new account, add 'Alpha' (Reading), 'Bravo' (Finished), 'Charlie' (Reading), make a 'Travel' shelf and put Alpha and Bravo on it",
+        "On /books choose 'Travel' in the shelf filter: the URL has shelf=<the shelf's id> and only Alpha and Bravo show",
+        "Click the Reading tab: the URL keeps shelf with status=reading and only Alpha shows; reload keeps the shelf filter, the tab and the list",
+        "Search 'a' and choose 'Title A to Z': the URL keeps shelf, status, q and sort, and only Alpha shows",
+        "Choose 'All shelves': the URL has no shelf and Alpha and Charlie show",
+        "Open /books?shelf=<an id that is not one of my shelves>: all my books show and the filter shows 'All shelves'"
+      ]
+    },
+    {
+      "id": "F035",
+      "milestone": "M4",
+      "priority": 35,
+      "complexity": "M",
+      "title": "Record reading progress on a book I am reading",
+      "depends_on": ["F010"],
+      "acceptance": [
+        "Add a book with status Reading and open its page: a Progress section shows 'Total pages' and 'Current page' fields and a 'Save progress' button",
+        "Enter 250 and 100 and save: the page shows 'Page 100 of 250 (40%)', also after reload",
+        "Change the status to Want to read: the Progress section is hidden; change it back to Reading: it shows page 100 of 250 again",
+        "A book with status Want to read shows no Progress section"
+      ]
+    },
+    {
+      "id": "F036",
+      "milestone": "M4",
+      "priority": 36,
+      "complexity": "S",
+      "title": "Progress validation errors next to the field",
+      "depends_on": ["F035"],
+      "acceptance": [
+        "On a Reading book's page, save progress with Total pages empty, 0, 10001 and 2.5: an error next to Total pages says it must be a whole number from 1 to 10,000, and nothing is saved",
+        "Enter total 250 and current page 251, then -1: an error next to Current page says it must be a whole number from 0 to 250, and nothing is saved",
+        "Reload: the earlier saved progress is unchanged",
+        "Enter total 250 and current page 0: it saves and shows 'Page 0 of 250 (0%)'"
+      ]
+    },
+    {
+      "id": "F037",
+      "milestone": "M4",
+      "priority": 37,
+      "complexity": "S",
+      "title": "The list shows reading progress with a small progress bar",
+      "depends_on": ["F035", "F007"],
+      "acceptance": [
+        "With a Reading book at page 100 of 250, open /books: its row shows '40%' and a progress bar filled to 40%",
+        "A Reading book without progress, and books that are Want to read, show no percentage or bar",
+        "Change the book's progress to page 250 of 250: the list shows '100%'"
+      ],
+      "owner_check": true
+    },
+    {
+      "id": "F038",
+      "milestone": "M4",
+      "priority": 38,
+      "complexity": "S",
+      "title": "Finishing a book sets its page to the total",
+      "depends_on": ["F035"],
+      "acceptance": [
+        "With a Reading book at page 100 of 250, change its status to Finished: the page shows Finished and no Progress section",
+        "Change the status back to Reading: the Progress section shows 'Page 250 of 250 (100%)', also after reload",
+        "Finishing a Reading book with no progress recorded works as before and leaves no progress"
+      ]
     }
   ]
 }
