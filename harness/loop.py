@@ -1361,8 +1361,14 @@ class Loop:
             git("fetch", "-q", "origin", cwd=wt)
             behind = git("merge-base", "--is-ancestor", "origin/main", "HEAD", cwd=wt, check=False).returncode != 0
         if behind:  # main moved since CI ran: rebase, push, and let CI run again
+            # One at a time: green PRs that all rebase onto the same main run CI for nothing once the first
+            # merges. Seen for real: F025 rebased 4 times on one runner, 2 hours from green to merged.
+            if any(j.get("requeued") and j["stage"] in ("ci", "merging") and j["id"] != job["id"]
+                   for j in self.state["jobs"].values()):
+                return
             if not self.rebase(job, "origin/main"):
                 return
+            job["requeued"] = True
             return self.set_stage(job, "ci", note="rebased on the new main")
         lead = round(time.time() - job.get("first_started", time.time()))
         job["lead_seconds"] = lead
