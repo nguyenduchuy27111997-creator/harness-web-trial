@@ -543,6 +543,19 @@
         "Change the status back to Reading: the Progress section shows 'Page 250 of 250 (100%)', also after reload",
         "Finishing a Reading book with no progress recorded works as before and leaves no progress"
       ]
+    },
+    {
+      "id": "F039",
+      "milestone": "M4",
+      "priority": 39,
+      "complexity": "S",
+      "title": "Status tabs show how many books each has",
+      "depends_on": ["F013", "F020"],
+      "acceptance": [
+        "With 2 Want to read, 1 Reading and 3 Finished books, /books shows the tabs 'All (6)', 'Want to read (2)', 'Reading (1)' and 'Finished (3)'",
+        "Change a book from Reading to Finished: the tabs then read 'Reading (0)' and 'Finished (4)', also after reload",
+        "With a search in ?q=, each tab counts only the books the search shows"
+      ]
     }
   ]
 }
