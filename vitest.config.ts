@@ -10,7 +10,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       // In the loop, a json summary too: harness/quality.py reads it for the office ($HARNESS_QUALITY).
-      reporter: process.env.HARNESS_QUALITY ? ["text", "json-summary"] : undefined,
+      ...(process.env.HARNESS_QUALITY ? { reporter: ["text", "json-summary"] } : {}),
       include: ["lib/**/*.ts"],
       exclude: ["**/*.test.ts", "lib/supabase/**"], // Supabase/cookie glue: covered by e2e (docs/design/M1.md)
       thresholds: { lines: 80, functions: 80, branches: 70, statements: 80 },
