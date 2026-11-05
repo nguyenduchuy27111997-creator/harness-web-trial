@@ -1,5 +1,0 @@
-## 2026-11-06 · passing
-- Did: status tabs show "(n)" counts via countByStatus; page filters by status in memory; new e2e status-tab-counts.spec.ts; status-filter.spec.ts tab-name assertion now matches "Name (n)"; regenerated the 13 /books baselines.
-- Verified by: verifier PASS (all 3 criteria), check.sh green (44 e2e).
-- Next session should know: tab counts honor ?q= and ?shelf= but not the selected status; the designer should review the regenerated baselines.
-

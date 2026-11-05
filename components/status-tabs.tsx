@@ -17,8 +17,8 @@ export function StatusTabs({ current, counts, q, sort, shelf }: { current?: Book
           asChild
           variant="ghost"
           className={cn(
-            "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-            status === current && "bg-accent text-accent-foreground",
+            "text-muted-foreground hover:bg-muted hover:text-foreground",
+            status === current && "bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground",
           )}
         >
           <Link
