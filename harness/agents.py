@@ -115,9 +115,11 @@ class Agents:
         self.threads[job["id"]] = (t, holder, job["stage"])  # the result is for this stage, whatever happens meanwhile
         t.start()
 
-    def claude(self, job, prompt, model, turns=200, lane_note=True):
-        """One headless Claude run in the job's worktree. Returns (cost, subtype, text)."""
-        cap = self.caps[job["id"]]
+    def claude(self, job, prompt, model, turns=200, lane_note=True, agent=None, cap=None):
+        """One headless Claude run in the job's worktree. Returns (cost, subtype, text). With `agent`, that
+        subagent runs as the session itself (`--agent`, no relay session, no browser), and several may run at
+        once for one job, each with its own share of the stage's cap."""
+        cap = cap or self.caps[job["id"]]
         with PORT_LOCK:
             port = free_port(self.opts.port_base + 1, taken={j.get("port") for j in self.state["jobs"].values()})
             job["port"] = port
@@ -133,7 +135,9 @@ class Agents:
                "--max-turns", str(turns), "--output-format", "stream-json" if STREAM else "json", "--setting-sources",
                "project" if SANDBOX else "project,local", "--strict-mcp-config",
                "--exclude-dynamic-system-prompt-sections"]  # the same system prompt in every lane: cache hits
-        browser = self.stack.get("verify", "browser") == "browser"  # an API is verified with curl: no browser
+        if agent:
+            cmd += ["--agent", agent]
+        browser = not agent and self.stack.get("verify", "browser") == "browser"  # an API is verified with curl: no browser
         if SANDBOX:
             env = {k: v for k, v in env.items() if ENV_KEEP.match(k) or k in self.stack.get("env_allow", [])}
             cmd += ["--settings", str(self.session_settings(job))]
@@ -146,12 +150,14 @@ class Agents:
         if STREAM:
             cmd += ["--verbose", "--include-partial-messages", "--forward-subagent-text"]
         attempt = job.get("attempts", 0) + 1
-        live = stream.Session(job["id"], job["stage"], self.home / "streams" / f"{job['id']}-{attempt}.jsonl",
+        live = stream.Session(job["id"], job["stage"],
+                              self.home / "streams" / f"{job['id']}-{attempt}{'-' + agent if agent else ''}.jsonl",
                               evidence=Path(job["worktree"]) / "harness/evidence" / job["id"])
         proc = subprocess.Popen(cmd, cwd=job["worktree"], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                 text=True, start_new_session=True)
         self.procs.add(proc)
-        preview.PREVIEW.session_start(job["id"], port, job["worktree"], job["stage"])  # the office's live app
+        if not agent:
+            preview.PREVIEW.session_start(job["id"], port, job["worktree"], job["stage"])  # the office's live app
         lines, errs = [], []
 
         def pump(pipe, keep, feed=None):
@@ -174,8 +180,9 @@ class Agents:
         for r in readers:  # a process the session left behind may hold the pipe: never wait on it for long
             r.join(30)
         self.procs.discard(proc)
-        preview.PREVIEW.session_end(job["id"])
-        stop_processes_in(job["worktree"])
+        if not agent:
+            preview.PREVIEW.session_end(job["id"])
+            stop_processes_in(job["worktree"])
         d = final_result(lines)
         out, err = (json.dumps(d) if d is not None else "".join(lines)), "".join(errs)
         log = self.home / "sessions" / f"{job['id']}-{attempt}.log"
@@ -200,12 +207,16 @@ class Agents:
             return 0.0, "no-json", ""
         subtype = d.get("subtype", "unknown")
         usage = d.get("usage") or {}
-        job["last_telemetry"] = {  # what the session did, for the scorecard: turns, tokens, cost by model
+        telemetry = {  # what the session did, for the scorecard: turns, tokens, cost by model
             "turns": d.get("num_turns"), "session_id": d.get("session_id"),
             "tokens": {"in": usage.get("input_tokens", 0), "out": usage.get("output_tokens", 0),
                        "cache_read": usage.get("cache_read_input_tokens", 0),
                        "cache_write": usage.get("cache_creation_input_tokens", 0)},
             "by_model": {m: round(u.get("costUSD", 0), 4) for m, u in (d.get("modelUsage") or {}).items()}}
+        if agent:
+            job.setdefault("lens_telemetry", {})[agent] = telemetry  # the stage adds its lenses up
+        else:
+            job["last_telemetry"] = telemetry
         if d.get("is_error") and LIMIT.search(str(d.get("result") or "")):
             job["limit_message"] = str(d.get("result"))[:200]
             return float(d.get("total_cost_usd", 0)), "limit", ""

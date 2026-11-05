@@ -91,6 +91,7 @@ class Merge:
             log = "\n".join(gh("run", "view", rid, "--log-failed", cwd=self.root, check=False).stdout
                             for rid in job.get("ci_runs", []))
             excerpt = ci_log.trim(log) if log.strip() else ""
+            job["ci_log"] = excerpt  # the CI doctor reads it before the fix session (stages.work_fix)
             return self.start_fix(job, f"CI failed on the PR ({job['pr_url']}). Run ./scripts/check.sh, find the failure "
                                        "and fix it." + (f"\n\nThe failed steps' log (last lines):\n```\n{excerpt}\n```"
                                                         if excerpt else ""))

@@ -37,9 +37,9 @@ Anything after the feature id is context from the human (for example an answer t
 
 ## 4. Verify
 - `./scripts/check.sh` must pass.
-- Review: spawn the `reviewer` subagent on your uncommitted diff (`git diff HEAD` plus new files). Fix only `bug` findings and violations of a golden principle. Ignore the rest; do not over-engineer. Re-run `check.sh` if you changed anything.
+- Review: spawn the `reviewer` subagent on your uncommitted diff (`git diff HEAD` plus new files). Fix only `bug` findings and violations of a golden principle. Ignore the rest; do not over-engineer. Re-run `check.sh` if you changed anything. In the loop (`HARNESS_AUTONOMOUS=1`), skip this step: the loop's review stage runs the reviewer and the other lenses on the PR, so a review here would be paid for twice.
 - Spawn the `verifier` subagent with the feature id. Do not mark passing on your own judgment.
-- Wait for each subagent's result before you go on (run it in the foreground if your Agent tool lets you choose). Never end your turn while the reviewer or verifier is still running: in a headless run the session ends with your turn, and the loop counts unfinished work as a failed attempt.
+- Wait for each subagent's result before you go on (run it in the foreground if your Agent tool lets you choose). Never end your turn while a subagent you spawned is still running: in a headless run the session ends with your turn, and the loop counts unfinished work as a failed attempt.
 - A hook saves the verifier's report as `harness/evidence/<id>.md`, next to its screenshots in `harness/evidence/<id>/`. Never write or edit anything under `harness/evidence/` yourself. A feature cannot be committed as `passing` without a fresh PASS there.
 - If the verifier fails it, fix and re-verify. After 3 failed rounds, set `status` to `blocked` and `blocked_reason` to `failed`, write what you tried and what still fails in `notes`, and go to step 5. The loop retries it later with a stronger model.
 - If the feature needs something only a human can provide (an API key, an account, a product decision), mark it `blocked` right away with `blocked_reason: needs_human` and what the human must do in `notes`. Do not fake it.

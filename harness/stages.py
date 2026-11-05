@@ -4,9 +4,17 @@ import json
 import sys
 import time
 
+import re
+import threading
+
 from common import (  # noqa: F401
-    backlog, gh, git, now, run, DOCS, GIT_LOCK, NOT_SENSITIVE, Path, REVIEW_LINE, SENSITIVE,
+    backlog, gh, git, now, run, DOCTOR_MODEL, DOCS, GIT_LOCK, NOT_SENSITIVE, Path, QUERY, REVIEW_LINE, SENSITIVE,
+    SKEPTIC_MODEL, UI,
 )
+
+AGENT_MODEL = re.compile(r"^model:\s*(\S+)", re.M)
+VERDICT = re.compile(r"^\s*(\d+):\s*(KEEP|DROP)\b\W*(.*)$", re.M)  # the skeptic's line for finding n
+TRIAGE = re.compile(r"^\s*(FIXED|REJECTED):\s*(.+)$", re.M)  # the fix session's answer for each finding
 
 
 class Stages:
@@ -194,14 +202,47 @@ class Stages:
         self.set_stage(job, "review", note=job.get("note"))
         self.launch(job, self.work_review)
 
+    def agent_model(self, job, agent):
+        """The model a subagent's definition asks for (the branch's .claude/agents/<agent>.md), else the default."""
+        f = Path(job["worktree"]) / f".claude/agents/{agent}.md"
+        m = AGENT_MODEL.search(f.read_text()) if f.exists() else None
+        return m.group(1) if m and m.group(1) != "inherit" else self.opts.model
+
+    def lenses(self, job, span, base, delta, changed):
+        """The review of one diff as (agent, task) pairs, each run as its own session, all at once (DESIGN.md 15.5,
+        P28; each lens has the stage's cap, as the one relay session had): the reviewer always; security on auth, data and API code; the designer on what users see; perf and
+        accessibility on UI and data access."""
+        ms = self.main.get(job["id"], {}).get("milestone")
+        design = f"docs/design/{ms}.md"
+        task = f"Review `git diff {span}` (feature {job['id']}: {job.get('title', '')})."
+        reviewer = task + (f" The milestone's design is {design}." if ms and (Path(job["worktree"]) / design).exists() else "")
+        if delta:
+            reviewer += (" This is a re-review after a fix: the diff is only the fix. Check that it fixes these findings "
+                         f"and adds no new bug:\n{job.get('last_bugs', '')}\n")
+        if job.get("rejected"):
+            reviewer += ("\nThe author rejected these findings, with a reason each:\n" + "\n".join(job["rejected"])
+                         + "\nDo not repeat a finding whose reason holds. If a reason is wrong, report the finding again "
+                           "as [bug] and end its line with `still: <why the reason is wrong>`.\n")
+        out = [("reviewer", reviewer)]
+        if all(DOCS.search(p) for p in changed):
+            return out
+        if any(SENSITIVE.search(p) and not NOT_SENSITIVE.search(p) for p in changed):
+            out.append(("security-reviewer", task))
+        baselines = [p for p in changed if p.startswith("e2e/__screenshots__/") and p.endswith(".png")]
+        pictures = [p for p in changed if p.endswith(".png")]
+        if pictures if delta else (job.get("shots") or baselines):  # the designer judges what users see
+            out.append(("designer", f"Feature {job['id']}, base {base}."
+                        + (f" Changed baselines: {', '.join(baselines)}." if baselines else "")
+                        + (f" A stacked PR: UI that {job['base']} already has is the base PR's, not this feature's."
+                           if base != "origin/main" else "")))
+        if any((UI.search(p) or QUERY.search(p)) and not NOT_SENSITIVE.search(p) for p in changed):
+            out.append(("perf-a11y-reviewer", task))
+        return out
+
     def work_review(self, job):
         # A stacked job is reviewed against the commit it was built on: its base branch may have been
         # rebased since (seen for real: F003's diff against a rebased agent/F001 held all of F001, 42 files).
         base = "origin/main" if job["base"] == "main" else job.get("base_sha") or job["base"]
-        ms = self.main.get(job["id"], {}).get("milestone")
-        design = f"docs/design/{ms}.md"
-        also = (f" The milestone's design is {design}: tell the reviewer to check the diff against it."
-                if ms and (Path(job["worktree"]) / design).exists() else "")
         head = git("rev-parse", "HEAD", cwd=job["worktree"]).stdout.strip()
         seen = job.get("reviewed_head")
         # After a fix, only what the fix changed is reviewed, against the bugs it was asked to fix. A
@@ -211,25 +252,70 @@ class Stages:
         span = f"{seen}..HEAD" if delta else f"{base}...HEAD"
         job["reviewed_head"] = head
         changed = git("diff", "--name-only", span, cwd=job["worktree"]).stdout.split()
-        baselines = [p for p in changed if p.startswith("e2e/__screenshots__/") and p.endswith(".png")]
-        pictures = [p for p in changed if p.endswith(".png")]
-        docs_only = changed and all(DOCS.search(p) for p in changed)
-        if not docs_only and any(SENSITIVE.search(p) and not NOT_SENSITIVE.search(p) for p in changed):
-            also += " Also spawn the security-reviewer subagent on the same diff."
-        if not docs_only and (pictures if delta else (job.get("shots") or baselines)):  # the designer judges what users see
-            also += (f" Also spawn the designer subagent on feature {job['id']} with base {base}"
-                     + (f" and these changed baselines: {', '.join(baselines)}" if baselines else "")
-                     + (f" (a stacked PR: UI that {job['base']} already has is the base PR's, not this feature's)"
-                        if base != "origin/main" else "")
-                     + ".")
-        also += (" Run every subagent named here in the foreground (not in the background) and wait for all of them."
-                 if also else "")
-        fixed = (f" This is a re-review after a fix: the diff is only the fix. Ask the reviewer to check that it fixes "
-                 f"these findings and adds no new bug:\n{job.get('last_bugs', '')}\n" if delta else "")
-        prompt = (f"Spawn the reviewer subagent on `git diff {span}`.{fixed}{also} Do not edit or commit anything. "
-                  "Reply with only their finding lines, most severe first, or exactly: No findings.")
-        cost, subtype, text = self.claude(job, prompt, self.opts.model, turns=60, lane_note=False)
-        return {"cost": cost, "subtype": subtype, "findings": text.strip()}
+        lenses = self.lenses(job, span, base, delta, changed)
+        results = {}  # each lens is a session of its own, with the stage's cap
+
+        def look(agent, task):
+            results[agent] = self.claude(job, task + " Do not edit or commit anything. Reply with only your finding "
+                                         "lines, most severe first, or exactly: No findings.",
+                                         self.agent_model(job, agent), turns=60, lane_note=False, agent=agent)
+        threads = [threading.Thread(target=look, args=lens, daemon=True) for lens in lenses]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        cost = sum(r[0] for r in results.values())
+        failed = next(((a, r[1]) for a, r in results.items() if r[1] != "success"), None)
+        silent = next((a for a, r in results.items() if not ("No findings" in r[2] or REVIEW_LINE.search(r[2]))), None)
+        lines = []
+        for agent, _ in lenses:  # one line per finding, in lens order, the same finding from two lenses once
+            for line in results.get(agent, (0, "", ""))[2].splitlines():
+                if REVIEW_LINE.search(line) and line.strip() not in lines:
+                    lines.append(line.strip())
+        self.merge_telemetry(job)
+        if failed or silent:
+            return {"cost": cost, "subtype": failed[1] if failed else "success",
+                    "findings": "" if silent else "\n".join(lines) or "No findings.", "lens": (failed or (silent,))[0]}
+        lines, dropped, more = self.skeptic(job, span, lines)
+        job["last_model"] = self.agent_model(job, "reviewer")  # the stage's record names the reviewer's model
+        job["skeptic_dropped"] = job.get("skeptic_dropped", 0) + dropped
+        return {"cost": cost + more, "subtype": "success", "findings": "\n".join(lines) or "No findings."}
+
+    def skeptic(self, job, span, lines):
+        """Each [bug] (security's aside) goes past a skeptic first; one it refutes becomes a [note] with its reason,
+        so no fix round is spent on a false alarm. Returns (lines, how many it dropped, its cost)."""
+        bugs = [i for i, line in enumerate(lines) if "[bug]" in line and "security:" not in line]
+        if not bugs:
+            return lines, 0, 0.0
+        listing = "\n".join(f"{n}. {lines[i]}" for n, i in enumerate(bugs, 1))
+        cost, subtype, text = self.claude(
+            job, f"Diff: `git diff {span}` (feature {job['id']}). Findings:\n{listing}\n\nFor each finding, reply one "
+                 "line `N: KEEP` if it is a real bug in this diff, or `N: DROP — <why not>`. Nothing else.",
+            SKEPTIC_MODEL, turns=40, lane_note=False, agent="skeptic")
+        self.merge_telemetry(job)
+        if subtype != "success":
+            return lines, 0, cost  # no verdict: every finding stands
+        out, dropped = list(lines), 0
+        for n, verdict, why in VERDICT.findall(text):
+            i = int(n) - 1
+            if verdict == "DROP" and 0 <= i < len(bugs):
+                out[bugs[i]] = lines[bugs[i]].replace("[bug]", "[note]", 1) + f" (skeptic: {why.strip() or 'not a bug'})"
+                dropped += 1
+        return out, dropped, cost
+
+    def merge_telemetry(self, job):
+        """The stage's sessions as one record: the lenses' tokens and dollars by model added up."""
+        lens = job.pop("lens_telemetry", {})
+        if not lens:
+            return
+        total = job.setdefault("last_telemetry", {"turns": 0, "tokens": {}, "by_model": {}})
+        total.setdefault("session_id", (lens.get("reviewer") or next(iter(lens.values()))).get("session_id"))
+        for t in lens.values():
+            total["turns"] = (total.get("turns") or 0) + (t.get("turns") or 0)
+            for k, v in (t.get("tokens") or {}).items():
+                total.setdefault("tokens", {})[k] = total.get("tokens", {}).get(k, 0) + v
+            for m, v in (t.get("by_model") or {}).items():
+                total.setdefault("by_model", {})[m] = round(total.get("by_model", {}).get(m, 0) + v, 4)
 
     def finish_review(self, job, res):
         if self.base_merged(job):  # the base PR merged while this review ran: move onto main
@@ -240,6 +326,8 @@ class Stages:
         text = res.get("findings", "")
         reported = "No findings" in text or REVIEW_LINE.search(text)
         if res.get("subtype") != "success" or not reported:
+            if res.get("lens") and res.get("subtype") == "success":
+                res["subtype"] = f"no findings reported by {res['lens']}"
             # Cut off (budget, turns), crashed, or ended its turn before its subagents reported (seen for real:
             # "All three subagents are running ... I'm waiting" was read as no bugs): it reviewed nothing.
             if res.get("subtype") == "success":
@@ -262,6 +350,14 @@ class Stages:
         for kind, lines in kinds.items():
             self.failure(job, f"review bug: {kind}", detail="\n".join(lines))
         job["last_bugs"] = "\n".join(bugs)
+        disputed = [line for line in bugs if "still:" in line]
+        if disputed:  # the author rejected it, the reviewer holds: someone has to decide (the dispatcher, from P31)
+            job.pop("rejected", None)
+            return self.set_stage(job, "held", note="the author and the reviewer disagree",
+                                  question=f"{job['id']}: the author rejected these findings and the reviewer still "
+                                           "holds them. Who is right? Answer, and the loop fixes or merges:\n"
+                                           + "\n".join(disputed))
+        job.pop("rejected", None)
         if not bugs:
             with GIT_LOCK:  # CI and the merge must see what was reviewed (a restart can leave a fix unpushed)
                 git("push", "-q", "-f", "origin", job["branch"], cwd=job["worktree"])
@@ -297,13 +393,26 @@ class Stages:
                       "its PASS. Commit everything.")
             cost, subtype, _ = self.claude(job, prompt, self.opts.large_model)
             return {"cost": cost, "subtype": subtype}
+        problems, extra = job["fix_with"], 0.0
+        if job.get("ci_log"):  # a cheap look at the red log first: the fix starts from the cause, not the noise
+            extra, subtype, text = self.claude(
+                job, f"CI failed on feature {job['id']}'s PR. The failed steps' log:\n```\n{job.pop('ci_log')}\n```\n"
+                     "Find the cause in the code. Do not edit anything.", DOCTOR_MODEL, turns=30, lane_note=False,
+                agent="ci-doctor", cap=min(0.3, self.caps[job["id"]]))
+            self.merge_telemetry(job)
+            if subtype == "success" and text.strip():
+                problems += f"\n\nThe CI doctor's diagnosis (check it, it may be wrong):\n{text.strip()}"
+        review = problems.startswith("The reviewer found")
         prompt = (f"You are continuing feature {job['id']} ({job['title']}) on this branch. Fix only these problems:\n"
-                  f"{job['fix_with']}\n\nThen run ./scripts/check.sh, spawn the verifier subagent for {job['id']} again, "
+                  f"{problems}\n\n"
+                  + ("Fix each finding, or, if one is not a real bug, leave it and say why. End your reply with one "
+                     "line per finding: `FIXED: <finding>` or `REJECTED: <finding> — <why>`.\n\n" if review else "")
+                  + f"Then run ./scripts/check.sh, spawn the verifier subagent for {job['id']} again, "
                   f"keep harness/status/{job['id']}.json passing only if the verifier passes (set it blocked with "
                   f"blocked_reason failed otherwise), add a short entry at the top of harness/log/{job['id']}.md, "
                   "and commit everything.")
-        cost, subtype, _ = self.claude(job, prompt, self.fix_model(job))
-        return {"cost": cost, "subtype": subtype}
+        cost, subtype, text = self.claude(job, prompt, self.fix_model(job))
+        return {"cost": cost + extra, "subtype": subtype, "text": text}
 
     def record_fix(self, job):
         """At merge: did the default model's first fix need another round?"""
@@ -370,4 +479,9 @@ class Stages:
             self.open_pr(job)
         if job.get("kind"):  # designs and rules had their review in the session
             return self.set_stage(job, "ci", note="fixed")
+        triage = TRIAGE.findall(res.get("text", ""))
+        counts = job.setdefault("triage", {"fixed": 0, "rejected": 0})
+        for verb, _ in triage:
+            counts[verb.lower()] += 1
+        job["rejected"] = [line for verb, line in triage if verb == "REJECTED"]
         self.start_review(job)

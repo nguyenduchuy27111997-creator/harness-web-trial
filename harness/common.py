@@ -50,6 +50,10 @@ SENSITIVE = re.compile(r"(^|/)(auth|session|middleware|api|migrations|supabase|d
 # ...but not tests, docs or the harness's own files, which change no access rule.
 NOT_SENSITIVE = re.compile(r"^(harness|e2e|tests?|docs)/|\.(spec|test)\.[cm]?[jt]sx?$|\.md$")
 DOCS = re.compile(r"\.md$|^docs/")
+UI = re.compile(r"\.(tsx|jsx|vue|svelte|css|scss|html)$")  # what users see: the perf and a11y lens looks at it
+QUERY = re.compile(r"(^|/)(migrations|supabase|db|database|queries)(/|\.|$)|\.sql$", re.I)  # and at data access
+SKEPTIC_MODEL = os.environ.get("LOOP_SKEPTIC_MODEL", "sonnet")  # checks each [bug] before a fix is paid for
+DOCTOR_MODEL = os.environ.get("LOOP_DOCTOR_MODEL", "haiku")  # reads a red CI log before the fix session
 # Errors that mean GitHub or the network was briefly unreachable: the step is tried again, not handed to the human.
 CMD_TIMEOUT = float(os.environ.get("LOOP_CMD_TIMEOUT", "300"))  # seconds for one git or gh command
 TRANSIENT = re.compile(r"could not resolve host|unable to access|error connecting to|connection (timed out|refused|reset|closed)"
@@ -95,7 +99,7 @@ MIN_DISK_GB = 10
 PROBE_EVERY = float(os.environ.get("LOOP_PROBE_EVERY", "300"))  # seconds between runs of stack.json's probes
 PROBE_MAX = float(os.environ.get("LOOP_PROBE_MAX", "1800"))  # a probe failing this long stops the run
 RUNNER_RESTART_GAP = float(os.environ.get("LOOP_RUNNER_RESTART_GAP", "600"))  # seconds between two restarts
-REVIEW_LINE = re.compile(r"\[(bug|ux|note|test|dead|duplicate|principle-\d+)\]")  # a finding line of a review
+REVIEW_LINE = re.compile(r"\[(bug|ux|note|test|dead|duplicate|perf|a11y|principle-\d+)\]")  # a finding line of a review
 # The account's Claude usage limit: not the job's fault. The loop pauses until it resets and keeps the job.
 LIMIT = re.compile(r"hit your (\w+[- ])?limit|usage limit (reached|exceeded)|limit will reset|resets? (at )?\d{1,2}(:\d\d)?\s*[ap]m", re.I)
 LIMIT_PAUSE = os.environ.get("LOOP_LIMIT_PAUSE")  # seconds to pause instead of until the reset (tests)
