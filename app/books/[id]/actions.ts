@@ -5,15 +5,18 @@ import { redirect } from "next/navigation";
 import {
   isUuid,
   parseBookFields,
+  parseProgress,
   parseRating,
   parseReview,
   parseStatus,
   removeBook,
   updateBookFields,
+  updateBookProgress,
   updateBookRating,
   updateBookReview,
   updateBookStatus,
   type EditBookFormState,
+  type ProgressFormState,
   type RatingFormState,
   type ReviewFormState,
   type StatusFormState,
@@ -100,6 +103,33 @@ export async function editBook(
   if (!isUuid(id)) return { formError: "Book not found" };
   try {
     if (!(await updateBookFields(await createClient(), id, parsed.value))) return { formError: "Book not found" };
+  } catch {
+    return { formError: "Could not save. Try again." };
+  }
+  revalidatePath("/books");
+  revalidatePath(`/books/${id}`);
+  return { saved: true };
+}
+
+export async function saveProgress(
+  id: string,
+  _prev: ProgressFormState,
+  formData: FormData,
+): Promise<ProgressFormState> {
+  await requireUser();
+  const parsed = parseProgress(formData);
+  if (!parsed.ok) {
+    return {
+      fieldErrors: parsed.fieldErrors,
+      values: {
+        total_pages: String(formData.get("total_pages") ?? ""),
+        current_page: String(formData.get("current_page") ?? ""),
+      },
+    };
+  }
+  if (!isUuid(id)) return { formError: "Book not found" };
+  try {
+    if (!(await updateBookProgress(await createClient(), id, parsed.value))) return { formError: "Book not found" };
   } catch {
     return { formError: "Could not save. Try again." };
   }
