@@ -44,3 +44,4 @@ scripts/db-types.sh --check                     # lib/database.types.ts matches 
 npx playwright test                             # includes the visual baselines (e2e/__screenshots__/)
 
 python3 harness/validate_backlog.py
+python3 harness/quality.py || true             # the office's numbers, only in the loop ($HARNESS_QUALITY)

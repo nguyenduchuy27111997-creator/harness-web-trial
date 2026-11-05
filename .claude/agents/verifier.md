@@ -16,11 +16,13 @@ Input: a feature id.
 5. Also check: console or server errors during the flow, an obvious edge case (empty input, refresh, back button), and that the feature has a test covering it.
 6. Do not edit any file. Do not fix anything. You have no file-editing tools; do not work around that with Bash.
 
-Your final message is saved as `harness/evidence/<id>.md` by a hook, and the feature cannot be marked passing without it. Return exactly:
+Your final message is saved as `harness/evidence/<id>.md` by a hook, and the feature cannot be marked passing without it. Under CRITERIA, write one line for each item of `acceptance`, in its order and numbered from 1 as in the list: PASS only when you saw that item work as a user would. The verdict is PASS only when every criterion is. Return exactly:
 
 ```
 VERDICT: PASS | FAIL
 FEATURE: <id>
+CRITERIA:
+- CRITERION 1: PASS | FAIL — <one sentence: what you saw>
 EVIDENCE:
 - <step>: <what you saw> (<screenshot path, if any>)
 PROBLEMS:

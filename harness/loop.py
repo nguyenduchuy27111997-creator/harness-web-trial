@@ -57,12 +57,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import backlog  # noqa: E402
 import ci_log  # noqa: E402
 import health  # noqa: E402
+import history  # noqa: E402
+import lang  # noqa: E402
 import metrics  # noqa: E402
 import notify  # noqa: E402
 import owner  # noqa: E402
 import preview  # noqa: E402
 import runner  # noqa: E402
 import stream  # noqa: E402
+import watch  # noqa: E402
 
 CLAUDE = os.environ.get("CLAUDE_BIN", "claude")
 GH = os.environ.get("GH_BIN", "gh")
@@ -291,6 +294,7 @@ class Loop:
         self.caps = {}  # feature id -> --max-budget-usd of its running session, held until its cost is counted
         self.stopping = False
         self.busy = None  # why the machine takes no new session right now (machine_busy), else None
+        self.watch = watch.Watch()  # alerts: quiet, going in circles, red tests, context, budget (watch.py)
         self.main_ci_since = {}
         # What the stack needs (harness/stack.json, from the preset): how features are verified, tools to probe.
         try:
@@ -358,7 +362,7 @@ class Loop:
         if stage in WAITING_HUMAN and question:
             key = f"ask:{job['id']}:{hashlib.sha1(question.encode()).hexdigest()[:8]}"
             detail = (notify.config(self.home) or {}).get("detail")
-            self.push(key, f"{job['id']} needs you", question if detail else f"{job.get('title', '')}: {job.get('note') or stage}",
+            self.push(key, lang.say("{id} needs you", id=job["id"]), question if detail else f"{job.get('title', '')}: {job.get('note') or stage}",
                       priority=4, click=job.get("pr_url"))
             try:
                 self.ask_on_github(job, key)
@@ -376,6 +380,45 @@ class Loop:
         for old in list(sent)[:-300]:
             sent.pop(old)
         notify.send(self.home, title, message, priority=priority, click=click, wait=wait)
+        notify.desktop(title, message)
+
+    def quality_path(self, fid, fresh=False):
+        """Where a session's check writes its numbers; emptied when a session starts, so old numbers are never new."""
+        f = self.home / "quality" / f"{fid}.json"
+        if fresh:
+            f.parent.mkdir(parents=True, exist_ok=True)
+            f.unlink(missing_ok=True)
+        return f
+
+    def keep_history(self):
+        """Hourly, the old streams and films go (history.py). And once a day, the days before today that have no
+        summary yet get one: Claude's when the budget has room for it, else one made from the numbers."""
+        if time.time() - getattr(self, "pruned", 0) > 3600:
+            self.pruned = time.time()
+            history.prune(self.home)
+        today = datetime.date.today().isoformat()
+        if self.state.get("summary_day") == today:
+            return
+        last = self.state.get("summary_day") or (datetime.date.today() - datetime.timedelta(days=2)).isoformat()
+        self.state["summary_day"] = today
+        for d in sorted(x["day"] for x in history.days(self.home) if last <= x["day"] < today and not x["summary"])[-3:]:
+            room = self.state["spent"] + history.SUMMARY_COST <= self.state["budget"]
+            cost = history.summarize(self.home, self.state, d, claude=CLAUDE, room=room)
+            self.state["spent"] = round(self.state["spent"] + cost, 4)
+            self.event("loop", f"summary of {d} written" + (f" (${cost:.2f})" if cost else ""))
+
+    def alerts(self):
+        """What watch.py sees, on the bus for the office and pushed (ntfy and macOS) at most every 30 minutes."""
+        if os.environ.get("LOOP_ALERTS") == "0":
+            return
+        with stream.BUS.cond:
+            events = list(stream.BUS.events)
+        for a in self.watch.check(events, self.state, self.home / "tests"):
+            stream.BUS.publish({"role": "loop", "kind": "alert", **a})
+            self.event(a["job"], f"alert: {a['detail']}")
+            self.push(f"alert:{a['job']}:{a['rule']}:{int(time.time() // 1800)}",
+                      lang.say("{id}: {detail}", id=a["job"], detail=lang.say(a["detail_key"], **a["params"])),
+                      lang.say(a["hint_key"], **a["params"]))
 
     def owner(self):
         if not self.state.get("owner"):
@@ -482,8 +525,8 @@ class Loop:
         today = now()[:10]
         if sum(1 for x in samples.values() if x.get("pushed", "").startswith(today)) < SAMPLE_PUSHES:
             sample["pushed"] = now()
-            self.push(f"sample:{job['id']}", f"Check {job['id']} against what you meant",
-                      f"{job['title']}. Looks right? Comment /ok, or /bug <what is off>, on the PR.", click=job.get("pr_url"))
+            self.push(f"sample:{job['id']}", lang.say("Check {id} against what you meant", id=job["id"]),
+                      lang.say("{title}. Looks right? Comment /ok, or /bug <what is off>, on the PR.", title=job["title"]), click=job.get("pr_url"))
 
     def self_hosted(self):
         if "self_hosted" not in self.state:
@@ -513,15 +556,15 @@ class Loop:
             if first:
                 self.event("loop", f"runner: {why}; restart it (svc.sh stop, then start)"
                                    + (", or let the loop do it: loop.py runner on" if plists else ""))
-                self.push(f"runner:{self.state['started']}", "CI runner stuck", f"{why}. Restart it, or allow the loop "
-                                                                                 "to: loop.py runner on.", priority=4)
+                self.push(f"runner:{self.state['started']}", lang.say("CI runner stuck"),
+                          lang.say("{why}. Restart it, or allow the loop to: loop.py runner on.", why=why), priority=4)
             return
         if len(restarts) >= 3:
             if not self.state.get("ci_stalled"):
                 self.state["ci_stalled"] = why
                 self.event("loop", f"ci stalled: the runner is still stuck after 3 restarts ({why}); nothing new starts")
-                self.push(f"stalled:{self.state['started']}", "CI runner still stuck",
-                          f"{why}, after 3 restarts. Check the Mac and the runner.", priority=5)
+                self.push(f"stalled:{self.state['started']}", lang.say("CI runner still stuck"),
+                          lang.say("{why}, after 3 restarts. Check the Mac and the runner.", why=why), priority=5)
             return
         if restarts and time.time() - restarts[-1] < RUNNER_RESTART_GAP:
             return
@@ -543,7 +586,7 @@ class Loop:
         for ms in sorted(done - set(self.state["milestones_done"])):
             self.state["milestones_done"].append(ms)
             self.event(ms, f"milestone: {ms} done; run /release {ms} for staging and its owner check")
-            self.push(f"milestone:{ms}", f"Milestone {ms} done", f"Every feature of {ms} is merged. Next: /release {ms}.",
+            self.push(f"milestone:{ms}", lang.say("Milestone {ms} done", ms=ms), lang.say("Every feature of {ms} is merged. Next: /release {ms}.", ms=ms),
                       wait=wait)
 
     # cost, failures, budgets --------------------------------------------------------------
@@ -763,7 +806,8 @@ class Loop:
             job["port"] = port
         env = {**os.environ, "PORT": str(port), "HARNESS_LANE": job["id"], "HARNESS_AUTONOMOUS": "1",
                "HARNESS_STAGE": job["stage"],
-               "HARNESS_TESTS": str(preview.PREVIEW.tests_path(job["id"]))}  # the kit's reporters write each test here
+               "HARNESS_TESTS": str(preview.PREVIEW.tests_path(job["id"])),  # the kit's reporters write each test here
+               "HARNESS_QUALITY": str(self.quality_path(job["id"], fresh=True))}  # and check.sh its numbers (quality.py)
         if lane_note:
             prompt += (f"\n\n(This lane's app runs on http://localhost:{port}: PORT is set, and ./init.sh and the "
                        "e2e tests use it. Never use port 3000 or another app's port.)")
@@ -1298,8 +1342,8 @@ class Loop:
     def block_ci(self, url):
         if not self.state["ci_blocked"]:
             self.state["ci_blocked"] = True
-            self.push(f"ci_blocked:{self.state['started']}", "CI is not starting",
-                      "GitHub Actions starts no jobs (billing or runner). Nothing merges until it does.", priority=4)
+            self.push(f"ci_blocked:{self.state['started']}", lang.say("CI is not starting"),
+                      lang.say("GitHub Actions starts no jobs (billing or runner). Nothing merges until it does."), priority=4)
             self.event("loop", f"ci blocked: GitHub Actions did not start the jobs ({url or 'no link'}); check the "
                                "account's Billing & plans (spending limit, payment). Nothing merges or reverts until CI runs.")
 
@@ -1522,6 +1566,13 @@ class Loop:
                             "merge.", count=False)
         return False
 
+    def advance_waiting(self, job):
+        """A stacked PR whose base has merged, and that is not moving onto main yet: the merge's restack can be
+        put off (a conflict whose session waits for a less busy machine) and nothing else tries again. Seen for
+        real: F031 sat in waiting_base for 3 hours after F028 merged."""
+        if self.base_merged(job) and job["id"] not in self.threads:
+            self.restack(job)
+
     def restack(self, job):
         with GIT_LOCK:
             git("fetch", "-q", "origin", cwd=job["worktree"])
@@ -1684,6 +1735,12 @@ class Loop:
             del self.threads[fid]
             job, res = self.job(fid), holder.get("result", {})
             self.count(job, holder, stage)
+            q = self.quality_path(fid)
+            if q.exists():  # the last green check of the session: coverage, tests, bundle (harness/quality.py)
+                try:
+                    job["quality"] = json.loads(q.read_text())
+                except ValueError:
+                    pass
             if res.get("subtype") in ("limit", "infra"):
                 self.pause(job, stage, infra=res["subtype"] == "infra")
                 continue
@@ -1723,7 +1780,7 @@ class Loop:
             self.state["paused_until"], self.state["pause_kind"] = until, "infra" if infra else "limit"
             resumes = datetime.datetime.fromtimestamp(until).strftime('%H:%M')
             self.event("loop", f"paused: {why} ({message[:120]}); resumes {resumes}")
-            self.push(f"pause:{self.state['pause_kind']}:{int(until) // 600}", "Loop paused", f"{why}; resumes {resumes}.")
+            self.push(f"pause:{self.state['pause_kind']}:{int(until) // 600}", lang.say("Loop paused"), lang.say("{why}; resumes {resumes}.", why=why, resumes=resumes))
         if stage == "building":
             self.set_stage(job, "queued", note="waits for the usage limit to reset")  # not an attempt
         elif stage == "fixing":  # undo the half-done fix; the review runs again and asks for the fix again
@@ -1783,20 +1840,25 @@ class Loop:
                     self.advance_ci(job)
                 elif job["stage"] == "merging":
                     self.advance_merge(job)
+                elif job["stage"] == "waiting_base":
+                    self.advance_waiting(job)
             except Exception as e:
                 if TRANSIENT.search(str(e)):
                     raise  # the network, not the job: the whole tick is retried
                 self.set_stage(job, "held", note=f"loop error: {e}", question=f"{job['id']}: the loop hit an error: {e}")
         self.watch_main()
         self.watch_runner()
+        self.alerts()
+        self.keep_history()
         self.delete_merged_branches()
         for ms, cap in self.budgets().items():
             if self.over_budget(ms) and not self.state["milestone_over"].get(ms):
                 self.state["milestone_over"][ms] = True
                 self.event(ms, f"budget: {ms} used ${self.state['milestone_spent'].get(ms, 0):.2f} of ${cap}; "
                                f"its features wait for a new budget (loop.py budget {ms} <dollars>)")
-                self.push(f"msbudget:{ms}:{cap}", f"{ms} budget used", f"{ms} spent ${self.state['milestone_spent'].get(ms, 0):.2f} "
-                                                                      f"of ${cap}; its features wait for more.")
+                self.push(f"msbudget:{ms}:{cap}", lang.say("{ms} budget used", ms=ms),
+                          lang.say("{ms} spent ${spent} of ${cap}; its features wait for more.", ms=ms,
+                                   spent=f"{self.state['milestone_spent'].get(ms, 0):.2f}", cap=cap))
             elif not self.over_budget(ms):
                 self.state["milestone_over"].pop(ms, None)
         if (self.home / "stop").exists():
@@ -1818,8 +1880,9 @@ class Loop:
             self.state["stop_reason"] = (f"budget ${self.state['budget']} used" if self.state["budget"] - self.state["spent"] < 0.01
                                          else f"budget ${self.state['budget']} used (less than ${MIN_SESSION:.2f} left, too little "
                                               "to start a session)")
-            self.push(f"budget:{self.state['started']}", "Budget used",
-                      f"Spent ${self.state['spent']:.2f} of ${self.state['budget']}; work in flight finishes, nothing new starts.")
+            self.push(f"budget:{self.state['started']}", lang.say("Budget used"),
+                      lang.say("Spent ${spent} of ${budget}; work in flight finishes, nothing new starts.",
+                               spent=f"{self.state['spent']:.2f}", budget=self.state["budget"]))
         if not self.stopping and not paused and not self.state["ci_blocked"] and not self.state.get("ci_stalled"):
             # nothing new while CI cannot run
             for f, base in self.ready():
@@ -1935,8 +1998,8 @@ class Loop:
                         self.state["offline_since"] = now()
                         self.event("loop", f"offline: GitHub unreachable; waiting (gives up after {OFFLINE_MAX / 3600:.0f} h)")
                     if time.time() - offline > 600:
-                        self.push(f"offline:{int(offline)}", "Loop offline", f"GitHub unreachable since {self.state['offline_since']}; "
-                                                                             "the loop waits and goes on by itself.")
+                        self.push(f"offline:{int(offline)}", lang.say("Loop offline"),
+                                  lang.say("GitHub unreachable since {since}; the loop waits and goes on by itself.", since=self.state["offline_since"]))
                     if time.time() - offline > OFFLINE_MAX:
                         self.state["stop_reason"] = f"offline for {(time.time() - offline) / 3600:.1f} h"
                         break
@@ -1982,7 +2045,7 @@ class Loop:
             self.save()
             self.write_history()
             self.event("loop", f"stopped: {self.state['stop_reason']} · spent ${self.state['spent']:.2f}")
-            self.push(f"end:{self.state['started']}", f"Loop stopped: {self.state['stop_reason']}"[:120],
+            self.push(f"end:{self.state['started']}", lang.say("Loop stopped: {why}", why=self.state["stop_reason"])[:120],
                       "\n".join(digest_for(self.home, self.state)), wait=True)
 
     def write_history(self):
@@ -2078,6 +2141,37 @@ def serve_dashboard(home, root):
                 body = f.read_bytes()
                 kind = {".html": "text/html; charset=utf-8", ".esm": "text/javascript", ".css": "text/css",
                         ".glb": "model/gltf-binary", ".png": "image/png"}[f.suffix]
+            elif path == "/history/days.json":  # the days the office can replay (history.py)
+                body, kind = json.dumps(history.days(home)).encode(), "application/json"
+            elif path == "/tree.json":  # the files and their lines, of main or of a lane's worktree (?job=F020)
+                job = re.search(r"[?&]job=([A-Za-z0-9_-]+)", self.path)
+                f = home / "state.json"
+                jobs = (json.loads(f.read_text()) if f.exists() else {}).get("jobs", {})
+                wt = (jobs.get(job.group(1)) or {}).get("worktree") if job else None
+                where = Path(wt) if wt and Path(wt).is_dir() else root
+                body, kind = json.dumps(history.tree(where)).encode(), "application/json"
+            elif path == "/roadmap.json":  # the backlog, milestones and what starts next (history.py)
+                f = home / "state.json"
+                body = json.dumps(history.roadmap(root, home, json.loads(f.read_text()) if f.exists() else {})).encode()
+                kind = "application/json"
+            elif path == "/history/stats.json":
+                f = home / "state.json"
+                body = json.dumps(history.stats(home, json.loads(f.read_text()) if f.exists() else {})).encode()
+                kind = "application/json"
+            elif re.fullmatch(r"/history/\d{4}-\d\d-\d\d\.json", path):  # ?job=F020 keeps that job's streamed code
+                job = re.search(r"[?&]job=([A-Za-z0-9_-]+)", self.path)
+                try:
+                    body = json.dumps(history.day_events(home, path[9:19], job.group(1) if job else None)).encode()
+                except ValueError:  # 2026-99-99
+                    self.send_error(404)
+                    return
+                kind = "application/json"
+            elif re.fullmatch(r"/history/summary/\d{4}-\d\d-\d\d", path):
+                f = home / "history" / "summary" / f"{path[-10:]}.md"
+                if not f.exists():
+                    self.send_error(404)
+                    return
+                body, kind = f.read_bytes(), "text/markdown; charset=utf-8"
             elif path == "/snapshot.json":
                 f = home / "state.json"
                 body = json.dumps({"state": json.loads(f.read_text()) if f.exists() else {}, **stream.BUS.snapshot()}).encode()
@@ -2220,6 +2314,7 @@ def service_plist(root):
 
 def cmd_start(root, a):
     home = home_of(root)
+    notify.DESKTOP = os.environ.get("LOOP_DESKTOP", "1") != "0"
     home.mkdir(exist_ok=True)
     state = json.loads((home / "state.json").read_text()) if (home / "state.json").exists() else {}
     if state.get("running") and alive(state.get("pid")):

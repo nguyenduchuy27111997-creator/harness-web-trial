@@ -23,11 +23,11 @@ import threading
 import time
 from pathlib import Path
 
+import history  # noqa: E402
 import stream
 
 IDLE = 180  # seconds with nobody watching before Chrome closes
 LANE_STAGES = ("building", "fixing")
-FILM_CAP = int(os.environ.get("LOOP_FILM_MB", "500")) * 1_000_000  # all films together; the oldest go first
 CHROME = ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "google-chrome", "google-chrome-stable",
           "chromium", "chromium-browser"]
 
@@ -224,14 +224,7 @@ class Preview:
         self.prune()
 
     def prune(self):
-        films = sorted((d for d in (self.home / "film").iterdir() if d.is_dir()), key=lambda d: d.stat().st_mtime)
-        size = {d: sum(f.stat().st_size for f in d.iterdir()) for d in films}
-        total = sum(size.values())
-        for d in films[:-1]:  # never the film being made
-            if total <= FILM_CAP:
-                break
-            total -= size[d]
-            shutil.rmtree(d, ignore_errors=True)
+        history.prune(self.home)  # films and streams: 30 days, 2 GB together, never the film being made
 
     def tick(self, busy):
         """From the loop's tick: start what the people watching need, unless the machine is busy."""

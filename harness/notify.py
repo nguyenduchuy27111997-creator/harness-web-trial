@@ -9,6 +9,8 @@ line (detail: true sends the full question). Sending never blocks or fails the l
 import json
 import secrets
 import string
+import subprocess
+import sys
 import threading
 import urllib.request
 from pathlib import Path
@@ -44,6 +46,23 @@ def post(cfg, title, message, priority=3, tags=(), click=None):
         with urllib.request.urlopen(req, timeout=10) as r:
             return 200 <= r.status < 300
     except Exception:
+        return False
+
+
+DESKTOP = False  # macOS notifications: `loop.py start` turns them on (LOOP_DESKTOP=0 keeps them off); tests never do
+
+
+def desktop(title, message):
+    """A macOS notification (Notification Center), with or without ntfy. Never blocks or fails the loop.
+    AppleScript strings take JSON's quoting: \\" and \\\\ escape the same way."""
+    if not DESKTOP or sys.platform != "darwin":
+        return False
+    q = lambda s: json.dumps(s, ensure_ascii=False)  # noqa: E731
+    try:
+        subprocess.Popen(["osascript", "-e", f"display notification {q(message[:240])} with title {q(title[:80])}"],
+                         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    except OSError:
         return False
 
 
