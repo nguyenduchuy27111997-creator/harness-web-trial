@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Book page Shelves section: lists the book's shelves, picker of shelves it is not on + Add to shelf, link to /shelves when the user has none. Migration book_shelves (composite FKs, RLS); addToShelf action. Book-page baselines refreshed for the new section."
+}

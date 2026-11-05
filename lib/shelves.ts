@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Tables } from "@/lib/database.types";
+import { isUuid } from "./books";
 import type { FormState, Parsed } from "@/lib/forms";
 
 export type Shelf = Pick<Tables<"shelves">, "id" | "name">;
@@ -26,6 +27,34 @@ export async function listShelves(supabase: SupabaseClient<Database>): Promise<S
 export async function insertShelf(supabase: SupabaseClient<Database>, name: string): Promise<"ok" | "taken"> {
   const { error } = await supabase.from("shelves").insert({ name });
   if (error?.code === "23505") return "taken";
+  if (error) throw new Error(error.message);
+  return "ok";
+}
+
+export type AddToShelfFormState = FormState<"shelf"> & { saved?: true };
+
+export function parseShelfChoice(formData: FormData): Parsed<string, "shelf"> {
+  const shelf = String(formData.get("shelf") ?? "");
+  if (!isUuid(shelf)) return { ok: false, fieldErrors: { shelf: "Choose a shelf" } };
+  return { ok: true, value: shelf };
+}
+
+export async function listBookShelfIds(supabase: SupabaseClient<Database>, bookId: string): Promise<string[]> {
+  if (!isUuid(bookId)) return [];
+  const { data, error } = await supabase.from("book_shelves").select("shelf_id").eq("book_id", bookId);
+  if (error) throw new Error(error.message);
+  return data.map((row) => row.shelf_id);
+}
+
+// user_id comes from the column default; the composite foreign keys reject a book or shelf of another owner.
+export async function addBookToShelf(
+  supabase: SupabaseClient<Database>,
+  bookId: string,
+  shelfId: string,
+): Promise<"ok" | "missing"> {
+  const { error } = await supabase.from("book_shelves").insert({ book_id: bookId, shelf_id: shelfId });
+  if (error?.code === "23505") return "ok";
+  if (error?.code === "23503" || error?.code === "42501") return "missing";
   if (error) throw new Error(error.message);
   return "ok";
 }

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { insertShelf, listShelves, parseShelfName } from "./shelves";
+import { addBookToShelf, insertShelf, listBookShelfIds, listShelves, parseShelfChoice, parseShelfName } from "./shelves";
 
 function form(name?: string) {
   const f = new FormData();
@@ -59,5 +59,52 @@ describe("insertShelf", () => {
   });
   it("throws on other errors", async () => {
     await expect(insertShelf(stub({ code: "XX", message: "boom" }), "Travel")).rejects.toThrow("boom");
+  });
+});
+
+describe("parseShelfChoice", () => {
+  const choice = (v?: string) => {
+    const f = new FormData();
+    if (v !== undefined) f.set("shelf", v);
+    return f;
+  };
+  it("accepts a uuid", () => {
+    const id = "123e4567-e89b-12d3-a456-426614174000";
+    expect(parseShelfChoice(choice(id))).toEqual({ ok: true, value: id });
+  });
+  it("rejects anything else", () => {
+    expect(parseShelfChoice(choice("nope"))).toEqual({ ok: false, fieldErrors: { shelf: "Choose a shelf" } });
+    expect(parseShelfChoice(choice())).toEqual({ ok: false, fieldErrors: { shelf: "Choose a shelf" } });
+  });
+});
+
+describe("listBookShelfIds", () => {
+  const stub = (result: { data: unknown; error: { message: string } | null }) =>
+    ({ from: () => ({ select: () => ({ eq: () => Promise.resolve(result) }) }) }) as unknown as SupabaseClient<Database>;
+  const id = "123e4567-e89b-12d3-a456-426614174000";
+  it("returns the shelf ids", async () => {
+    expect(await listBookShelfIds(stub({ data: [{ shelf_id: "a" }, { shelf_id: "b" }], error: null }), id)).toEqual(["a", "b"]);
+  });
+  it("returns none for a malformed book id without querying", async () => {
+    expect(await listBookShelfIds(stub({ data: null, error: { message: "boom" } }), "not-a-uuid")).toEqual([]);
+  });
+  it("throws on a database error", async () => {
+    await expect(listBookShelfIds(stub({ data: null, error: { message: "boom" } }), id)).rejects.toThrow("boom");
+  });
+});
+
+describe("addBookToShelf", () => {
+  const stub = (error: { code?: string; message: string } | null) =>
+    ({ from: () => ({ insert: () => Promise.resolve({ error }) }) }) as unknown as SupabaseClient<Database>;
+  it("is ok on success and when already on the shelf", async () => {
+    expect(await addBookToShelf(stub(null), "b", "s")).toBe("ok");
+    expect(await addBookToShelf(stub({ code: "23505", message: "dup" }), "b", "s")).toBe("ok");
+  });
+  it("is missing for a foreign key or RLS error", async () => {
+    expect(await addBookToShelf(stub({ code: "23503", message: "fk" }), "b", "s")).toBe("missing");
+    expect(await addBookToShelf(stub({ code: "42501", message: "rls" }), "b", "s")).toBe("missing");
+  });
+  it("throws on other errors", async () => {
+    await expect(addBookToShelf(stub({ code: "XX", message: "boom" }), "b", "s")).rejects.toThrow("boom");
   });
 });
