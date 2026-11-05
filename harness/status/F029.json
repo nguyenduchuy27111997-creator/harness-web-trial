@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Validation (parseShelfName, unique index -> 'taken') already shipped with F028; this feature adds its independent e2e test and baseline only."
+}
