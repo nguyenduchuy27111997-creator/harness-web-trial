@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Trigger books_finish_progress (migration 20261105140000) copies total_pages into current_page when a book becomes Finished."
+}
