@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Shelves page with create form; migration 1 (shelves); header Shelves link. Header now wraps on narrow screens and all signed-in baselines were refreshed for the new link."
+}
