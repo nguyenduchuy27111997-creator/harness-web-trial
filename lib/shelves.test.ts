@@ -8,6 +8,7 @@ import {
   listShelves,
   parseShelfChoice,
   parseShelfName,
+  removeShelf,
   updateShelfName,
 } from "./shelves";
 
@@ -154,5 +155,17 @@ describe("addBookToShelf", () => {
   });
   it("throws on other errors", async () => {
     await expect(addBookToShelf(stub({ code: "XX", message: "boom" }), BOOK, SHELF)).rejects.toThrow("boom");
+  });
+});
+
+describe("removeShelf", () => {
+  const stub = (data: { id: string }[] | null, error: { message: string } | null = null) =>
+    ({ from: () => ({ delete: () => ({ eq: () => ({ select: () => Promise.resolve({ data, error }) }) }) }) }) as unknown as SupabaseClient<Database>;
+  it("is true when a row was deleted, false when none was", async () => {
+    expect(await removeShelf(stub([{ id: "s" }]), "s")).toBe(true);
+    expect(await removeShelf(stub([]), "s")).toBe(false);
+  });
+  it("throws on a database error", async () => {
+    await expect(removeShelf(stub(null, { message: "boom" }), "s")).rejects.toThrow("boom");
   });
 });

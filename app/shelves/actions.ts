@@ -5,6 +5,7 @@ import { isUuid } from "@/lib/books";
 import {
   insertShelf,
   parseShelfName,
+  removeShelf,
   SHELF_NAME_TAKEN,
   type ShelfFormState,
   updateShelfName,
@@ -43,4 +44,12 @@ export async function renameShelf(id: string, _prev: ShelfFormState, formData: F
   revalidatePath("/shelves");
   revalidatePath("/books", "layout");
   return { saved: true };
+}
+
+export async function deleteShelf(id: string, _formData: FormData): Promise<void> {
+  await requireUser();
+  if (!isUuid(id)) return;
+  await removeShelf(await createClient(), id);
+  revalidatePath("/shelves");
+  revalidatePath("/books", "layout");
 }

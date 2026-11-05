@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { createShelf, renameShelf } from "@/app/shelves/actions";
+import { createShelf, deleteShelf, renameShelf } from "@/app/shelves/actions";
 import { RenameShelfList } from "@/components/rename-shelf-form";
 import { ShelfForm } from "@/components/shelf-form";
 import { listShelves } from "@/lib/shelves";
@@ -17,7 +17,11 @@ export default async function ShelvesPage() {
         <p className="text-muted-foreground">You have no shelves yet.</p>
       ) : (
         <RenameShelfList
-          shelves={shelves.map((shelf) => ({ ...shelf, action: renameShelf.bind(null, shelf.id) }))}
+          shelves={shelves.map((shelf) => ({
+            ...shelf,
+            action: renameShelf.bind(null, shelf.id),
+            deleteAction: deleteShelf.bind(null, shelf.id),
+          }))}
         />
       )}
       <ShelfForm action={createShelf} />
