@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { createShelf } from "@/app/shelves/actions";
+import { createShelf, renameShelf } from "@/app/shelves/actions";
+import { RenameShelfList } from "@/components/rename-shelf-form";
 import { ShelfForm } from "@/components/shelf-form";
 import { listShelves } from "@/lib/shelves";
 import { createClient, requireUser } from "@/lib/supabase/server";
@@ -15,11 +16,9 @@ export default async function ShelvesPage() {
       {shelves.length === 0 ? (
         <p className="text-muted-foreground">You have no shelves yet.</p>
       ) : (
-        <ul className="flex flex-col gap-3">
-          {shelves.map((shelf) => (
-            <li key={shelf.id}>{shelf.name}</li>
-          ))}
-        </ul>
+        <RenameShelfList
+          shelves={shelves.map((shelf) => ({ ...shelf, action: renameShelf.bind(null, shelf.id) }))}
+        />
       )}
       <ShelfForm action={createShelf} />
     </main>

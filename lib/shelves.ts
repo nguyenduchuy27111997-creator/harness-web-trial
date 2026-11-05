@@ -29,3 +29,14 @@ export async function insertShelf(supabase: SupabaseClient<Database>, name: stri
   if (error) throw new Error(error.message);
   return "ok";
 }
+
+export async function updateShelfName(
+  supabase: SupabaseClient<Database>,
+  id: string,
+  name: string,
+): Promise<"ok" | "taken" | "missing"> {
+  const { data, error } = await supabase.from("shelves").update({ name }).eq("id", id).select("id");
+  if (error?.code === "23505") return "taken";
+  if (error) throw new Error(error.message);
+  return data.length === 0 ? "missing" : "ok";
+}

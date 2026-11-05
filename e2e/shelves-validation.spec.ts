@@ -21,12 +21,12 @@ test("shelves: name is required, at most 40 characters and unique per account", 
 
   await name.fill("Travel");
   await create.click();
-  await expect(page.getByRole("listitem")).toHaveText(["Travel"]);
+  await expect(page.getByRole("listitem")).toContainText(["Travel"]);
 
   await name.fill("  travel ");
   await create.click();
   await expect(name).toHaveAccessibleDescription("You already have a shelf with that name");
-  await expect(page.getByRole("listitem")).toHaveText(["Travel"]);
+  await expect(page.getByRole("listitem")).toContainText(["Travel"]);
   await page.mouse.move(0, 0);
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F029-shelf-name-taken.png", { stylePath: "e2e/hide-dev-overlay.css" });
@@ -37,6 +37,6 @@ test("shelves: name is required, at most 40 characters and unique per account", 
   await page.goto("/shelves");
   await name.fill("Travel");
   await create.click();
-  await expect(page.getByRole("listitem")).toHaveText(["Travel"]);
+  await expect(page.getByRole("listitem")).toContainText(["Travel"]);
   await expect(name).toHaveValue("");
 });

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { insertShelf, listShelves, parseShelfName } from "./shelves";
+import { insertShelf, listShelves, parseShelfName, updateShelfName } from "./shelves";
 
 function form(name?: string) {
   const f = new FormData();
@@ -59,5 +59,24 @@ describe("insertShelf", () => {
   });
   it("throws on other errors", async () => {
     await expect(insertShelf(stub({ code: "XX", message: "boom" }), "Travel")).rejects.toThrow("boom");
+  });
+});
+
+describe("updateShelfName", () => {
+  const stub = (res: { data?: { id: string }[]; error?: { code?: string; message: string } | null }) =>
+    ({
+      from: () => ({ update: () => ({ eq: () => ({ select: () => Promise.resolve({ error: null, ...res }) }) }) }),
+    }) as unknown as SupabaseClient<Database>;
+  it("is ok when a row changed", async () => {
+    expect(await updateShelfName(stub({ data: [{ id: "a" }] }), "a", "Trips")).toBe("ok");
+  });
+  it("is missing when no row changed", async () => {
+    expect(await updateShelfName(stub({ data: [] }), "a", "Trips")).toBe("missing");
+  });
+  it("is taken on a unique violation", async () => {
+    expect(await updateShelfName(stub({ error: { code: "23505", message: "dup" } }), "a", "Trips")).toBe("taken");
+  });
+  it("throws on other errors", async () => {
+    await expect(updateShelfName(stub({ error: { code: "XX", message: "boom" } }), "a", "Trips")).rejects.toThrow("boom");
   });
 });

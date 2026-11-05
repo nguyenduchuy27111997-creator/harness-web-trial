@@ -23,7 +23,7 @@ test("shelves: create named shelves, own to each account", async ({ page }) => {
 
   await page.getByLabel("Name").fill("Book club");
   await page.getByRole("button", { name: "Create shelf" }).click();
-  await expect(page.getByRole("listitem")).toHaveText(["Book club", "Travel"]);
+  await expect(page.getByRole("listitem")).toContainText(["Book club", "Travel"]);
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F028-shelves.png", { stylePath: "e2e/hide-dev-overlay.css" });
 
