@@ -70,6 +70,15 @@ export async function addBookToShelf(
   throw new Error(error.message);
 }
 
+export async function removeBookFromShelf(
+  supabase: SupabaseClient<Database>,
+  bookId: string,
+  shelfId: string,
+): Promise<void> {
+  const { error } = await supabase.from("book_shelves").delete().eq("book_id", bookId).eq("shelf_id", shelfId);
+  if (error) throw new Error(error.message);
+}
+
 // A value that is not the id of one of the user's own shelves is ignored, so it never reaches a query.
 export function parseShelfFilter(value: string | string[] | undefined, shelves: Shelf[]): string | undefined {
   return typeof value === "string" && shelves.some((shelf) => shelf.id === value) ? value : undefined;
