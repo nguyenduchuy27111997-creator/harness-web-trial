@@ -12,10 +12,10 @@ test("quote validation", async ({ page }) => {
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await page.getByRole("link", { name: "Validated Quotes" }).click();
 
+  const list = page.getByRole("list", { name: "Quotes from this book" });
+  const save = page.getByRole("button", { name: "Save quote" });
   const quoteField = page.getByRole("textbox", { name: "Quote", exact: true });
   const pageField = page.getByRole("textbox", { name: "Page (optional)" });
-  const save = page.getByRole("button", { name: "Save quote" });
-  const list = page.getByRole("list", { name: "Quotes from this book" });
   // A server action answers a POST. The form resets after it, which can overwrite a fill made too early,
   // so retry until the POST carried the value.
   const submitWith = async (field: typeof quoteField, value: string, quote = "A valid quote") => {
@@ -66,8 +66,7 @@ test("quote validation", async ({ page }) => {
   await page.getByRole("option", { name: "Reading" }).click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await page.getByRole("link", { name: "Bounded Quotes" }).click();
-  await page.getByLabel("Total pages").fill("250");
-  await page.getByLabel("Current page").fill("100");
+  for (const [label, value] of [["Total pages", "250"], ["Current page", "100"]]) await page.getByLabel(label).fill(value);
   await page.getByRole("button", { name: "Save progress" }).click();
   await expect(page.getByText("Page 100 of 250 (40%)")).toBeVisible();
 
