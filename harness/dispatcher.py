@@ -26,7 +26,9 @@ class Dispatcher:
         if (MODE != "suggest" or not event or job.get("kind") == "rule" or self.free_budget() < CAP
                 or self.day_full()):
             return
-        key = f"{job['id']}:{event}:{job.get('attempts', 0)}:{job.get('fix_rounds', 0)}"
+        # A new hold after the owner answered is a new situation: seen on the web trial, F047's second hold had the key
+        # of its first (same attempt, same fix round) and was never asked about.
+        key = f"{job['id']}:{event}:{job.get('attempts', 0)}:{job.get('fix_rounds', 0)}:{len(job.get('answers', []))}"
         asked = self.state.setdefault("consulted", [])
         if key in asked:
             return
