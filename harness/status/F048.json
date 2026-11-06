@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "/quotes lists all own quotes newest first (listQuotes, embedded book id/title), each with text, 'Page N' when set, and a link to its book. Header gains 'Quotes' between Shelves and Stats, so every signed-in visual baseline was regenerated (header only)."
+}
