@@ -1,5 +1,5 @@
 {
-  "version": "5.27.7",
+  "version": "5.27.8",
   "preset": "nextjs-supabase",
   "files": {
     ".claude/agents/architect.md": "028703baff7bdfbf7e1a593438ff1ed616d359041d5c1223b37e00100de997b4",
@@ -221,7 +221,7 @@
     "init.sh": "ecce06abea33014c055e0d491247666bcef02e55969252d2e9ad7ed7507e48f2",
     "lighthouserc.cjs": "e47c2ddc72ec0a31f197a0de1831bb07dbd798f257a6949cfa0d149dcc7dbd0c",
     "playwright.config.ts": "f85ce7b916ce3714a3a7aebe905ad4a560cdbfc46d4defdbba80573ef7eb4557",
-    "scripts/check.sh": "c4d05528359665ec598f2f507eda35e11225053f56d6904e18cfaa12ea02e175",
+    "scripts/check.sh": "4c3da0d72e3a4fbe3abfaf5dc1babf13d1519f601781e03a22ca947ebff9a4dc",
     "scripts/db-reset.sh": "1b63126d524a61e21e68e0c322bd7aa55c18c15d6b98b69f7594d18bf33afc00",
     "scripts/db-types.sh": "49e4b51cfdd784cc6d7b60c972dd7c4340ff82f140c8528d0ce4dd31ec7bfbed",
     "scripts/db-up.sh": "32f0a337e6009ea1c36789354550d560007f90cf280454c9847068d970b298ce",
@@ -229,6 +229,7 @@
     "scripts/e2e-size.py": "f82f8442f750098e524a7d17a4c1e50db1de4d1280aa567e2f21c5e048c0ecd9",
     "scripts/env-test.sh": "b357a66e2ff1ea1c8f97f575a9fd669a2dd93f456cbc7d5d4bc8104ce4f05ef4",
     "scripts/migration-lint.py": "8912d04a7d43d0a37252a7890b84cd66d7ee3ef03cf386b389440774655ecc90",
+    "scripts/one-at-a-time.py": "849b82ebdef278f78a60a6c872c1da72cd3582c6103c48f3245a79b17aa6df26",
     "scripts/perf.sh": "04c4595db9dd60369b3dd93c80f610e110bd1d8fca308d27687133f4d82c6d7d",
     "scripts/preset-setup.sh": "5190888f5b657b664a6af71c425a68778ab8719fee830b4146784eb55caf53f5",
     "scripts/rls-check.py": "9c44e29d2876d9b6383d56bbddf461ee601e23f5f4bd22b0fd5697ec8233104d",
