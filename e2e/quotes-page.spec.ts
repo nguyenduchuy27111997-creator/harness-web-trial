@@ -52,3 +52,48 @@ test("quotes page lists my quotes newest first", async ({ page }) => {
   await expect(page).toHaveURL(/\/books\/[0-9a-f-]{36}$/);
   await expect(page.getByRole("heading", { name: "Middlemarch" })).toBeVisible();
 });
+
+// F049: search my quotes by text or book title, kept in the URL.
+test("search quotes by text or book title", async ({ page }) => {
+  await signUpAs(page, `f049-${process.env.HARNESS_LANE ?? "local"}-${Date.now()}@example.com`);
+  await addBook(page, "Middlemarch", "George Eliot");
+  await addBook(page, "Persuasion", "Jane Austen");
+  await saveQuote(page, "Middlemarch", MIDDLEMARCH);
+  await saveQuote(page, "Persuasion", PERSUASION);
+
+  await page.goto("/quotes");
+  const items = page.getByRole("list", { name: "My quotes" }).getByRole("listitem");
+  const search = page.getByRole("search").getByLabel("Search");
+
+  await search.fill("NARROW");
+  await search.press("Enter");
+  await expect(page).toHaveURL(/\/quotes\?q=NARROW$/);
+  await expect(items).toHaveCount(1);
+  await expect(items.first()).toContainText(MIDDLEMARCH);
+
+  await search.fill("persua");
+  await search.press("Enter");
+  await expect(page).toHaveURL(/\/quotes\?q=persua$/);
+  await expect(items).toHaveCount(1);
+  await expect(items.first()).toContainText(PERSUASION);
+  await page.reload();
+  await expect(search).toHaveValue("persua");
+  await expect(items).toHaveCount(1);
+  await expect(items.first()).toContainText(PERSUASION);
+
+  await search.fill("zzz");
+  await search.press("Enter");
+  await expect(page.getByText("No quotes match “zzz”.")).toBeVisible();
+  await page.getByRole("link", { name: "Clear search" }).click();
+  await expect(page).toHaveURL(/\/quotes$/);
+  await expect(items).toHaveCount(2);
+  await expect(search).toHaveValue("");
+
+  await search.fill("narrow");
+  await search.press("Enter");
+  await expect(items).toHaveCount(1);
+  await search.fill("");
+  await search.press("Enter");
+  await expect(page).toHaveURL(/\/quotes$/);
+  await expect(items).toHaveCount(2);
+});

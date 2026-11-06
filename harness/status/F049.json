@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Quote search on /quotes via filterQuotes/quotesHref; SearchForm reused with a quotes flag (decision 0011)."
+}

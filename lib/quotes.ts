@@ -52,6 +52,19 @@ export async function listQuotes(supabase: SupabaseClient<Database>): Promise<Qu
   return data;
 }
 
+// In memory over the one user's rows, so q never reaches a query (design M5).
+export function filterQuotes(quotes: Quote[], q?: string): Quote[] {
+  if (!q) return quotes;
+  const needle = q.toLocaleLowerCase("en");
+  return quotes.filter(
+    (quote) => quote.body.toLocaleLowerCase("en").includes(needle) || quote.book.title.toLocaleLowerCase("en").includes(needle),
+  );
+}
+
+export function quotesHref(q?: string): string {
+  return q ? `/quotes?${new URLSearchParams({ q })}` : "/quotes";
+}
+
 // The composite foreign key rejects a book that is not the user's or is gone (23503); RLS rejects a forged owner (42501).
 export async function insertQuote(
   supabase: SupabaseClient<Database>,

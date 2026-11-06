@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { insertQuote, listBookQuotes, listQuotes, parseQuote } from "./quotes";
+import { filterQuotes, insertQuote, listBookQuotes, listQuotes, parseQuote, quotesHref } from "./quotes";
 
 const BOOK = "11111111-1111-4111-8111-111111111111";
 
@@ -122,5 +122,27 @@ describe("insertQuote", () => {
   });
   it("throws on another error", async () => {
     await expect(insertQuote(stub({ code: "XX", message: "boom" }).supabase, BOOK, { body: "A", page: null })).rejects.toThrow("boom");
+  });
+});
+
+describe("filterQuotes", () => {
+  const quote = (body: string, title: string) => ({ id: body, body, page: null, created_at: "", book: { id: title, title } });
+  const quotes = [quote("a narrow mind", "Middlemarch"), quote("half agony, half hope", "Persuasion")];
+
+  it("returns every quote without a search", () => {
+    expect(filterQuotes(quotes)).toEqual(quotes);
+  });
+
+  it("matches the text or the book title ignoring case", () => {
+    expect(filterQuotes(quotes, "NARROW").map((x) => x.book.title)).toEqual(["Middlemarch"]);
+    expect(filterQuotes(quotes, "persua").map((x) => x.book.title)).toEqual(["Persuasion"]);
+    expect(filterQuotes(quotes, "zzz")).toEqual([]);
+  });
+});
+
+describe("quotesHref", () => {
+  it("leaves out an empty search and encodes the rest", () => {
+    expect(quotesHref()).toBe("/quotes");
+    expect(quotesHref("a b&c")).toBe("/quotes?q=a+b%26c");
   });
 });
