@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { formatNoteDate, insertNote, listNotes, parseNote, updateNote } from "./notes";
+import { formatNoteDate, insertNote, listNotes, parseNote, removeNote, updateNote } from "./notes";
 
 const B = "11111111-1111-4111-8111-111111111111";
 
@@ -90,5 +90,21 @@ describe("updateNote", () => {
   });
   it("throws on a database error", async () => {
     await expect(updateNote(stub({ data: null, error: { message: "boom" } }), "b", "n", "x")).rejects.toThrow("boom");
+  });
+});
+
+describe("removeNote", () => {
+  const stub = (result: { data: unknown; error: { message: string } | null }) =>
+    ({
+      from: () => ({ delete: () => ({ eq: () => ({ eq: () => ({ select: () => Promise.resolve(result) }) }) }) }),
+    }) as unknown as SupabaseClient<Database>;
+  it("is true when a row was deleted", async () => {
+    expect(await removeNote(stub({ data: [{ id: "n" }], error: null }), "b", "n")).toBe(true);
+  });
+  it("is false when no row matched", async () => {
+    expect(await removeNote(stub({ data: [], error: null }), "b", "n")).toBe(false);
+  });
+  it("throws on a database error", async () => {
+    await expect(removeNote(stub({ data: null, error: { message: "boom" } }), "b", "n")).rejects.toThrow("boom");
   });
 });

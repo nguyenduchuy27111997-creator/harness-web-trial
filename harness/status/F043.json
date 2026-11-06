@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "removeNote + deleteNote action; ConfirmDeleteButton (size sm) beside Edit on each note. e2e/notes-delete.spec.ts; F040-notes baseline updated for the new Delete button."
+}

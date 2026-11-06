@@ -21,7 +21,7 @@ import {
   type ReviewFormState,
   type StatusFormState,
 } from "@/lib/books";
-import { insertNote, parseNote, updateNote, type NoteFormState } from "@/lib/notes";
+import { insertNote, parseNote, removeNote, updateNote, type NoteFormState } from "@/lib/notes";
 import { addBookToShelf, parseShelfChoice, removeBookFromShelf, type AddToShelfFormState } from "@/lib/shelves";
 import { createClient, requireUser } from "@/lib/supabase/server";
 
@@ -199,4 +199,10 @@ export async function editNote(
   }
   revalidatePath(`/books/${bookId}`);
   return { saved: true };
+}
+
+export async function deleteNote(bookId: string, noteId: string, _formData: FormData): Promise<void> {
+  await requireUser();
+  if (isUuid(bookId) && isUuid(noteId)) await removeNote(await createClient(), bookId, noteId);
+  revalidatePath(`/books/${bookId}`);
 }
