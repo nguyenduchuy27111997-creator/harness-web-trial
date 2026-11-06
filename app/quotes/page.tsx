@@ -14,12 +14,12 @@ export default async function QuotesPage() {
       {quotes.length === 0 ? (
         <p className="text-muted-foreground">You have no quotes yet.</p>
       ) : (
-        <ul aria-label="My quotes" className="flex flex-col gap-4">
+        <ul aria-label="My quotes" className="flex flex-col gap-3">
           {quotes.map((quote) => (
             <li key={quote.id} className="flex flex-col gap-1 border-l-2 border-border pl-3">
               <blockquote className="whitespace-pre-wrap break-words">{quote.body}</blockquote>
               <p className="text-sm text-muted-foreground">
-                <Link href={`/books/${quote.book.id}`} className="font-medium text-foreground underline-offset-4 hover:underline">
+                <Link href={`/books/${quote.book.id}`} className="font-heading font-medium text-primary underline-offset-4 hover:underline">
                   {quote.book.title}
                 </Link>
                 {quote.page !== null && <> · Page {quote.page}</>}
