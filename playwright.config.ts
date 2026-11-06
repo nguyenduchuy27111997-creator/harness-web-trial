@@ -10,6 +10,10 @@ const port = Number(process.env.PORT ?? 3300);
 export default defineConfig({
   testDir: "./e2e",
   timeout: 30_000,
+  // In CI a failed test runs once more before it fails the run. In the web trial most red runs after a local PASS
+  // were e2e tests timing out on a busy shared machine, and each cost a whole rerun of the job (about 20 minutes
+  // with the queue for one runner). Playwright reports a test that passed on its retry as flaky.
+  retries: process.env.CI ? 1 : 0,
   // In the loop, each test also goes to the office's live test list (harness/reporters/, $HARNESS_TESTS).
   reporter: process.env.HARNESS_TESTS ? [["list"], ["./harness/reporters/playwright.mjs"]] : undefined,
   // Visual baselines: toHaveScreenshot() images live in e2e/__screenshots__/ and are

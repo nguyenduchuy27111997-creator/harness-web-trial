@@ -11,6 +11,7 @@ Kept: streams and films for LOOP_HISTORY_DAYS (30) and at most LOOP_HISTORY_MB (
 first. events.log, state.json and the summaries are small and stay.
 """
 import collections
+import contextlib
 import datetime
 import json
 import os
@@ -187,6 +188,66 @@ def tree(path):
         _trees.clear()
     _trees[key] = out
     return out
+
+
+def records(home, state, today=None):
+    """The office's records (DESIGN.md 14.14), plain numbers from what the loop keeps: days in a row main stayed
+    green (now and best), the cheapest and the fastest feature, each week's share merged without a fix round, the
+    bugs review caught by lens, the verifier's PASS and FAIL, and the hours features waited on the owner."""
+    home = Path(home)
+    today = today or datetime.date.today().isoformat()
+    fails = []
+    f = home / "failures.jsonl"
+    for line in f.read_text(errors="replace").splitlines() if f.exists() else []:
+        with contextlib.suppress(ValueError):
+            fails.append(json.loads(line))
+    events = log_events(home)
+    red = {x["at"][:10] for x in fails if str(x.get("kind", "")).startswith("main ci failed")}
+    run, best = 0, 0
+    if events:
+        d, end = datetime.date.fromisoformat(events[0]["at"][:10]), datetime.date.fromisoformat(today)
+        while d <= end:
+            run = 0 if d.isoformat() in red else run + 1
+            best = max(best, run)
+            d += datetime.timedelta(days=1)
+    done = [j for j in state.get("jobs", {}).values() if j.get("stage") == "merged" and re.match(r"^[FB]\d", j["id"]) and not j.get("kind")]
+    pick = lambda key, rows: min(rows, key=key) if rows else None  # noqa: E731
+    cheap = pick(lambda j: j.get("cost", 0), [j for j in done if j.get("cost")])
+    fast = pick(lambda j: j["lead_seconds"], [j for j in done if j.get("lead_seconds")])
+    weeks = collections.defaultdict(lambda: [0, 0])
+    for j in done:
+        w = weeks[week(j.get("merged_at") or j.get("updated") or today)]
+        w[0] += 1
+        w[1] += not j.get("fix_rounds") and not j.get("attempts")
+    lens = collections.Counter()
+    for x in fails:
+        k = str(x.get("kind", ""))
+        if k.startswith("review bug"):
+            m = re.search(r"\(([\w-]+)\)", k)
+            lens[m.group(1) if m else "reviewer"] += 1
+    verdicts = collections.Counter()
+    for s in (home / "streams").glob("*.jsonl") if (home / "streams").is_dir() else []:
+        for line in s.read_text(errors="replace").splitlines():
+            if '"verdict"' in line:
+                with contextlib.suppress(ValueError):
+                    e = json.loads(line)
+                    if e.get("kind") == "verdict" and e.get("verdict") in ("PASS", "FAIL"):
+                        verdicts[e["verdict"]] += 1
+    waited, since = 0.0, {}
+    for e in events:
+        if e["kind"] != "stage":
+            continue
+        t = datetime.datetime.fromisoformat(e["at"]).timestamp()
+        if e["job"] in since:
+            waited += t - since.pop(e["job"])
+        if e["stage"] in ("needs_human", "held"):
+            since[e["job"]] = t
+    return {"main_green": {"now": run, "best": best},
+            "cheapest": cheap and {"id": cheap["id"], "title": cheap.get("title", ""), "cost": round(cheap["cost"], 2)},
+            "fastest": fast and {"id": fast["id"], "title": fast.get("title", ""), "minutes": round(fast["lead_seconds"] / 60)},
+            "first_pass": [{"week": w, "merged": n, "first": k} for w, (n, k) in sorted(weeks.items())][-8:],
+            "review_bugs": dict(lens.most_common()), "verifier": {"pass": verdicts["PASS"], "fail": verdicts["FAIL"]},
+            "waiting_hours": round(waited / 3600, 1)}
 
 
 def week(stamp):

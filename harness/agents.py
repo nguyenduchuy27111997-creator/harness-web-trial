@@ -166,7 +166,8 @@ class Agents:
         cap = cap or self.caps[job["id"]]
         with PORT_LOCK:
             port = free_port(self.opts.port_base + 1, taken={j.get("port") for j in self.state["jobs"].values()})
-            job["port"] = port
+            if not lens:  # a lens beside the job's own session (a test-writer beside the coder) leaves it the port
+                job["port"] = port
         env = {**os.environ, "PORT": str(port), "HARNESS_LANE": job["id"], "HARNESS_AUTONOMOUS": "1",
                "HARNESS_STAGE": job["stage"],
                "HARNESS_TESTS": str(preview.PREVIEW.tests_path(job["id"])),  # the kit's reporters write each test here
@@ -188,7 +189,7 @@ class Agents:
             if job["stage"] in ("review", "fixing"):
                 cmd += ["--disallowedTools", "WebFetch"]
         if browser:
-            qa = preview.PREVIEW.qa_browser(job["id"], job["worktree"])  # someone watching: the office sees QA's browser
+            qa = preview.PREVIEW.qa_browser(job["id"], job["worktree"])  # the office can see QA's browser, now or once someone opens it
             cmd += ["--mcp-config", str(self.session_mcp(job, port, qa)) if SANDBOX or qa else "harness/loop-mcp.json",
                     "--allowedTools", "mcp__playwright"]
         if STREAM:

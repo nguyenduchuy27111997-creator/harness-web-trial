@@ -130,12 +130,11 @@ class Preview:
 
     # sessions ------------------------------------------------------------------------
     def qa_browser(self, job, wt):
-        """A CDP endpoint for the session's Playwright MCP, when someone is watching and the machine has room; else None
-        (the MCP starts its own browser, as without the office)."""
+        """A CDP endpoint for the session's Playwright MCP when the machine has room, else None (the MCP starts its own
+        browser, as without the office). Whether anyone watches yet does not matter: the session's verifier opens a
+        Chrome either way, and someone who opens the office mid-session then sees QA too; the camera attaches only then."""
         exe = chrome()
-        with self.lock:
-            watched = self.viewers > 0
-        if not (self.enabled and watched and exe and not self.busy):
+        if not (self.enabled and exe and not self.busy):
             return None
         port = free_port()
         profile = self.home / "qa" / job

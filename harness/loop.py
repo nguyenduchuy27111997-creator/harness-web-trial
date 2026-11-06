@@ -42,12 +42,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import *  # noqa: E402,F401,F403
 import agents  # noqa: E402
 import common  # noqa: E402
+import dispatcher  # noqa: E402
 import merge  # noqa: E402
 import scheduler  # noqa: E402
 import stages  # noqa: E402
 
 
-class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge):
+class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge, dispatcher.Dispatcher):
     def __init__(self, root, opts):
         self.root = Path(root)
         self.opts = opts
@@ -123,6 +124,8 @@ class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge):
             job["note"] = note
         job["question"] = question
         self.event(job["id"], f"{stage}" + (f": {note}" if note else ""))
+        self.outcome(job, stage, note)  # what came of the dispatcher's advice, if it was asked
+        self.consult(job, stage)  # and its advice on this stage, if it is one it is asked about
         stream.BUS.publish({"job": job["id"], "role": "loop", "kind": "stage", "stage": stage, "note": job.get("note"),
                             "question": question})
         if stage in WAITING_HUMAN and question:
@@ -158,10 +161,16 @@ class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge):
 
     def keep_history(self):
         """Hourly, the old streams and films go (history.py). And once a day, the days before today that have no
-        summary yet get one: Claude's when the budget has room for it, else one made from the numbers."""
+        summary yet get one: Claude's when the budget has room for it, else one made from the numbers. What the
+        office's questions cost (ask.py, asked through the dashboard) is added to the spend here."""
+        asked = round(sum(a.get("cost", 0) for a in ask.asked(self.home)), 4)
+        if asked > self.state.get("ask_spent", 0):
+            self.state["spent"] = round(self.state["spent"] + asked - self.state.get("ask_spent", 0), 4)
+            self.state["ask_spent"] = asked
         if time.time() - getattr(self, "pruned", 0) > 3600:
             self.pruned = time.time()
             history.prune(self.home)
+        self.recaps()
         today = datetime.date.today().isoformat()
         if self.state.get("summary_day") == today:
             return
@@ -172,6 +181,27 @@ class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge):
             cost = history.summarize(self.home, self.state, d, claude=CLAUDE, room=room)
             self.state["spent"] = round(self.state["spent"] + cost, 4)
             self.event("loop", f"summary of {d} written" + (f" (${cost:.2f})" if cost else ""))
+
+    def recaps(self):
+        """The History tab's films (recap.py): one at a time, in the background, while the machine has room. A film
+        that cannot be made (no ffmpeg, say or Chrome, or ffmpeg failed) is not tried again this run."""
+        if self.busy or getattr(self, "filming", None) and self.filming.is_alive():
+            return
+        tried = self.__dict__.setdefault("films_tried", set())
+        todo = [w for w in recap.wanted(self.home, self.state) if w not in tried]
+        if not todo:
+            return
+        tried.add(todo[0])
+        state = json.loads(json.dumps(self.state))
+
+        def run():
+            try:
+                out = recap.make(self.home, self.root, state, todo[0])
+            except (OSError, ValueError, KeyError, subprocess.SubprocessError):
+                out = None
+            self.event("loop", f"film of {todo[0][1]} made" if out else f"no film of {todo[0][1]} (needs ffmpeg, say and Chrome)")
+        self.filming = threading.Thread(target=run, daemon=True)
+        self.filming.start()
 
     def alerts(self):
         """What watch.py sees, on the bus for the office and pushed (ntfy and macOS) at most every 30 minutes."""
@@ -540,9 +570,9 @@ def serve_dashboard(home, root):
             elif re.fullmatch(r"/(ci|pr)/[A-Za-z0-9_-]+\.json", path):  # a lane's CI steps or its PR (github.py), while Focus shows it
                 f = home / "state.json"
                 j = (json.loads(f.read_text()) if f.exists() else {}).get("jobs", {}).get(path.split("/")[2][:-5])
-                ask = lambda *a: gh(*a, cwd=root, check=False)  # noqa: E731
-                found = j and (github.ci(ask, j["branch"], log="log=1" in self.path) if path.startswith("/ci/") and j.get("branch")
-                               else github.pr(ask, j["pr"]) if path.startswith("/pr/") and j.get("pr") else None)
+                call_gh = lambda *a: gh(*a, cwd=root, check=False)  # noqa: E731
+                found = j and (github.ci(call_gh, j["branch"], log="log=1" in self.path) if path.startswith("/ci/") and j.get("branch")
+                               else github.pr(call_gh, j["pr"]) if path.startswith("/pr/") and j.get("pr") else None)
                 if not found:
                     self.send_error(404)
                     return
@@ -570,6 +600,18 @@ def serve_dashboard(home, root):
                     self.send_error(404)
                     return
                 kind = "application/json"
+            elif path == "/history/records.json":  # the office's records (history.records)
+                f = home / "state.json"
+                body, kind = json.dumps(history.records(home, json.loads(f.read_text()) if f.exists() else {})).encode(), "application/json"
+            elif path == "/history/recaps.json":  # the films there are (recap.py)
+                body, kind = json.dumps(recap.made(home)).encode(), "application/json"
+            elif re.fullmatch(r"/history/recap/(F\d{3}|[DL]-[A-Za-z0-9]+|\d{4}-\d\d-\d\d)\.mp4", path):
+                f = home / "history" / "recap" / path.rsplit("/", 1)[1]
+                if not f.exists():
+                    self.send_error(404)
+                    return
+                self.video(f)
+                return
             elif re.fullmatch(r"/history/summary/\d{4}-\d\d-\d\d", path):
                 f = home / "history" / "summary" / f"{path[-10:]}.md"
                 if not f.exists():
@@ -578,7 +620,11 @@ def serve_dashboard(home, root):
                 body, kind = f.read_bytes(), "text/markdown; charset=utf-8"
             elif path == "/snapshot.json":
                 f = home / "state.json"
-                body = json.dumps({"state": json.loads(f.read_text()) if f.exists() else {}, **stream.BUS.snapshot()}).encode()
+                body = json.dumps({"state": json.loads(f.read_text()) if f.exists() else {}, **stream.BUS.snapshot(),
+                                   "ask_token": ask.token(home)}).encode()  # another site's page cannot read it
+                kind = "application/json"
+            elif path == "/ask.json":  # the questions asked so far and what is left of today's cap
+                body = json.dumps({"asked": ask.asked(home)[-30:], "left": round(ask.DAY_CAP - history.SUMMARY_COST - ask.spent(home), 2)}).encode()
                 kind = "application/json"
             elif re.fullmatch(r"/design/[A-Za-z0-9_-]+", path):  # the lane's design doc as it is now, for the whiteboard
                 state = json.loads((home / "state.json").read_text())
@@ -646,6 +692,52 @@ def serve_dashboard(home, root):
                 return
             self.send_response(200)
             self.send_header("Content-Type", kind)
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(body)
+
+        def video(self, f):
+            """An MP4 with byte ranges, so the page's player can seek."""
+            size = f.stat().st_size
+            m = re.fullmatch(r"bytes=(\d*)-(\d*)", self.headers.get("Range") or "")
+            start = int(m.group(1)) if m and m.group(1) else 0
+            end = min(int(m.group(2)), size - 1) if m and m.group(2) else size - 1
+            with f.open("rb") as fh:
+                fh.seek(start)
+                body = fh.read(end - start + 1)
+            self.send_response(206 if m else 200)
+            self.send_header("Content-Type", "video/mp4")
+            self.send_header("Accept-Ranges", "bytes")
+            self.send_header("Content-Length", str(len(body)))
+            if m:
+                self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
+            self.end_headers()
+            self.wfile.write(body)
+
+        def do_POST(self):
+            """POST /ask {q, job?}: a question to the office (ask.py), from the dashboard's own page only."""
+            host = self.headers.get("Host") or ""
+            origin = self.headers.get("Origin") or ""
+            if self.path != "/ask":
+                self.send_error(404)
+                return
+            if host.rsplit(":", 1)[0] not in ("localhost", "127.0.0.1") or origin != f"http://{host}" \
+                    or not secrets.compare_digest(self.headers.get("X-Office-Token") or "", ask.token(home)):
+                self.send_error(403)
+                return
+            try:
+                d = json.loads(self.rfile.read(min(int(self.headers.get("Content-Length") or 0), 4000)))
+                q, job = str(d["q"]).strip(), d.get("job")
+            except (ValueError, KeyError, TypeError):
+                self.send_error(400)
+                return
+            if not q or (job is not None and not re.fullmatch(r"[A-Za-z0-9_-]+", str(job))):
+                self.send_error(400)
+                return
+            f = home / "state.json"
+            body = json.dumps(ask.answer(home, json.loads(f.read_text()) if f.exists() else {}, q, job, claude=CLAUDE)).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
             self.send_header("Cache-Control", "no-store")
             self.end_headers()
             self.wfile.write(body)
@@ -987,6 +1079,11 @@ def cmd_stop(root, a):
     return 0
 
 
+def cmd_decisions(root, a):
+    print(dispatcher.report(home_of(root)))
+    return 0
+
+
 def cmd_events(root, a):
     f = home_of(root) / "events.log"
     f.touch()
@@ -1037,6 +1134,7 @@ def main():
     bu.add_argument("dollars", type=float)
     ev = sub.add_parser("events")
     ev.add_argument("--follow", action="store_true")
+    sub.add_parser("decisions")  # the dispatcher's advice beside what happened (LOOP_DISPATCHER=suggest)
     me = sub.add_parser("metrics")
     me.add_argument("--json", action="store_true")
     fc = sub.add_parser("forecast")
@@ -1054,7 +1152,7 @@ def main():
     return {"start": cmd_start, "status": cmd_status, "answer": cmd_answer, "drop": cmd_drop, "stop": cmd_stop, "budget": cmd_budget,
             "events": cmd_events, "digest": cmd_digest, "notify": cmd_notify,
             "runner": cmd_runner, "service": cmd_service, "metrics": cmd_metrics,
-            "forecast": cmd_forecast}[a.cmd](root, a)
+            "forecast": cmd_forecast, "decisions": cmd_decisions}[a.cmd](root, a)
 
 
 if __name__ == "__main__":

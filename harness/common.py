@@ -9,6 +9,7 @@ import json
 import os
 import plistlib
 import re
+import secrets
 import shutil
 import signal
 import socket
@@ -22,6 +23,7 @@ import zoneinfo
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import ask  # noqa: E402
 import backlog  # noqa: E402
 import ci_log  # noqa: E402
 import health  # noqa: E402
@@ -32,6 +34,7 @@ import metrics  # noqa: E402
 import notify  # noqa: E402
 import owner  # noqa: E402
 import preview  # noqa: E402
+import recap  # noqa: E402
 import runner  # noqa: E402
 import stream  # noqa: E402
 import watch  # noqa: E402

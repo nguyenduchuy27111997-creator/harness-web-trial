@@ -25,13 +25,14 @@ Anything after the feature id is context from the human (for example an answer t
 
 ## 3. Implement
 - Read only the docs this feature needs (follow the map in `CLAUDE.md`).
+- To find where something is (a component, a route, a query, the tests and helpers for an area), spawn the `explorer` subagent (cheap, read-only) instead of opening many files yourself.
 - Read `docs/design/<milestone>.md` if it exists and build to it: its data model, migrations, contract and module rules. The reviewer flags any departure as a bug.
 - If the feature cannot be built on the design, do not diverge silently. Change the design doc as little as possible, write why in a new decision in `docs/decisions/`, and spawn the `architect` subagent on the milestone (foreground). The integrity guard refuses a changed design doc without a fresh architect PASS for exactly its content.
 - Follow `docs/golden-principles.md`.
 - `type: bug`: first write the e2e test that reproduces the bug and watch it fail, then fix.
 - `type: chore` titled `Baseline: ...`: the behavior already exists. Write its e2e test and verify; change no product code. If it does not work, mark it `blocked` with `blocked_reason: needs_human`.
 - UI: follow `docs/design-system.md` if it exists: tokens, base components, the states it asks for. End the feature's e2e test with a visual baseline of its final state if the stack has them (see `harness/PRESET.md`). Update another feature's baseline only when your acceptance changes that page; the `designer` subagent reviews every changed baseline.
-- Write a new, independent e2e test for this feature (own `test()`, own sign-in and data; never add steps to another feature's test, principle 6) that exercises the feature the way a user would.
+- In the loop, a `test-writer` agent may be writing this feature's e2e test beside you; the prompt then says so and where it hands over. Build to that test and never change it. Otherwise, write a new, independent e2e test for this feature (own `test()`, own sign-in and data; never add steps to another feature's test, principle 6) that exercises the feature the way a user would.
 - Work on this one feature only. If you find an unrelated bug, add it to `notes` of the relevant feature and move on.
 - If the feature needs a design choice that is in neither the design doc nor `docs/decisions/`, make the smallest reasonable choice and record it as a new decision file.
 

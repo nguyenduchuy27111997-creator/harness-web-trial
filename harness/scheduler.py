@@ -260,6 +260,7 @@ class Scheduler:
         self.poll_comments()
         self.apply_answers()
         self.collect()
+        self.collect_advice()
         self.refresh_main()
         self.check_milestones()
         for job in list(self.state["jobs"].values()):
@@ -364,10 +365,11 @@ class Scheduler:
                 j["stage"] in ("ci", "merging", "merged") for j in active):
             self.state["stop_reason"] = f"the CI runner is stuck ({self.state['ci_stalled']}); start the loop again once it runs"
             return True
-        if active or self.threads:
+        if active or self.threads or getattr(self, "advice", None):  # the dispatcher's answer is written before the end
             return False
         if self.stopping or broke:
             return True
+        self.refresh_main()  # a merge this tick is not in the backlog read before it: its dependents are ready now
         if self.ready() or (self.state.get("paused_until") and any(j["stage"] == "review" for j in self.state["jobs"].values())):
             return False  # work waits for the usage limit to reset
         if any(self.home.glob("answer-*.json")):

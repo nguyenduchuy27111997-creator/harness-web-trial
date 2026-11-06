@@ -37,6 +37,18 @@ VI = {
     # the day's summary without Claude (history.py)
     "Merged {n}: {list}": "Đã merge {n}: {list}", "Nothing merged.": "Không có gì được merge.", "Spent ${spent}.": "Đã tiêu ${spent}.",
     "Stumbles: {list}.": "Chỗ vấp: {list}.", "Waiting on you: {list}.": "Đang chờ bạn: {list}.",
+    # questions to the office (ask.py)
+    "Questions are turned off (LOOP_ASK=0).": "Hỏi đáp đang tắt (LOOP_ASK=0).",
+    "Today's ${cap} for questions is used up: ask again tomorrow.": "Đã dùng hết ${cap} cho hỏi đáp hôm nay: mai hỏi tiếp nhé.",
+    "No answer this time: try again.": "Lần này không có câu trả lời: thử lại nhé.",
+    # the films (recap.py)
+    "{id}: {title}.": "{id}: {title}.", "Merged after {m} minutes, for {c} dollars.": "Đã merge sau {m} phút, tốn {c} đô.",
+    "It changed {n} files.": "Đổi {n} file.", "Review sent it back {n} times before it passed.": "Review trả lại {n} lần rồi mới qua.",
+    "It passed review the first time.": "Qua review ngay lần đầu.",
+    "{m} min to merge · ${c} · {r} fix rounds · PR #{pr}": "{m} phút tới merge · ${c} · {r} vòng sửa · PR #{pr}",
+    "The code": "Code", "{n} files changed": "{n} file thay đổi", "+{a} lines, −{d} lines": "+{a} dòng, −{d} dòng",
+    "Merged": "Đã merge", "#{pr} into main at {at}": "#{pr} vào main lúc {at}",
+    "{n} merged": "{n} feature đã merge", "${s} spent": "Đã tiêu ${s}", "{m} min to merge · ${c}": "{m} phút tới merge · ${c}",
 }
 
 
