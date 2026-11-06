@@ -21,7 +21,7 @@ import {
   type ReviewFormState,
   type StatusFormState,
 } from "@/lib/books";
-import { insertNote, parseNote, type NoteFormState } from "@/lib/notes";
+import { insertNote, parseNote, updateNote, type NoteFormState } from "@/lib/notes";
 import { addBookToShelf, parseShelfChoice, removeBookFromShelf, type AddToShelfFormState } from "@/lib/shelves";
 import { createClient, requireUser } from "@/lib/supabase/server";
 
@@ -175,6 +175,25 @@ export async function addNote(bookId: string, _prev: NoteFormState, formData: Fo
   if (!isUuid(bookId)) return { formError: "Book not found" };
   try {
     if ((await insertNote(await createClient(), bookId, parsed.value)) === "missing") return { formError: "Book not found" };
+  } catch {
+    return { formError: "Could not save. Try again." };
+  }
+  revalidatePath(`/books/${bookId}`);
+  return { saved: true };
+}
+
+export async function editNote(
+  bookId: string,
+  noteId: string,
+  _prev: NoteFormState,
+  formData: FormData,
+): Promise<NoteFormState> {
+  await requireUser();
+  const parsed = parseNote(formData);
+  if (!parsed.ok) return { fieldErrors: parsed.fieldErrors, values: { note: String(formData.get("note") ?? "") } };
+  if (!isUuid(bookId) || !isUuid(noteId)) return { formError: "Note not found" };
+  try {
+    if (!(await updateNote(await createClient(), bookId, noteId, parsed.value))) return { formError: "Note not found" };
   } catch {
     return { formError: "Could not save. Try again." };
   }
