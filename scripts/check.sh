@@ -41,7 +41,8 @@ scripts/db-types.sh --check                     # lib/database.types.ts matches 
 # With no dev server running from here, start e2e from a clean dev cache: a stale .next/dev kept F015's
 # e2e in Fast Refresh reload loops, and agents may not rm -rf it themselves.
 [ -n "$(dev_servers_here)" ] || rm -rf .next/dev
-npx playwright test                             # includes the visual baselines (e2e/__screenshots__/)
+# One e2e suite at a time on this machine (lanes, the verifier): two at once time out under load.
+python3 scripts/one-at-a-time.py e2e npx playwright test  # includes the visual baselines (e2e/__screenshots__/)
 
 python3 harness/validate_backlog.py
 python3 harness/quality.py || true             # the office's numbers, only in the loop ($HARNESS_QUALITY)

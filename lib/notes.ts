@@ -40,3 +40,17 @@ export async function insertNote(supabase: SupabaseClient<Database>, bookId: str
 export function formatNoteDate(createdAt: string): string {
   return new Intl.DateTimeFormat("en-US", { dateStyle: "long", timeZone: "UTC" }).format(new Date(createdAt));
 }
+
+// false when no row matched: missing, someone else's, or on another book. created_at stays: it is not updatable.
+export async function updateNote(supabase: SupabaseClient<Database>, bookId: string, id: string, body: string): Promise<boolean> {
+  const { data, error } = await supabase.from("notes").update({ body }).eq("id", id).eq("book_id", bookId).select("id");
+  if (error) throw new Error(error.message);
+  return data.length > 0;
+}
+
+// false when no row matched: missing, someone else's, or on another book.
+export async function removeNote(supabase: SupabaseClient<Database>, bookId: string, id: string): Promise<boolean> {
+  const { data, error } = await supabase.from("notes").delete().eq("id", id).eq("book_id", bookId).select("id");
+  if (error) throw new Error(error.message);
+  return data.length > 0;
+}
