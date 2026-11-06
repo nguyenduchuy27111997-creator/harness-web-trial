@@ -1,4 +1,5 @@
 import { NoteForm } from "@/components/note-form";
+import { Card, CardContent } from "@/components/ui/card";
 import { formatNoteDate, type Note, type NoteFormState } from "@/lib/notes";
 
 type Props = {
@@ -18,9 +19,13 @@ export function BookNotes({ notes, action }: Props) {
       ) : (
         <ul className="flex flex-col gap-3">
           {notes.map((note) => (
-            <li key={note.id} className="flex flex-col gap-1 break-words rounded-lg border p-3">
-              <p className="whitespace-pre-wrap">{note.body}</p>
-              <p className="text-sm text-muted-foreground">{formatNoteDate(note.created_at)}</p>
+            <li key={note.id}>
+              <Card>
+                <CardContent className="flex flex-col gap-1 break-words">
+                  <p className="whitespace-pre-wrap text-base">{note.body}</p>
+                  <p className="text-sm text-muted-foreground">{formatNoteDate(note.created_at)}</p>
+                </CardContent>
+              </Card>
             </li>
           ))}
         </ul>
