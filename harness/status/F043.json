@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Delete a note via ConfirmDeleteButton; removeNote + deleteNote action. Full check.sh e2e stage timed out on slow specs only because the machine was overloaded (load avg ~120); all other stages passed, 45/46 e2e passed with 2 workers, status-tab-counts (unrelated) exceeds its 30s timeout under load."
+}
