@@ -938,8 +938,20 @@ def write_answer(home, fid, text, drop=False):
 
 
 def cmd_answer(root, a):
-    write_answer(home_of(root), a.feature, a.text)
-    print(f"Answer for {a.feature} recorded; the loop picks it up on its next tick.")
+    home = home_of(root)
+    write_answer(home, a.feature, a.text)
+    state = json.loads((home / "state.json").read_text()) if (home / "state.json").exists() else {}
+    if (state.get("running") and alive(state.get("pid"))) or not ANSWER_STARTS:
+        print(f"Answer for {a.feature} recorded; the loop picks it up on its next tick.")
+        return 0
+    # Seen on the web trial: the loop had stopped, waiting on the owner, and an answer sat unread for 10 minutes until
+    # someone restarted it. A stopped loop starts again with the last run's options to act on it.
+    opts = state.get("opts") or {}
+    flags = [x for k, v in opts.items() if v is not None and k in OPT_KEYS for x in (f"--{k.replace('_', '-')}", str(v))]
+    subprocess.Popen([sys.executable, str(Path(__file__).resolve()), "start", *flags], cwd=root,
+                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+    print(f"Answer for {a.feature} recorded. The loop was stopped: it starts again now to act on it"
+          + (f" ({' '.join(flags)})." if flags else "."))
     return 0
 
 
