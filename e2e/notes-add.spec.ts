@@ -38,7 +38,7 @@ test("add notes to a book", async ({ page }) => {
 
   await page.getByRole("combobox", { name: "Status" }).click();
   await page.getByRole("option", { name: "Finished" }).click();
-  await page.getByRole("button", { name: "Save" }).click();
+  await page.getByRole("button", { name: "Save status" }).click();
   await expect(page.getByRole("textbox", { name: "Review" })).toBeVisible();
   await field.fill("A third note");
   await notes.getByRole("button", { name: "Add note" }).click();

@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Rebuilt on origin/main (F042/F043 notes edit/delete) as one commit; features.json is main's. Book-page 'Save' clicks name 'Save status' (no button there is named exactly 'Save'). Book-page baselines refreshed incl. F042/F043."
+}
