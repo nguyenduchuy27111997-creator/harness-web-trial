@@ -23,7 +23,7 @@ import {
   type StatusFormState,
 } from "@/lib/books";
 import { insertNote, parseNote, removeNote, updateNote, type NoteFormState } from "@/lib/notes";
-import { insertQuote, parseQuote, type QuoteFormState } from "@/lib/quotes";
+import { insertQuote, parseQuote, removeQuote, type QuoteFormState } from "@/lib/quotes";
 import { addBookToShelf, parseShelfChoice, removeBookFromShelf, type AddToShelfFormState } from "@/lib/shelves";
 import { createClient, requireUser } from "@/lib/supabase/server";
 
@@ -234,4 +234,11 @@ export async function addQuote(
   revalidatePath(`/books/${bookId}`);
   revalidatePath("/quotes");
   return { saved: true };
+}
+
+export async function deleteQuote(bookId: string, quoteId: string, _formData: FormData): Promise<void> {
+  await requireUser();
+  if (isUuid(bookId) && isUuid(quoteId)) await removeQuote(await createClient(), bookId, quoteId);
+  revalidatePath(`/books/${bookId}`);
+  revalidatePath("/quotes");
 }

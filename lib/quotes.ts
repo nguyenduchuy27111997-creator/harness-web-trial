@@ -50,3 +50,10 @@ export async function insertQuote(
   if (error.code === "23503" || error.code === "42501") return "missing";
   throw new Error(error.message);
 }
+
+// Filtered on the book too, so a quote id that belongs to another book matches nothing.
+export async function removeQuote(supabase: SupabaseClient<Database>, bookId: string, id: string): Promise<boolean> {
+  const { data, error } = await supabase.from("quotes").delete().eq("id", id).eq("book_id", bookId).select("id");
+  if (error) throw new Error(error.message);
+  return data.length > 0;
+}

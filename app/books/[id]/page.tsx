@@ -20,6 +20,7 @@ import { createClient, requireUser } from "@/lib/supabase/server";
 import {
   addNote,
   addQuote,
+  deleteQuote,
   editNote,
   deleteNote,
   addToShelf,
@@ -82,7 +83,7 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
         editAction={editNote.bind(null, book.id)}
         deleteAction={deleteNote.bind(null, book.id)}
       />
-      <BookQuotes quotes={quotes} action={addQuote.bind(null, book.id)} />
+      <BookQuotes quotes={quotes} action={addQuote.bind(null, book.id)} deleteAction={deleteQuote.bind(null, book.id)} />
       <DeleteBookButton title={book.title} action={deleteBook.bind(null, book.id)} />
     </main>
   );
