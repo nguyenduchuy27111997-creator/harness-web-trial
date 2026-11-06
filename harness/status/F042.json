@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Edit a note in place: updateNote, editNote action, edit-note-form; one open at a time in BookNotes. Rebuilt on main after the earlier branch (based on the pre-squash F041) conflicted; F040-notes.png baseline updated for the new Edit button."
+}
