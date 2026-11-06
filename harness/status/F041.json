@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Validation (parseNote messages, kept text, field error) was already built with F040; this feature adds its e2e test e2e/notes-validation.spec.ts with a baseline."
+}
