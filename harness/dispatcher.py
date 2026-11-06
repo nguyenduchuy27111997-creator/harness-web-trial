@@ -92,6 +92,14 @@ class Dispatcher:
                                                        **probe.get("lens_telemetry", {}).get("dispatcher", {})})
             self.state["spent"] = round(self.state["spent"] + cost, 4)
             advice = parse(text)
+            failed = box.get("res", (0, "error"))[1] != "success" or "error" in box or set(advice) == {"raw"}
+            tries = self.state.setdefault("consult_tries", {})
+            if failed and tries.get(key, 0) < 2 and job is not None:  # it was not asked at all: ask again
+                tries[key] = tries.get(key, 0) + 1
+                self.state["consulted"] = [k for k in self.state.get("consulted", []) if k != key]
+                self.consult(job, "building" if event == "milestone" else job["stage"])
+                continue
+            tries.pop(key, None)
             self.decide_log({"key": key, "at": now(), "job": fid, "event": event, "advice": advice,
                              "cost": round(cost, 4), **({"error": box["error"]} if "error" in box else {})})
             if job is not None and event != "milestone":

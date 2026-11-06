@@ -44,7 +44,7 @@ def card(chrome, folder, name, kicker, title, line):
     f.write_text(CARD.format(w=W, h=H, kicker=html.escape(kicker), title=html.escape(title), line=html.escape(line)))
     png = folder / f"{name}.png"
     subprocess.run([*NICE, chrome, "--headless=new", "--disable-gpu", "--hide-scrollbars", f"--window-size={W},{H}",
-                    f"--user-data-dir={folder / 'chrome'}", "--no-first-run", f"--screenshot={png}", f.as_uri()],
+                    f"--user-data-dir={folder / 'chrome'}", "--no-first-run", "--use-mock-keychain", f"--screenshot={png}", f.as_uri()],
                    capture_output=True, timeout=60)
     return png if png.exists() else None
 

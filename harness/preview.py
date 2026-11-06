@@ -140,7 +140,8 @@ class Preview:
         profile = self.home / "qa" / job
         profile.mkdir(parents=True, exist_ok=True)
         proc = subprocess.Popen([exe, "--headless=new", f"--remote-debugging-port={port}", "--remote-debugging-address=127.0.0.1",
-                                 f"--user-data-dir={profile}", "--no-first-run", "--no-default-browser-check", "about:blank"],
+                                 f"--user-data-dir={profile}", "--no-first-run", "--no-default-browser-check",
+                                 "--use-mock-keychain", "about:blank"],  # no Keychain read (secd) at each start
                                 cwd=wt, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                                 start_new_session=True)
         endpoint = f"http://127.0.0.1:{port}"
