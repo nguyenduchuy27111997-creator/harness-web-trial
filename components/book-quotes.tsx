@@ -1,4 +1,5 @@
 import { QuoteForm } from "@/components/quote-form";
+import { QuoteItem } from "@/components/quote-item";
 import type { BookQuote, QuoteFormState } from "@/lib/quotes";
 
 type Props = {
@@ -15,10 +16,7 @@ export function BookQuotes({ quotes, action }: Props) {
       ) : (
         <ul aria-label="Quotes from this book" className="flex flex-col gap-3">
           {quotes.map((quote) => (
-            <li key={quote.id} className="flex flex-col gap-1 border-l-2 border-border pl-3">
-              <blockquote className="whitespace-pre-wrap break-words">{quote.body}</blockquote>
-              {quote.page !== null && <p className="text-sm text-muted-foreground">Page {quote.page}</p>}
-            </li>
+            <QuoteItem key={quote.id} body={quote.body} meta={quote.page !== null && <>Page {quote.page}</>} />
           ))}
         </ul>
       )}
