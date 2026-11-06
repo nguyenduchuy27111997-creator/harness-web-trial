@@ -35,6 +35,12 @@ One person per account, on desktop or phone. They add a book in a few seconds, m
 - Filter `/books` by one shelf; the shelf is kept in the URL (`?shelf=`) and combines with the status tab, the search and the sort.
 - Record reading progress on a book I am reading: total pages (1 to 10,000) and the page I am on (0 to total). The list shows its percentage with a small progress bar; finishing the book sets the page to the total.
 
+### M5: notes and quotes
+- Write notes on a book from its page `/books/<id>`: plain text from 1 to 2,000 characters, newest first, each with the date I wrote it. Edit or delete a note (deleting asks first).
+- Save quotes from a book on its page: the quote text (1 to 1,000 characters) and an optional page number (1 to the book's total pages if it has one, else 1 to 10,000). Edit or delete a quote (deleting asks first).
+- See all my quotes on `/quotes`, newest first, each with its book's title linking to the book. Search them by text or book title; the search is kept in the URL (`?q=`).
+- Deleting a book deletes its notes and quotes. No one else can see or change my notes and quotes.
+
 ## Out of scope
 - Book search APIs, covers, ISBN lookup, sharing, social features, import/export.
 - Password reset, social login, email confirmation.
@@ -50,3 +56,4 @@ Next.js + Supabase (the nextjs-supabase preset).
 - M2: I can move a book to Finished and rate it, filter by status, delete a book, see my stats, and a second account cannot open my book's URL.
 - M3: I can fix a typo in a book's title, find a book by part of its author's name, sort my finished books by rating, and see my progress toward a goal of 20 books this year.
 - M4: I can make a "Travel" shelf, put two books on it, filter my list to that shelf together with the Reading tab, and see that I am 40% through a 250-page book.
+- M5: I can write a note on a book, save a quote from page 42 of it, find that quote on `/quotes` by a word in it, and after deleting the book its quote is gone.
