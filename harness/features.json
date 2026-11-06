@@ -556,6 +556,175 @@
         "Change a book from Reading to Finished: the tabs then read 'Reading (0)' and 'Finished (4)', also after reload",
         "With a search in ?q=, each tab counts only the books the search shows"
       ]
+    },
+    {
+      "id": "F040",
+      "milestone": "M5",
+      "priority": 40,
+      "complexity": "M",
+      "title": "Write notes on a book from its page, newest first with their date",
+      "depends_on": ["F009"],
+      "acceptance": [
+        "Signed in, add 'Middlemarch' and open its page /books/<id>: a Notes section says the book has no notes yet, with a Note text field and an 'Add note' button",
+        "Type 'Dorothea reminds me of my aunt' and click 'Add note': the note shows in the Notes section with today's date, also after reload, and the field is empty again",
+        "Add a second note 'Chapter 20 is the turning point': it shows above the first one",
+        "Notes can be added whatever the book's status: change it to Finished and add a third note, which shows at the top"
+      ],
+      "owner_check": true
+    },
+    {
+      "id": "F041",
+      "milestone": "M5",
+      "priority": 41,
+      "complexity": "S",
+      "title": "Note validation: required, at most 2,000 characters",
+      "depends_on": ["F040"],
+      "acceptance": [
+        "On a book's page click 'Add note' with the field empty, then with only spaces: 'Note is required' shows next to the field and no note is added",
+        "Enter 2,001 characters: an error next to the field says the note must be at most 2,000 characters, the text stays in the field, and no note is added",
+        "Enter exactly 2,000 characters: the note is added and shows in full"
+      ]
+    },
+    {
+      "id": "F042",
+      "milestone": "M5",
+      "priority": 42,
+      "complexity": "S",
+      "title": "Edit a note on a book's page",
+      "depends_on": ["F041"],
+      "acceptance": [
+        "With a note 'Chapter 20 is the turing point', click its 'Edit' button: a field shows prefilled with the note, with Save and Cancel buttons",
+        "Change it to 'Chapter 20 is the turning point' and save: the note shows the new text and keeps its original date, also after reload",
+        "Edit it to an empty text: 'Note is required' shows next to the field; after reload the note is unchanged",
+        "Click 'Edit', change the text, then click 'Cancel': the form closes and the note is unchanged"
+      ]
+    },
+    {
+      "id": "F043",
+      "milestone": "M5",
+      "priority": 43,
+      "complexity": "S",
+      "title": "Delete a note after confirming",
+      "depends_on": ["F040"],
+      "acceptance": [
+        "With two notes on a book, click 'Delete' next to one: a confirm dialog asks whether to delete the note",
+        "Click Cancel: both notes are still shown",
+        "Click 'Delete' again and confirm: that note is gone, also after reload, and the other note and the book are still there"
+      ]
+    },
+    {
+      "id": "F044",
+      "milestone": "M5",
+      "priority": 44,
+      "complexity": "M",
+      "title": "Save quotes from a book on its page, with an optional page number",
+      "depends_on": ["F009"],
+      "acceptance": [
+        "Signed in, add 'Middlemarch' and open its page: a Quotes section says the book has no quotes yet, with a Quote text field, an optional Page field and a 'Save quote' button",
+        "Enter 'It is a narrow mind which cannot look at a subject from various points of view.' with page 42 and click 'Save quote': the quote shows with 'Page 42', also after reload, and the fields are empty again",
+        "Save a second quote with no page: it shows above the first one, with no page number",
+        "Quotes can be saved whatever the book's status"
+      ],
+      "owner_check": true
+    },
+    {
+      "id": "F045",
+      "milestone": "M5",
+      "priority": 45,
+      "complexity": "S",
+      "title": "Quote validation: text required up to 1,000 characters, page within the book",
+      "depends_on": ["F044", "F035"],
+      "acceptance": [
+        "On a book's page click 'Save quote' with the text empty or only spaces: 'Quote is required' shows next to the Quote field and nothing is saved",
+        "Enter 1,001 characters: an error next to the Quote field says it must be at most 1,000 characters, and nothing is saved",
+        "On a book with no total pages, enter page 0, 10001 and 2.5: an error next to Page says it must be a whole number from 1 to 10,000, and nothing is saved; page 10000 saves",
+        "On a Reading book with progress saved as total 250, enter page 251: an error next to Page says it must be a whole number from 1 to 250, and nothing is saved; page 250 saves"
+      ]
+    },
+    {
+      "id": "F046",
+      "milestone": "M5",
+      "priority": 46,
+      "complexity": "S",
+      "title": "Edit a quote on a book's page",
+      "depends_on": ["F045"],
+      "acceptance": [
+        "With a quote on page 42, click its 'Edit' button: the Quote and Page fields show prefilled, with Save and Cancel buttons",
+        "Change the text and the page to 43 and save: the quote shows the new text and 'Page 43', also after reload",
+        "Clear the page and save: the quote shows no page number",
+        "Edit the text to empty: 'Quote is required' shows next to the field; after reload the quote is unchanged",
+        "Click 'Edit', change the text, then click 'Cancel': the form closes and the quote is unchanged"
+      ]
+    },
+    {
+      "id": "F047",
+      "milestone": "M5",
+      "priority": 47,
+      "complexity": "S",
+      "title": "Delete a quote after confirming",
+      "depends_on": ["F044"],
+      "acceptance": [
+        "With two quotes on a book, click 'Delete' next to one: a confirm dialog asks whether to delete the quote",
+        "Click Cancel: both quotes are still shown",
+        "Click 'Delete' again and confirm: that quote is gone, also after reload, and the other quote and the book are still there"
+      ]
+    },
+    {
+      "id": "F048",
+      "milestone": "M5",
+      "priority": 48,
+      "complexity": "M",
+      "title": "Quotes page lists all my quotes newest first, linking to their books",
+      "depends_on": ["F044"],
+      "acceptance": [
+        "Sign up a new account: the header has a 'Quotes' link; click it and land on /quotes, where one sentence says I have no quotes yet",
+        "Add 'Middlemarch' and 'Persuasion', save a quote on page 42 of Middlemarch, then a quote with no page from Persuasion",
+        "Open /quotes: both quotes show, Persuasion's first; each shows its text, its page number if it has one, and its book's title",
+        "Click 'Middlemarch' next to its quote: land on that book's page /books/<id>"
+      ],
+      "owner_check": true
+    },
+    {
+      "id": "F049",
+      "milestone": "M5",
+      "priority": 49,
+      "complexity": "S",
+      "title": "Search my quotes by text or book title, kept in the URL",
+      "depends_on": ["F048"],
+      "acceptance": [
+        "With a quote 'a narrow mind' from 'Middlemarch' and a quote 'half agony, half hope' from 'Persuasion', on /quotes search 'NARROW': the URL has q=NARROW and only the Middlemarch quote shows",
+        "Search 'persua': only the Persuasion quote shows, matched by its book title; reload keeps the search box text and the result",
+        "Search 'zzz': one sentence says no quotes match 'zzz', with a 'Clear search' link that goes back to /quotes with all quotes",
+        "Clear the search box and submit: the URL has no q and both quotes show"
+      ]
+    },
+    {
+      "id": "F050",
+      "milestone": "M5",
+      "priority": 50,
+      "complexity": "S",
+      "title": "Deleting a book deletes its notes and quotes",
+      "depends_on": ["F014", "F040", "F048"],
+      "acceptance": [
+        "Add 'Middlemarch' and 'Persuasion', write a note on Middlemarch and save a quote on page 42 of each",
+        "Delete Middlemarch from its page after confirming: /quotes shows only the Persuasion quote, also after reload",
+        "Search /quotes for a word from the Middlemarch quote: no quotes match",
+        "Opening Middlemarch's old URL shows the book not found page"
+      ]
+    },
+    {
+      "id": "F051",
+      "milestone": "M5",
+      "priority": 51,
+      "complexity": "S",
+      "title": "No one else can see or change my notes and quotes",
+      "depends_on": ["F042", "F046", "F049", "F016"],
+      "acceptance": [
+        "Account A adds 'Middlemarch', writes a note and saves a quote with the word 'narrow' in it",
+        "Sign out and sign up account B: /quotes says B has no quotes, and searching /quotes?q=narrow shows no quotes",
+        "As B, open A's book URL /books/<id>: the book not found page shows, with none of A's notes or quotes",
+        "With B's session against the local Supabase, reading, updating or deleting A's note and quote by id returns or changes no rows (an integration test the verifier runs); signed in again as A, the note and the quote are unchanged"
+      ]
     }
   ]
 }
