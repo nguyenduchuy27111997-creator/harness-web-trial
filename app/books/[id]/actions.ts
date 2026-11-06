@@ -22,6 +22,7 @@ import {
   type ReviewFormState,
   type StatusFormState,
 } from "@/lib/books";
+import { insertNote, parseNote, removeNote, updateNote, type NoteFormState } from "@/lib/notes";
 import { insertQuote, parseQuote, removeQuote, type QuoteFormState } from "@/lib/quotes";
 import { addBookToShelf, parseShelfChoice, removeBookFromShelf, type AddToShelfFormState } from "@/lib/shelves";
 import { createClient, requireUser } from "@/lib/supabase/server";
@@ -166,6 +167,45 @@ export async function removeFromShelf(bookId: string, shelfId: string, _formData
   await requireUser();
   if (isUuid(bookId) && isUuid(shelfId)) await removeBookFromShelf(await createClient(), bookId, shelfId);
   revalidatePath("/books");
+  revalidatePath(`/books/${bookId}`);
+}
+
+export async function addNote(bookId: string, _prev: NoteFormState, formData: FormData): Promise<NoteFormState> {
+  await requireUser();
+  const parsed = parseNote(formData);
+  if (!parsed.ok) return { fieldErrors: parsed.fieldErrors, values: { note: String(formData.get("note") ?? "") } };
+  if (!isUuid(bookId)) return { formError: "Book not found" };
+  try {
+    if ((await insertNote(await createClient(), bookId, parsed.value)) === "missing") return { formError: "Book not found" };
+  } catch {
+    return { formError: "Could not save. Try again." };
+  }
+  revalidatePath(`/books/${bookId}`);
+  return { saved: true };
+}
+
+export async function editNote(
+  bookId: string,
+  noteId: string,
+  _prev: NoteFormState,
+  formData: FormData,
+): Promise<NoteFormState> {
+  await requireUser();
+  const parsed = parseNote(formData);
+  if (!parsed.ok) return { fieldErrors: parsed.fieldErrors, values: { note: String(formData.get("note") ?? "") } };
+  if (!isUuid(bookId) || !isUuid(noteId)) return { formError: "Note not found" };
+  try {
+    if (!(await updateNote(await createClient(), bookId, noteId, parsed.value))) return { formError: "Note not found" };
+  } catch {
+    return { formError: "Could not save. Try again." };
+  }
+  revalidatePath(`/books/${bookId}`);
+  return { saved: true };
+}
+
+export async function deleteNote(bookId: string, noteId: string, _formData: FormData): Promise<void> {
+  await requireUser();
+  if (isUuid(bookId) && isUuid(noteId)) await removeNote(await createClient(), bookId, noteId);
   revalidatePath(`/books/${bookId}`);
 }
 

@@ -107,7 +107,12 @@ class Merge:
         with GIT_LOCK:
             git("fetch", "-q", "origin", cwd=wt)
             behind = git("merge-base", "--is-ancestor", "origin/main", "HEAD", cwd=wt, check=False).returncode != 0
-        if behind:  # main moved since CI ran: rebase, push, and let CI run again
+        if behind and not job.get("revert_of") and self.apart(job):
+            # Main's new commits and this PR change no file in common: merge what CI passed without running it
+            # again; main's own CI checks the two together. In the web trial 39 reruns after a rebase found
+            # nothing real, at about 20 minutes each on one runner.
+            self.event(job["id"], "merging: main moved, on other files; main's CI checks the result")
+        elif behind:  # main moved since CI ran: rebase, push, and let CI run again
             # One at a time: green PRs that all rebase onto the same main run CI for nothing once the first
             # merges. Seen for real: F025 rebased 4 times on one runner, 2 hours from green to merged.
             # The turn is held while that CI runs: green and behind again, two PRs waited on each other for 2 hours.
@@ -137,6 +142,12 @@ class Merge:
         job["merge_sha"] = gh("pr", "view", str(job["pr"]), "--json", "mergeCommit", "--jq", ".mergeCommit.oid",
                               cwd=self.root).stdout.strip()
         job["merged_at"], job["merged_run"] = now(), self.state["started"]
+        with GIT_LOCK:
+            git("fetch", "-q", "origin", cwd=self.root, check=False)
+            trees = {git("rev-parse", f"{c}^{{tree}}", cwd=self.root, check=False).stdout.strip()
+                     for c in (job["merge_sha"], verified)}
+        if len(trees) == 1 and "" not in trees:  # main is now exactly the commit CI passed
+            job["main_tested"] = True
         if not job.get("kind") and not job.get("revert_of"):  # the branch is deleted soon: images point at the commit
             body = self.home / f"pr-{job['id']}.md"
             body.write_text(self.pr_body(job, job.get("findings", "")).replace(f"/blob/{job['branch']}/",
@@ -157,6 +168,13 @@ class Merge:
         with GIT_LOCK:
             self.remove_worktree(job)
         self.delete_merged_branches()
+
+    def apart(self, job):
+        """True when the files this PR changes and the files main changed since it branched have none in common."""
+        wt = job["worktree"]
+        mine = set(git("diff", "--name-only", "origin/main...HEAD", cwd=wt, check=False).stdout.split())
+        theirs = set(git("diff", "--name-only", "HEAD...origin/main", cwd=wt, check=False).stdout.split())
+        return bool(mine) and bool(theirs) and not mine & theirs
 
     def base_merged(self, job):
         return job["base"] != "main" and any(j.get("branch") == job["base"] and j["stage"] == "merged"
@@ -293,6 +311,8 @@ class Merge:
         out = gh("run", "list", "--commit", sha, "--json", "status,conclusion,url,databaseId", cwd=self.root,
                  check=False).stdout
         runs = json.loads(out or "[]")
+        if sha in self.state.get("tested_main", []):
+            return "pass", ""  # the same tree as a PR commit CI passed
         if not runs:
             return "none", ""
         failed = [r for r in runs if r["status"] == "completed" and r["conclusion"] not in ("success", "skipped", "neutral")]
@@ -315,6 +335,9 @@ class Merge:
     def watch_main(self):
         for job in list(self.state["jobs"].values()):  # revert() adds jobs
             if job["stage"] != "merged" or job.get("main_checked"):
+                continue
+            if job.get("main_tested"):
+                self.skip_main_ci(job)
                 continue
             result, url = self.main_ci(job["merge_sha"])
             if result == "none":
@@ -356,6 +379,23 @@ class Merge:
             elif (not revert or revert["stage"] == "dropped") and self.main_ci(self.state["main_sha"])[0] == "pass":
                 self.state["main_red"] = False  # a human dropped the revert and made main green another way
                 self.event(self.state["main_red_by"], "main is green again without the revert")
+
+    def skip_main_ci(self, job):
+        """Main's tree is the one CI passed on the PR: cancel main's own run of it, which on one runner made the next
+        PR wait. Checked once the run shows up, or after the grace period if it never does."""
+        sha = job["merge_sha"]
+        tested = self.state.setdefault("tested_main", [])
+        if sha not in tested:
+            tested[:] = tested[-49:] + [sha]
+        out = gh("run", "list", "--commit", sha, "--json", "status,databaseId", cwd=self.root, check=False).stdout
+        runs = json.loads(out or "[]")
+        for r in runs:
+            if r["status"] != "completed":
+                gh("run", "cancel", str(r["databaseId"]), cwd=self.root, check=False)
+        self.main_ci_since.setdefault(job["id"], time.time())
+        if runs or time.time() - self.main_ci_since[job["id"]] > MAIN_GRACE:
+            job["main_checked"] = True
+            self.event(job["id"], f"main CI skipped on {sha[:7]}: the same tree as the PR commit CI passed")
 
     def revert(self, job, url):
         self.failure(job, "main CI failed after merge")

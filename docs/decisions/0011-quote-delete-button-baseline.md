@@ -11,3 +11,6 @@ Update `F044-quotes.png` only. Specs that look for the book's own "Delete" butto
 
 ## Consequences
 F046 (Edit) will add its button to the same row and update this baseline again.
+
+## Update 2026-11-07
+After merging main (F040–F044 as merged), both `F044-quotes.png` and `F047-quote-deleted.png` were regenerated: the book page now also shows the Notes section above Quotes. Note Delete buttons live in the notes list, so quote tests still scope "Delete" to the quotes list item.

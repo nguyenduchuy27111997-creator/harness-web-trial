@@ -1,6 +1,8 @@
 """The stages a feature goes through before CI: build, design, rule, review and fix. A mixin of loop.Loop."""
 
+import hashlib
 import json
+import os
 import sys
 import time
 
@@ -15,6 +17,10 @@ from common import (  # noqa: F401
 AGENT_MODEL = re.compile(r"^model:\s*(\S+)", re.M)
 VERDICT = re.compile(r"^\s*(\d+):\s*(KEEP|DROP)\b\W*(.*)$", re.M)  # the skeptic's line for finding n
 TRIAGE = re.compile(r"^\s*(FIXED|REJECTED):\s*(.+)$", re.M)  # the fix session's answer for each finding
+TESTS = re.compile(r"^\s*TESTS:\s*(.+)$", re.M)  # the test-writer's files
+# P27 (DESIGN.md 15.5): a test-writer writes the feature's e2e test from its acceptance while the coder builds it,
+# and the coder may not change that test. Off by default until the web trial has measured it.
+TEST_WRITER = os.environ.get("LOOP_TEST_WRITER") == "1"
 
 
 class Stages:
@@ -50,8 +56,71 @@ class Stages:
         prompt = command + (f" The human answered earlier questions: {extra}" if extra else "")
         if job.get("last_failure"):  # a retry knows why the last attempt failed, so it does not repeat it blind
             prompt += f" The previous attempt failed: {job['last_failure']}"
+        job.pop("locked_tests", None)  # each attempt's test-writer locks its own files
+        writer = None
+        if self.wants_test_writer(job):
+            ready, issue = self.handoff(job)
+            ready.unlink(missing_ok=True)
+            issue.unlink(missing_ok=True)
+            prompt += (f"\n\n(A test-writer agent is writing this feature's e2e test now, in this worktree. Write no e2e test "
+                       f"of your own for the acceptance. Before you verify (step 4), wait for {ready} to exist: check every "
+                       "30 seconds, for up to 20 minutes. It lists the test files: build until they pass and commit them "
+                       "with your work exactly as they are, since the loop rejects a commit that changes them. If one is "
+                       f"wrong (it asks for what the acceptance does not say), do not change it: write why to {issue}, set "
+                       "the feature blocked with blocked_reason failed, and stop; the test-writer writes it again. If it "
+                       "lists no files, write the test yourself as usual.)")
+            box = {}
+            writer = threading.Thread(target=lambda: box.update(cost=self.write_tests(job)), daemon=True)
+            writer.start()
         cost, subtype, text = self.claude(job, prompt, job["model"])
+        if writer:
+            writer.join()
+            cost += box.get("cost", 0.0)
+            self.merge_telemetry(job)
+            job["last_model"] = job["model"]  # the stage's record names the coder's model
         return {"cost": cost, "subtype": subtype, "text": text}
+
+    def wants_test_writer(self, job):
+        f = self.main.get(job["id"], {}) if hasattr(self, "main") else {}
+        return TEST_WRITER and not job.get("kind") and f.get("type") != "chore"
+
+    def handoff(self, job):
+        """Where the loop says the test-writer is done, and where the coder says its test is wrong: in the worktree's
+        git dir, so neither is ever committed."""
+        gd = Path(git("rev-parse", "--absolute-git-dir", cwd=job["worktree"]).stdout.strip())
+        return gd / "test-writer.json", gd / "test-issue.md"
+
+    def write_tests(self, job):
+        """The test-writer's session, beside the coder's. Its files are locked: their content is kept in the job and
+        the build is rejected if the coder's commit changed them. Returns its cost."""
+        wt = job["worktree"]
+        ready, _ = self.handoff(job)
+        task = f"Write the e2e test for {job['id']}."
+        if job.get("test_issue"):
+            task += f" The coder found your last test wrong, and said: {job.pop('test_issue')}"
+        files = []
+        try:
+            cost, subtype, text = self.claude(job, task, self.agent_model(job, "test-writer"), turns=60,
+                                              lane_note=False, agent="test-writer")
+            named = TESTS.findall(text or "")
+            if subtype == "success" and named and not named[-1].strip().startswith("none"):
+                files = [x.strip() for x in named[-1].split(",") if (Path(wt) / x.strip()).is_file()]
+        except Exception as e:  # the coder goes on and writes the test itself
+            cost = 0.0
+            with (self.home / "loop.log").open("a") as f:
+                f.write(f"{now()} {job['id']} test-writer failed: {e!r}\n")
+        job["locked_tests"] = {x: hashlib.sha256((Path(wt) / x).read_text().encode()).hexdigest() for x in files}
+        ready.write_text(json.dumps({"files": files}) + "\n")
+        return cost
+
+    def changed_tests(self, job):
+        """The test-writer's files the coder's commit changed (or dropped)."""
+        out = []
+        for path, digest in (job.get("locked_tests") or {}).items():
+            r = run(["git", "show", f"HEAD:{path}"], cwd=job["worktree"])
+            if r.returncode != 0 or hashlib.sha256(r.stdout.encode()).hexdigest() != digest:
+                out.append(path)
+        return out
 
     def finish_build(self, job, res):
         wt = job["worktree"]
@@ -87,6 +156,11 @@ class Stages:
                                                "which an agent may not. Answer how to build it without them, or change "
                                                "them yourself in a chat session first, then answer to build it again.")
             return self.retry(job, "integrity guard: " + lines[0])
+        if changed := self.changed_tests(job):
+            git("update-ref", f"refs/harness/rejected/{job['id']}-{int(time.time())}", "HEAD", cwd=wt)
+            git("reset", "-q", "--hard", job["base_sha"], cwd=wt)
+            return self.retry(job, f"the coder changed the test-writer's test ({', '.join(changed)}); build to it "
+                                   "unchanged, or say why it is wrong")
         if job.get("kind") == "design":
             return self.finish_design(job, res)
         if job.get("kind") == "rule":
@@ -102,6 +176,9 @@ class Stages:
             return self.set_stage(job, "review")
         if f.get("status") == "blocked" and f.get("blocked_reason") == "needs_human":
             return self.set_stage(job, "needs_human", note="needs you", question=f.get("notes") or "needs a decision")
+        if job.get("locked_tests") is not None and (issue := self.handoff(job)[1]).exists():
+            job["test_issue"] = issue.read_text()[:1500]  # the next attempt's test-writer reads it
+            self.event(job["id"], "the coder found the test wrong; the test-writer writes it again")
         return self.retry(job, f.get("notes") or f"ended {f.get('status', 'unknown')}")
 
     def guard(self, job, source, base):
@@ -446,6 +523,8 @@ class Stages:
         merged = git("merge-base", "--is-ancestor", guard_base, "HEAD", cwd=wt, check=False).returncode == 0
         if job.get("fix_guard_base") and not merged and not cut:
             check.returncode, check.stdout = 1, "main was not merged into the branch"
+        if check.returncode == 0 and (changed := self.changed_tests(job)):  # a fix is the coder too: the test stays
+            check.returncode, check.stdout = 1, f"the fix changed the test-writer's test ({', '.join(changed)})"
         if cut and self.starved(job, res):  # undo it and try again with a full budget: the round is given back
             git("reset", "-q", "--hard", job["fix_base"], cwd=wt)
             git("clean", "-q", "-fd", cwd=wt)

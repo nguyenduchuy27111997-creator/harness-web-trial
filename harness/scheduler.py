@@ -4,9 +4,11 @@ import fnmatch
 import hashlib
 import json
 import re
+import time
 
 from common import (  # noqa: F401
     backlog, git, health, lang, now, preview, DONE, GIT_LOCK, MIN_SESSION, Path, TRANSIENT, WAITING_HUMAN,
+    WAIT_FOR_HUMAN,
 )
 
 
@@ -234,6 +236,9 @@ class Scheduler:
                     job["quality"] = json.loads(q.read_text())
                 except ValueError:
                     pass
+            if job["stage"] in DONE:  # dropped while the session ran; seen for real: its result would bring it back
+                self.event(fid, f"the {stage} session ended after the job was {job['stage']}; its result is not used")
+                continue
             if res.get("subtype") in ("limit", "infra"):
                 self.pause(job, stage, infra=res["subtype"] == "infra")
                 continue
@@ -260,6 +265,7 @@ class Scheduler:
         self.poll_comments()
         self.apply_answers()
         self.collect()
+        self.collect_advice()
         self.refresh_main()
         self.check_milestones()
         for job in list(self.state["jobs"].values()):
@@ -364,14 +370,27 @@ class Scheduler:
                 j["stage"] in ("ci", "merging", "merged") for j in active):
             self.state["stop_reason"] = f"the CI runner is stuck ({self.state['ci_stalled']}); start the loop again once it runs"
             return True
-        if active or self.threads:
+        if active or self.threads or getattr(self, "advice", None):  # the dispatcher's answer is written before the end
+            self.state.pop("idle_since", None)
+            self.state.pop("idle_said", None)
             return False
         if self.stopping or broke:
             return True
+        self.refresh_main()  # a merge this tick is not in the backlog read before it: its dependents are ready now
         if self.ready() or (self.state.get("paused_until") and any(j["stage"] == "review" for j in self.state["jobs"].values())):
             return False  # work waits for the usage limit to reset
         if any(self.home.glob("answer-*.json")):
             return False  # an answer waits for a lane, budget or a quiet machine; seen for real: the loop stopped at load 28
+        asked = [j["id"] for j in self.state["jobs"].values() if j["stage"] in WAITING_HUMAN]
+        if asked and WAIT_FOR_HUMAN and not self.state["stop_reason"]:
+            since = self.state.setdefault("idle_since", time.time())
+            if time.time() - since < WAIT_FOR_HUMAN:
+                if not self.state.get("idle_said"):
+                    self.state["idle_said"] = True
+                    self.event("loop", f"waiting on you: {', '.join(asked)}; the loop stays up for your answer, "
+                                       f"on the PR or with loop.py answer, for {WAIT_FOR_HUMAN / 3600:.0f} h")
+                return False
+        self.state.pop("idle_said", None)
         if not self.state["stop_reason"]:
             waiting = [j["id"] for j in self.state["jobs"].values() if j["stage"] in WAITING_HUMAN]
             waiting += [f"{ms} budget" for ms in self.state["milestone_over"]]
