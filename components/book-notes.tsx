@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { EditNoteForm } from "@/components/edit-note-form";
 import { NoteForm } from "@/components/note-form";
 import { Button } from "@/components/ui/button";
@@ -11,9 +12,10 @@ type Props = {
   notes: Note[];
   action: (prev: NoteFormState, formData: FormData) => Promise<NoteFormState>;
   editAction: (noteId: string, prev: NoteFormState, formData: FormData) => Promise<NoteFormState>;
+  deleteAction: (noteId: string, formData: FormData) => Promise<void>;
 };
 
-export function BookNotes({ notes, action, editAction }: Props) {
+export function BookNotes({ notes, action, editAction, deleteAction }: Props) {
   // At most one edit form is open at a time.
   const [openId, setOpenId] = useState<string | null>(null);
   return (
@@ -41,10 +43,16 @@ export function BookNotes({ notes, action, editAction }: Props) {
                     <>
                       <p className="whitespace-pre-wrap text-base">{note.body}</p>
                       <p className="text-sm text-muted-foreground">{formatNoteDate(note.created_at)}</p>
-                      <div>
+                      <div className="flex gap-2">
                         <Button type="button" variant="outline" size="sm" onClick={() => setOpenId(note.id)}>
                           Edit
                         </Button>
+                        <ConfirmDeleteButton
+                          heading="Delete this note?"
+                          description="This note will be deleted. This cannot be undone."
+                          size="sm"
+                          action={deleteAction.bind(null, note.id)}
+                        />
                       </div>
                     </>
                   )}

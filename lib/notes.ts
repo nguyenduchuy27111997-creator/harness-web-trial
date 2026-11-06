@@ -47,3 +47,10 @@ export async function updateNote(supabase: SupabaseClient<Database>, bookId: str
   if (error) throw new Error(error.message);
   return data.length > 0;
 }
+
+// false when no row matched: missing, someone else's, or on another book.
+export async function removeNote(supabase: SupabaseClient<Database>, bookId: string, id: string): Promise<boolean> {
+  const { data, error } = await supabase.from("notes").delete().eq("id", id).eq("book_id", bookId).select("id");
+  if (error) throw new Error(error.message);
+  return data.length > 0;
+}
