@@ -15,7 +15,7 @@ test("edit form open: the status and details Save buttons are told apart", async
   await page.getByRole("button", { name: "Edit" }).click();
   await expect(page.getByRole("textbox", { name: "Title" })).toBeVisible();
   const names = await page.getByRole("button").evaluateAll((els) => els.map((el) => el.textContent?.trim()));
-  expect(names.filter((n) => n?.startsWith("Save"))).toEqual(["Save details", "Save status"]);
+  expect(names.filter((n) => n?.startsWith("Save"))).toEqual(["Save details", "Save status", "Save quote"]);
   await expect(page.getByRole("button", { name: "Save status" })).toHaveCount(1);
   await expect(page.getByRole("button", { name: "Save details" })).toHaveCount(1);
   await expectAccessible(page);

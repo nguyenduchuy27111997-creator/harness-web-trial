@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Migration 20261106120000_quotes.sql (applied to the shared local DB by psql), lib/quotes.ts (parseQuote, listBookQuotes, insertQuote), addQuote action, BookQuotes + QuoteForm on /books/[id]. The new 'Save quote' button made two older specs' { name: 'Save' } clicks ambiguous: they now say 'Save status' (decision 0010); book-page baselines updated."
+}
