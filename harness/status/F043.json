@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "removeNote (filtered on id and book_id) + deleteNote action; ConfirmDeleteButton size=sm per note in BookNotes. e2e/notes-delete.spec.ts; F040 baseline updated (notes now show Delete). F042 (edit) lands in the same files: expect a small merge in book-notes.tsx, actions.ts and the F040 baseline."
+}
