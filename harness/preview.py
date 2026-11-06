@@ -352,6 +352,18 @@ class Preview:
                         path = path.relative_to(lane["wt"])
                     self.send({"op": "edited", "job": e["job"], "path": str(path)})
 
+    def shutdown(self):
+        """Every lane's dev server and QA Chrome, gone: the loop ends with sessions it never saw out (a stop, a crash).
+        Seen for real: each such end left a headless Chrome (qa/<job> profile) running for good."""
+        with self.lock:
+            lanes, self.lanes = list(self.lanes.values()), {}
+        qa, self.qa = list(self.qa.values()), {}
+        for proc in [lane["dev"] for lane in lanes] + [q[0] for q in qa]:
+            if proc:
+                with contextlib.suppress(OSError):
+                    os.killpg(proc.pid, 15)
+        self.stop()
+
     def stop(self):
         cam, self.cam = self.cam, None
         if cam:

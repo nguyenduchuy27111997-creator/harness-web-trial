@@ -464,6 +464,7 @@ class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge, dispa
         finally:
             for p in list(self.procs):  # never leave sessions running without a loop
                 kill_group(p, grace=2)
+            preview.PREVIEW.shutdown()  # nor their QA Chrome and dev servers
             self.state["running"] = False
             self.state["stop_reason"] = self.state.get("stop_reason") or "the loop ended unexpectedly"
             self.save()
@@ -501,6 +502,7 @@ class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge, dispa
                 cut.append({"id": fid, "stage": stage, "max_cost": self.caps.get(fid, 0)})
         for p in list(self.procs):
             kill_group(p, grace=2)
+        preview.PREVIEW.shutdown()  # their QA Chrome and dev servers too: os._exit skips the run's own clean-up
         self.state["cut_off"] = cut
         self.state["running"], self.state["stop_reason"] = False, "stopped at once"
         self.save()

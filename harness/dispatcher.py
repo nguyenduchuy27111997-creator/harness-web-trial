@@ -21,7 +21,10 @@ class Dispatcher:
     def consult(self, job, stage):
         """Ask the dispatcher about this job's new stage, in the background, once per situation."""
         event = "milestone" if stage == "building" and job.get("kind") == "design" else EVENTS.get(stage)
-        if MODE != "suggest" or not event or job.get("kind") == "rule" or not self.can_start():
+        # Not held back by a busy machine: it is one read-only call, and a busy machine is when PRs get held. Seen on
+        # the web trial: at load 70-90 on 12 CPUs, F040 and F044 were held and the dispatcher was never asked.
+        if (MODE != "suggest" or not event or job.get("kind") == "rule" or self.free_budget() < CAP
+                or self.day_full()):
             return
         key = f"{job['id']}:{event}:{job.get('attempts', 0)}:{job.get('fix_rounds', 0)}"
         asked = self.state.setdefault("consulted", [])
@@ -66,7 +69,14 @@ class Dispatcher:
                 "Its recent events:\n```\n" + "\n".join(mine) + "\n```")
 
     def collect_advice(self):
-        """Write each answer the dispatcher gave, and what it cost, once it is done."""
+        """Write each answer the dispatcher gave, and what it cost, once it is done. On a run's first tick, ask about
+        the jobs already waiting that it was never asked about (they went to waiting before it was on, or a run before)."""
+        if not getattr(self, "swept", False):
+            self.swept = True
+            day = time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(time.time() - 86400))
+            for job in list(self.state["jobs"].values()):
+                if job["stage"] in EVENTS and job.get("updated", "") >= day:  # not every old failure: the last day's
+                    self.consult(job, job["stage"])
         for key, (t, box, fid, event, probe) in list(getattr(self, "advice", {}).items()):
             if t.is_alive():
                 continue
