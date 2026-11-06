@@ -1,12 +1,20 @@
+"use client";
+
+import { useState } from "react";
+import { EditNoteForm } from "@/components/edit-note-form";
 import { NoteForm } from "@/components/note-form";
+import { Button } from "@/components/ui/button";
 import { formatNoteDate, type Note, type NoteFormState } from "@/lib/notes";
 
 type Props = {
   notes: Note[];
   action: (prev: NoteFormState, formData: FormData) => Promise<NoteFormState>;
+  editAction: (noteId: string, prev: NoteFormState, formData: FormData) => Promise<NoteFormState>;
 };
 
-export function BookNotes({ notes, action }: Props) {
+export function BookNotes({ notes, action, editAction }: Props) {
+  // At most one edit form is open at a time.
+  const [openId, setOpenId] = useState<string | null>(null);
   return (
     <section aria-labelledby="notes-heading" className="flex flex-col gap-3">
       <h2 id="notes-heading" className="font-heading text-xl font-semibold">
@@ -19,8 +27,24 @@ export function BookNotes({ notes, action }: Props) {
         <ul className="flex flex-col gap-3">
           {notes.map((note) => (
             <li key={note.id} className="flex flex-col gap-1 break-words rounded-lg border p-3">
-              <p className="whitespace-pre-wrap">{note.body}</p>
-              <p className="text-sm text-muted-foreground">{formatNoteDate(note.created_at)}</p>
+              {openId === note.id ? (
+                <EditNoteForm
+                  id={note.id}
+                  body={note.body}
+                  action={editAction.bind(null, note.id)}
+                  onClose={() => setOpenId(null)}
+                />
+              ) : (
+                <>
+                  <p className="whitespace-pre-wrap">{note.body}</p>
+                  <p className="text-sm text-muted-foreground">{formatNoteDate(note.created_at)}</p>
+                  <div>
+                    <Button type="button" variant="outline" size="sm" onClick={() => setOpenId(note.id)}>
+                      Edit
+                    </Button>
+                  </div>
+                </>
+              )}
             </li>
           ))}
         </ul>
