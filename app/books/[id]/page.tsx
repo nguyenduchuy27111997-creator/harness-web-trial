@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BookQuotes } from "@/components/book-quotes";
 import { BookShelves } from "@/components/book-shelves";
 import { BookStatusForm } from "@/components/book-status-form";
 import { BookNotes } from "@/components/book-notes";
@@ -13,10 +14,12 @@ import { StatusBadge } from "@/components/status-badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatFinishDate, getBook } from "@/lib/books";
 import { listNotes } from "@/lib/notes";
+import { listBookQuotes } from "@/lib/quotes";
 import { listBookShelfIds, listShelves } from "@/lib/shelves";
 import { createClient, requireUser } from "@/lib/supabase/server";
 import {
   addNote,
+  addQuote,
   editNote,
   deleteNote,
   addToShelf,
@@ -35,11 +38,12 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   await requireUser();
   const supabase = await createClient();
-  const [book, shelves, shelfIds, notes] = await Promise.all([
+  const [book, shelves, shelfIds, notes, quotes] = await Promise.all([
     getBook(supabase, id),
     listShelves(supabase),
     listBookShelfIds(supabase, id),
     listNotes(supabase, id),
+    listBookQuotes(supabase, id),
   ]);
   if (!book) notFound();
   return (
@@ -78,6 +82,7 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
         editAction={editNote.bind(null, book.id)}
         deleteAction={deleteNote.bind(null, book.id)}
       />
+      <BookQuotes quotes={quotes} action={addQuote.bind(null, book.id)} />
       <DeleteBookButton title={book.title} action={deleteBook.bind(null, book.id)} />
     </main>
   );

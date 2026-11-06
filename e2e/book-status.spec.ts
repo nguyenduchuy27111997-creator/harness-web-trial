@@ -45,7 +45,7 @@ test("change status and finish date", async ({ page }) => {
   await page.getByRole("combobox", { name: "Status" }).click();
   await page.getByRole("option", { name: "Reading" }).click();
   await expect(page.getByRole("status")).toHaveCount(0);
-  await page.getByRole("button", { name: "Save" }).click();
+  await page.getByRole("button", { name: "Save status" }).click();
   await expect(page.getByRole("status")).toHaveText("Saved");
   await expect(page.getByText(/Finished on/)).toHaveCount(0);
 });

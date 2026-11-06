@@ -26,7 +26,7 @@ test("review a finished book", async ({ page }) => {
   const statusField = page.getByRole("combobox", { name: "Status" });
   await statusField.click();
   await page.getByRole("option", { name: "Finished" }).click();
-  await page.getByRole("button", { name: "Save" }).click();
+  await page.getByRole("button", { name: "Save status" }).click();
   await expect(review).toBeVisible();
 
   await review.fill("Loved the ending.");
