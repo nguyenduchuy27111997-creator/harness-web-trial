@@ -236,6 +236,9 @@ class Scheduler:
                     job["quality"] = json.loads(q.read_text())
                 except ValueError:
                     pass
+            if job["stage"] in DONE:  # dropped while the session ran; seen for real: its result would bring it back
+                self.event(fid, f"the {stage} session ended after the job was {job['stage']}; its result is not used")
+                continue
             if res.get("subtype") in ("limit", "infra"):
                 self.pause(job, stage, infra=res["subtype"] == "infra")
                 continue
