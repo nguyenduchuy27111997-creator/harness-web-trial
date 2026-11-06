@@ -121,27 +121,32 @@ def check(base, head, override, rule=False, agent=False):
         for path in sorted(changed - RULE_FILES):
             problems.append(f"{path}: a rule PR may change only {', '.join(sorted(RULE_FILES))}")
         problems += rule_lines(base, head)
+    # Merging main in brings main's changes (a kit upgrade, a backlog edit made with the override): those are
+    # not the agent's edits. Seen for real: F031's resolved conflict was refused for main's loop.py, and F042-F044's
+    # for main's new touches; each feature built again.
+    merging = head == ":" and git("rev-parse", "-q", "--verify", "MERGE_HEAD") is not None
     if agent:
-        # Merging main in brings main's protected files (a kit upgrade, say): those are not the agent's edits.
-        # Seen for real: F031's resolved conflict was refused for main's loop.py and the feature built again.
-        merging = head == ":" and git("rev-parse", "-q", "--verify", "MERGE_HEAD") is not None
         for path in sorted(p for p in changed if PROTECTED.match(p) and not (rule and p in RULE_FILES)
                            and not (merging and show(":", p) == show("MERGE_HEAD", p))):
             problems.append(f"{path}: a protected harness file; an agent may not change it (a human-led session can)")
     old, new = features(base), features(head)
     old_defs, new_defs = definitions(base), definitions(head)
+    main_defs = definitions("MERGE_HEAD") if merging else {}
     for fid in sorted(set(statuses(head)) - set(new_defs)):
         problems.append(f"{STATUS_DIR}{fid}.json: status for a feature that does not exist")
 
     if not override:
         for fid in old.keys() - new.keys():
-            problems.append(f"{FEATURES}: feature {fid} was removed")
+            if not (merging and fid not in main_defs):
+                problems.append(f"{FEATURES}: feature {fid} was removed")
         if old:
             for fid in new.keys() - old.keys():
-                problems.append(f"{FEATURES}: feature {fid} was added")
+                if not (merging and fid in main_defs):
+                    problems.append(f"{FEATURES}: feature {fid} was added")
         for fid in old_defs.keys() & new_defs.keys():
             changed = sorted(k for k in old_defs[fid].keys() | new_defs[fid].keys()
-                             if k not in EDITABLE and old_defs[fid].get(k) != new_defs[fid].get(k))
+                             if k not in EDITABLE and old_defs[fid].get(k) != new_defs[fid].get(k)
+                             and not (merging and fid in main_defs and new_defs[fid].get(k) == main_defs[fid].get(k)))
             if changed:
                 problems.append(f"{FEATURES}: {fid} changed {', '.join(changed)} (only status, notes, blocked_reason, attempts may change)")
 
