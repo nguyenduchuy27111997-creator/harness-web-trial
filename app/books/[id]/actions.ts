@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
+  getBook,
   isUuid,
   parseBookFields,
   parseProgress,
@@ -22,6 +23,7 @@ import {
   type StatusFormState,
 } from "@/lib/books";
 import { insertNote, parseNote, type NoteFormState } from "@/lib/notes";
+import { insertQuote, parseQuote, type QuoteFormState } from "@/lib/quotes";
 import { addBookToShelf, parseShelfChoice, removeBookFromShelf, type AddToShelfFormState } from "@/lib/shelves";
 import { createClient, requireUser } from "@/lib/supabase/server";
 
@@ -179,5 +181,32 @@ export async function addNote(bookId: string, _prev: NoteFormState, formData: Fo
     return { formError: "Could not save. Try again." };
   }
   revalidatePath(`/books/${bookId}`);
+  return { saved: true };
+}
+
+export async function addQuote(
+  bookId: string,
+  _prev: QuoteFormState,
+  formData: FormData,
+): Promise<QuoteFormState> {
+  await requireUser();
+  if (!isUuid(bookId)) return { formError: "Book not found" };
+  try {
+    const supabase = await createClient();
+    const book = await getBook(supabase, bookId);
+    if (!book) return { formError: "Book not found" };
+    const parsed = parseQuote(formData, book.total_pages);
+    if (!parsed.ok) {
+      return {
+        fieldErrors: parsed.fieldErrors,
+        values: { quote: String(formData.get("quote") ?? ""), page: String(formData.get("page") ?? "") },
+      };
+    }
+    if ((await insertQuote(supabase, bookId, parsed.value)) === "missing") return { formError: "Book not found" };
+  } catch {
+    return { formError: "Could not save. Try again." };
+  }
+  revalidatePath(`/books/${bookId}`);
+  revalidatePath("/quotes");
   return { saved: true };
 }

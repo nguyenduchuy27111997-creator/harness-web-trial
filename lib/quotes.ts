@@ -1,0 +1,52 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { isUuid } from "./books";
+import type { Database, Tables } from "@/lib/database.types";
+import type { FormState, Parsed } from "@/lib/forms";
+
+export type BookQuote = Pick<Tables<"quotes">, "id" | "body" | "page" | "created_at">;
+
+export type QuoteFormState = FormState<"quote" | "page"> & { saved?: true };
+
+// The page bound is the book's total pages when it has one (decision 0009), else the database's 10,000.
+export function parseQuote(
+  formData: FormData,
+  totalPages: number | null,
+): Parsed<{ body: string; page: number | null }, "quote" | "page"> {
+  const body = String(formData.get("quote") ?? "").trim();
+  const rawPage = String(formData.get("page") ?? "").trim();
+  const max = totalPages ?? 10000;
+  const fieldErrors: { quote?: string; page?: string } = {};
+  if (body.length === 0) fieldErrors.quote = "Quote is required";
+  else if (body.length > 1000) fieldErrors.quote = "Quote must be at most 1,000 characters";
+  const page = rawPage === "" ? null : Number(rawPage);
+  if (page !== null && (!/^\d+$/.test(rawPage) || page < 1 || page > max)) {
+    fieldErrors.page = `Page must be a whole number from 1 to ${max.toLocaleString("en-US")}`;
+  }
+  if (fieldErrors.quote || fieldErrors.page) return { ok: false, fieldErrors };
+  return { ok: true, value: { body, page } };
+}
+
+// Row Level Security limits the rows to the signed-in user's own. A malformed id matches no book, so it has no quotes.
+export async function listBookQuotes(supabase: SupabaseClient<Database>, bookId: string): Promise<BookQuote[]> {
+  if (!isUuid(bookId)) return [];
+  const { data, error } = await supabase
+    .from("quotes")
+    .select("id, body, page, created_at")
+    .eq("book_id", bookId)
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false });
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+// The composite foreign key rejects a book that is not the user's or is gone (23503); RLS rejects a forged owner (42501).
+export async function insertQuote(
+  supabase: SupabaseClient<Database>,
+  bookId: string,
+  quote: { body: string; page: number | null },
+): Promise<"ok" | "missing"> {
+  const { error } = await supabase.from("quotes").insert({ book_id: bookId, body: quote.body, page: quote.page });
+  if (!error) return "ok";
+  if (error.code === "23503" || error.code === "42501") return "missing";
+  throw new Error(error.message);
+}
