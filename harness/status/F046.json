@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "updateQuote and editQuote (re-parse against the book's total_pages), EditQuoteForm in place, one open at a time. F044's baseline updated: each quote now shows an Edit button. Full gate passed."
+}

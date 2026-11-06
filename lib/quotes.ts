@@ -50,3 +50,20 @@ export async function insertQuote(
   if (error.code === "23503" || error.code === "42501") return "missing";
   throw new Error(error.message);
 }
+
+// Filtering on the book as well as the id keeps the bound book, the page limit and the changed row in agreement.
+export async function updateQuote(
+  supabase: SupabaseClient<Database>,
+  bookId: string,
+  id: string,
+  quote: { body: string; page: number | null },
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("quotes")
+    .update({ body: quote.body, page: quote.page })
+    .eq("id", id)
+    .eq("book_id", bookId)
+    .select("id");
+  if (error) throw new Error(error.message);
+  return data.length > 0;
+}
