@@ -68,6 +68,6 @@ test("save quotes from a book", async ({ page }) => {
   await expect(page).toHaveScreenshot("F044-quotes.png", {
     stylePath: "e2e/hide-dev-overlay.css",
     fullPage: true,
-    mask: [page.getByText(/Finished on/)],
+    mask: [page.getByText(/Started on/), page.getByText(/Finished on/)],
   });
 });

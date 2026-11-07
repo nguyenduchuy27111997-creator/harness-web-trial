@@ -39,7 +39,7 @@ test("change status and finish date", async ({ page }) => {
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F010-finished.png", {
     stylePath: "e2e/hide-dev-overlay.css",
-    mask: [page.getByText(/Finished on/)],
+    mask: [page.getByText(/Started on/), page.getByText(/Finished on/)],
   });
 
   await page.getByRole("combobox", { name: "Status" }).click();

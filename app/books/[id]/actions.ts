@@ -43,6 +43,7 @@ export async function updateStatus(
   }
   revalidatePath("/books");
   revalidatePath(`/books/${id}`);
+  revalidatePath("/stats");
   return { saved: true };
 }
 

@@ -38,5 +38,6 @@ test("record reading progress", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Save status" })).toBeEnabled();
   await page.mouse.move(0, 0); // the hover colour of the last-clicked button is below contrast
   await expectAccessible(page);
-  await expect(page).toHaveScreenshot("F035-progress.png", { stylePath: "e2e/hide-dev-overlay.css" });
+  await page.evaluate(() => window.scrollTo(0, 0)); // the Started on line makes the page taller, so the last click scrolled it
+  await expect(page).toHaveScreenshot("F035-progress.png", { stylePath: "e2e/hide-dev-overlay.css", mask: [page.getByText(/Started on/)] });
 });
