@@ -51,6 +51,8 @@ test("quote validation", async ({ page }) => {
     await expect(pageField).toHaveValue(bad);
     await expect(noQuotes).toBeVisible();
   }
+  // The last two errors read the same, so wait for the action to finish: axe flagged a still-disabled Save.
+  await expect(save).toBeEnabled();
   await page.mouse.move(0, 0);
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F045-quote-errors.png", { stylePath: "e2e/hide-dev-overlay.css" });

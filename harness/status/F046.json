@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "updateQuote and editQuote (re-parse against the book's total_pages), EditQuoteForm in place, one open at a time. F044's baseline updated: each quote now shows an Edit button. Full gate passed. CI fix: CI's db reset failure was the runner (container error before migrations). Fixed a race in quote-validation's a11y check (wait for Save enabled). Gate and verifier passed again. Merged main (notes, quote delete): Edit sits next to Delete on each quote. Gate and verifier passed after the merge."
+}
