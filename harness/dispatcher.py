@@ -102,10 +102,16 @@ class Dispatcher:
                 self.consult(job, "building" if event == "milestone" else job["stage"])
                 continue
             tries.pop(key, None)
+            if failed:  # asked three times, never answered: the reply is an error, not advice. Seen on the web trial:
+                # "Failed to authenticate" was logged as F048's advice.
+                error, advice = box.get("error") or (text or "no reply").strip()[:200], {}
             self.decide_log({"key": key, "at": now(), "job": fid, "event": event, "advice": advice,
-                             "cost": round(cost, 4), **({"error": box["error"]} if "error" in box else {})})
+                             "cost": round(cost, 4), **({"error": error} if failed else {})})
             if job is not None and event != "milestone":
                 job["advice"] = key  # what happens to the job next is written beside it (outcome)
+            if failed:
+                self.event(fid, f"dispatcher could not answer: {error[:160]}")
+                continue
             what = advice.get("action") or ("touches for " + ", ".join(advice["touches"]) if advice.get("touches") else "no advice")
             self.event(fid, f"dispatcher would: {what}" + (f" ({advice['why'][:160]})" if advice.get("why") else ""))
 
@@ -145,6 +151,7 @@ def report(home):
     for r in by.values():
         a = r.get("advice", {})
         said = a.get("action") or (f"touches for {len(a['touches'])} features" if a.get("touches") else a.get("raw", "")[:80])
+        said = f"(no answer: {r['error'][:60]})" if r.get("error") else said
         did = r.get("actual")
         did = (f"{did['stage']}" + (f", owner said: {did['answer'][:80]}" if did.get("answer") else "")) if did else "still waiting"
         out.append(f"{r.get('at', '')[:16]}  {r['job']:<8} {r.get('event', ''):<10} would: {said}"

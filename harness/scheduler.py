@@ -269,10 +269,11 @@ class Scheduler:
             if job["stage"] in DONE:  # dropped while the session ran; seen for real: its result would bring it back
                 self.event(fid, f"the {stage} session ended after the job was {job['stage']}; its result is not used")
                 continue
-            if res.get("subtype") in ("limit", "infra"):
-                self.pause(job, stage, infra=res["subtype"] == "infra")
+            if res.get("subtype") in ("limit", "infra", "auth"):
+                self.pause(job, stage, kind=res["subtype"])
                 continue
             self.state.pop("infra_since", None)  # a session got through: the API is back
+            self.state.pop("auth_since", None)
             self.state["infra_pauses"] = 0
             try:
                 {"building": self.finish_build, "review": self.finish_review, "fixing": self.finish_fix}[stage](job, res)

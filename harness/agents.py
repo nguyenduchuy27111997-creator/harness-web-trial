@@ -11,7 +11,7 @@ import time
 
 from common import (  # noqa: F401
     api_reachable, final_result, free_port, git, health, kill_group, lang, limit_resume, metrics, now, online,
-    preview, run, stop_processes_in, stream, API_DOWN, CLAUDE, ENV_KEEP, FEATURE_FLOOR, FEATURE_ID, FIX_SONNET,
+    preview, run, stop_processes_in, stream, API_DOWN, AUTH, AUTH_PAUSE, CLAUDE, ENV_KEEP, FEATURE_FLOOR, FEATURE_ID, FIX_SONNET,
     INFRA_PAUSE, LIMIT, MAX_LOAD, MIN_DISK_GB, MIN_SESSION, OFFLINE_MAX, PORT_LOCK, PRIOR_COST, PROBE_EVERY,
     PROBE_MAX, Path, SANDBOX, SESSION_TIMEOUT, STAGE_CAPS, STREAM, DAILY_BUDGET, DAY_SHED, MIN_LANES,
 )
@@ -249,6 +249,9 @@ class Agents:
             if API_DOWN.search(err):
                 job["infra_message"] = tail[-1] if tail else "API unreachable"
                 return 0.0, "infra", ""
+            if AUTH.search(err):
+                job["infra_message"] = tail[-1] if tail else "not logged in"
+                return 0.0, "auth", ""
             return 0.0, "no-json", ""
         subtype = d.get("subtype", "unknown")
         usage = d.get("usage") or {}
@@ -268,6 +271,9 @@ class Agents:
         if d.get("is_error") and API_DOWN.search(str(d.get("result") or "")):
             job["infra_message"] = str(d.get("result"))[:200]
             return float(d.get("total_cost_usd", 0)), "infra", ""
+        if d.get("is_error") and AUTH.search(str(d.get("result") or "")):
+            job["infra_message"] = str(d.get("result"))[:200]
+            return float(d.get("total_cost_usd", 0)), "auth", ""
         if subtype == "success" and (d.get("is_error") or proc.returncode != 0):
             subtype = "error"  # seen with the network down: "success", is_error, and an API error as the result
         return float(d.get("total_cost_usd", 0)), subtype, str(d.get("result") or "")
@@ -350,10 +356,16 @@ class Agents:
         self.state["infra_pauses"] = n + 1
         return time.time() + INFRA_PAUSE * (1, 2, 4, 6)[min(n, 3)]
 
-    def pause(self, job, stage, infra=False):
-        """Claude's usage limit, or its API unreachable, stopped this session: keep the job as it was and pause
-        Claude work until the reset (or the API answers again). Neither is the job's fault: no attempt is used."""
-        if infra:
+    def pause(self, job, stage, kind="limit"):
+        """Claude's usage limit, its API unreachable, or Claude Code logged out stopped this session: keep the job
+        as it was and pause Claude work until the reset (the API answers, a later try). Not the job's fault: no
+        attempt is used. Logged out, the loop tries again every AUTH_PAUSE and tells the owner once."""
+        infra = kind == "infra"
+        if kind == "auth":
+            message = job.pop("infra_message", "not logged in")
+            self.state.setdefault("auth_since", int(time.time()))
+            until, why = time.time() + AUTH_PAUSE, "Claude Code is logged out on this machine (run claude, then /login)"
+        elif infra:
             message = job.pop("infra_message", "Claude's API unreachable")
             self.state.setdefault("infra_since", time.time())
             until, why = self.infra_wait(), "Claude's API unreachable"
@@ -365,10 +377,11 @@ class Agents:
             message = job.pop("limit_message", "usage limit")
             until, why = limit_resume(message), "Claude usage limit"
         if until > self.state.get("paused_until", 0):
-            self.state["paused_until"], self.state["pause_kind"] = until, "infra" if infra else "limit"
+            self.state["paused_until"], self.state["pause_kind"] = until, kind
             resumes = datetime.datetime.fromtimestamp(until).strftime('%H:%M')
             self.event("loop", f"paused: {why} ({message[:120]}); resumes {resumes}")
-            self.push(f"pause:{self.state['pause_kind']}:{int(until) // 600}", lang.say("Loop paused"), lang.say("{why}; resumes {resumes}.", why=why, resumes=resumes))
+            key = f"auth:{self.state['auth_since']}" if kind == "auth" else f"{kind}:{int(until) // 600}"  # logged out: once
+            self.push(f"pause:{key}", lang.say("Loop paused"), lang.say("{why}; resumes {resumes}.", why=why, resumes=resumes))
         if stage == "building":
             self.set_stage(job, "queued", note="waits for the usage limit to reset")  # not an attempt
         elif stage == "fixing":  # undo the half-done fix; the review runs again and asks for the fix again
@@ -389,7 +402,8 @@ class Agents:
             return True
         if self.state.pop("paused_until", None):
             kind = self.state.pop("pause_kind", "limit")
-            self.event("loop", "resumed: " + ("Claude's API answers again" if kind == "infra" else "the usage limit has reset"))
+            self.event("loop", "resumed: " + {"infra": "Claude's API answers again", "auth": "trying Claude again"}.get(
+                kind, "the usage limit has reset"))
         return False
 
     def count(self, job, holder, stage):
