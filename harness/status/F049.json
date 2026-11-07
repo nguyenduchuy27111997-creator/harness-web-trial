@@ -1,4 +1,4 @@
 {
   "status": "passing",
-  "notes": "Quote search on /quotes via filterQuotes/quotesHref; SearchForm reused with a quotes flag (decision 0012)."
+  "notes": "Quote search on /quotes via filterQuotes/quotesHref; QuoteSearchForm wraps SearchForm with an href builder and is always shown (decision 0012)."
 }

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { SearchForm } from "@/components/search-form";
+import { QuoteSearchForm } from "@/components/quote-search-form";
 import { parseSearch } from "@/lib/books";
 import { filterQuotes, listQuotes, quotesHref } from "@/lib/quotes";
 import { createClient, requireUser } from "@/lib/supabase/server";
@@ -16,7 +16,7 @@ export default async function QuotesPage({ searchParams }: { searchParams: Promi
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:p-8">
       <h1 className="font-heading text-4xl font-semibold tracking-tight">Quotes</h1>
-      {(all.length > 0 || q) && <SearchForm key={q} q={q} quotes />}
+      <QuoteSearchForm key={q} q={q} />
       {quotes.length === 0 && q ? (
         <div className="flex flex-col items-start gap-2">
           <p className="text-muted-foreground">No quotes match &ldquo;{q}&rdquo;.</p>
