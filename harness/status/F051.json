@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "RLS from the notes and quotes migrations already isolates accounts; added e2e/notes-quotes-isolation.spec.ts (UI flow plus a session-level integration test)."
+}
