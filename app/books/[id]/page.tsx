@@ -7,6 +7,7 @@ import { BookStatusForm } from "@/components/book-status-form";
 import { BookNotes } from "@/components/book-notes";
 import { DeleteBookButton } from "@/components/delete-book-button";
 import { EditBookForm } from "@/components/edit-book-form";
+import { EditDatesForm } from "@/components/edit-dates-form";
 import { ProgressForm } from "@/components/progress-form";
 import { RatingForm } from "@/components/rating-form";
 import { ReadingDates } from "@/components/reading-dates";
@@ -28,6 +29,7 @@ import {
   addToShelf,
   deleteBook,
   editBook,
+  editDates,
   removeFromShelf,
   saveProgress,
   saveRating,
@@ -63,6 +65,14 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
         </CardContent>
       </Card>
       <EditBookForm key={`${book.title}\n${book.author}`} title={book.title} author={book.author} action={editBook.bind(null, book.id)} />
+      {book.status !== "want_to_read" && (
+        <EditDatesForm
+          key={`${book.started_on}\n${book.finished_on}`}
+          startedOn={book.started_on}
+          finishedOn={book.status === "finished" ? book.finished_on : null}
+          action={editDates.bind(null, book.id)}
+        />
+      )}
       <BookStatusForm status={book.status} action={updateStatus.bind(null, book.id)} />
       <BookShelves
         shelves={shelves}

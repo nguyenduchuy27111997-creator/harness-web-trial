@@ -6,6 +6,7 @@ import {
   getBook,
   isUuid,
   parseBookFields,
+  parseReadingDates,
   parseProgress,
   parseRating,
   parseReview,
@@ -16,6 +17,8 @@ import {
   updateBookRating,
   updateBookReview,
   updateBookStatus,
+  updateReadingDates,
+  type DatesFormState,
   type EditBookFormState,
   type ProgressFormState,
   type RatingFormState,
@@ -272,4 +275,35 @@ export async function deleteQuote(bookId: string, quoteId: string, _formData: Fo
   if (isUuid(bookId) && isUuid(quoteId)) await removeQuote(await createClient(), bookId, quoteId);
   revalidatePath(`/books/${bookId}`);
   revalidatePath("/quotes");
+}
+
+export async function editDates(
+  bookId: string,
+  _prev: DatesFormState,
+  formData: FormData,
+): Promise<DatesFormState> {
+  await requireUser();
+  if (!isUuid(bookId)) return { formError: "Book not found" };
+  try {
+    const supabase = await createClient();
+    const book = await getBook(supabase, bookId);
+    if (!book || book.status === "want_to_read") return { formError: "Book not found" };
+    const parsed = parseReadingDates(formData, book.status);
+    if (!parsed.ok) {
+      return {
+        fieldErrors: parsed.fieldErrors,
+        values: {
+          started_on: String(formData.get("started_on") ?? ""),
+          finished_on: String(formData.get("finished_on") ?? ""),
+        },
+      };
+    }
+    if (!(await updateReadingDates(supabase, bookId, book.status, parsed.value))) return { formError: "Book not found" };
+  } catch {
+    return { formError: "Could not save. Try again." };
+  }
+  revalidatePath("/books");
+  revalidatePath(`/books/${bookId}`);
+  revalidatePath("/stats");
+  return { saved: true };
 }

@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Edit dates on /books/[id] for Reading (Started only) and Finished (Started + Finished) books. parseReadingDates is shape only (F055 adds future/ordering rules); a finish before the start is currently refused by the DB check and shows the generic save error until F055."
+}
