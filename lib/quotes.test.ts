@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { insertQuote, listBookQuotes, parseQuote } from "./quotes";
+import { insertQuote, listBookQuotes, listQuotes, parseQuote } from "./quotes";
 
 const BOOK = "11111111-1111-4111-8111-111111111111";
 
@@ -46,20 +46,22 @@ describe("parseQuote", () => {
   });
 });
 
-describe("listBookQuotes", () => {
-  const stub = (result: { data: unknown; error: { message: string } | null }) => {
-    const calls: unknown[][] = [];
-    const query = {
-      select: (columns: string) => (calls.push(["select", columns]), query),
-      eq: (column: string, value: string) => (calls.push(["eq", column, value]), query),
-      order: (column: string, options: unknown) => {
-        calls.push(["order", column, options]);
-        return column === "id" ? Promise.resolve(result) : query;
-      },
-    };
-    const supabase = { from: (table: string) => (calls.push(["from", table]), query) } as unknown as SupabaseClient<Database>;
-    return { supabase, calls };
+// A select query that resolves on its last order (by id).
+const stub = (result: { data: unknown; error: { message: string } | null }) => {
+  const calls: unknown[][] = [];
+  const query = {
+    select: (columns: string) => (calls.push(["select", columns]), query),
+    eq: (column: string, value: string) => (calls.push(["eq", column, value]), query),
+    order: (column: string, options: unknown) => {
+      calls.push(["order", column, options]);
+      return column === "id" ? Promise.resolve(result) : query;
+    },
   };
+  const supabase = { from: (table: string) => (calls.push(["from", table]), query) } as unknown as SupabaseClient<Database>;
+  return { supabase, calls };
+};
+
+describe("listBookQuotes", () => {
   it("lists the book's quotes newest first", async () => {
     const rows = [{ id: "q", body: "A", page: null, created_at: "2026-11-06T10:00:00+00:00" }];
     const { supabase, calls } = stub({ data: rows, error: null });
@@ -79,6 +81,23 @@ describe("listBookQuotes", () => {
   });
   it("throws on a database error", async () => {
     await expect(listBookQuotes(stub({ data: null, error: { message: "boom" } }).supabase, BOOK)).rejects.toThrow("boom");
+  });
+});
+
+describe("listQuotes", () => {
+  it("lists all quotes newest first with their book", async () => {
+    const rows = [{ id: "q", body: "A", page: 42, created_at: "2026-11-06T10:00:00+00:00", book: { id: BOOK, title: "T" } }];
+    const { supabase, calls } = stub({ data: rows, error: null });
+    expect(await listQuotes(supabase)).toEqual(rows);
+    expect(calls).toEqual([
+      ["from", "quotes"],
+      ["select", "id, body, page, created_at, book:books(id, title)"],
+      ["order", "created_at", { ascending: false }],
+      ["order", "id", { ascending: false }],
+    ]);
+  });
+  it("throws on a database error", async () => {
+    await expect(listQuotes(stub({ data: null, error: { message: "boom" } }).supabase)).rejects.toThrow("boom");
   });
 });
 

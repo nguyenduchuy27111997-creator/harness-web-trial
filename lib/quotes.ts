@@ -5,6 +5,8 @@ import type { FormState, Parsed } from "@/lib/forms";
 
 export type BookQuote = Pick<Tables<"quotes">, "id" | "body" | "page" | "created_at">;
 
+export type Quote = BookQuote & { book: Pick<Tables<"books">, "id" | "title"> };
+
 export type QuoteFormState = FormState<"quote" | "page"> & { saved?: true };
 
 // The page bound is the book's total pages when it has one (decision 0009), else the database's 10,000.
@@ -33,6 +35,17 @@ export async function listBookQuotes(supabase: SupabaseClient<Database>, bookId:
     .from("quotes")
     .select("id, body, page, created_at")
     .eq("book_id", bookId)
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false });
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+// All the signed-in user's quotes (Row Level Security), newest first, each with its book.
+export async function listQuotes(supabase: SupabaseClient<Database>): Promise<Quote[]> {
+  const { data, error } = await supabase
+    .from("quotes")
+    .select("id, body, page, created_at, book:books(id, title)")
     .order("created_at", { ascending: false })
     .order("id", { ascending: false });
   if (error) throw new Error(error.message);

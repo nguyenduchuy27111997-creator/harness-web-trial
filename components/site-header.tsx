@@ -19,6 +19,9 @@ export function SiteHeader({ signedIn, signOut }: SiteHeaderProps) {
               <Link href="/shelves">Shelves</Link>
             </Button>
             <Button asChild variant="ghost">
+              <Link href="/quotes">Quotes</Link>
+            </Button>
+            <Button asChild variant="ghost">
               <Link href="/stats">Stats</Link>
             </Button>
             <form action={signOut}>
