@@ -45,7 +45,7 @@ test("rate a finished book", async ({ page }) => {
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F011-rated.png", {
     stylePath: "e2e/hide-dev-overlay.css",
-    mask: [page.getByText(/Finished on/)],
+    mask: [page.getByText(/Started on/), page.getByText(/Finished on/)],
   });
   await rate(2);
 });

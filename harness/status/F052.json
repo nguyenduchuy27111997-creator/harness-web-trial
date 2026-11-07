@@ -1,1 +1,1 @@
-{"status":"passing","notes":"Migration 20261107100000_books_started_on (column, checks, trigger, update grant); BookDetail.started_on; 'Started on <date>' on /books/[id]; updateStatus revalidates /stats. Seven book-page baselines refreshed."}
+{"status":"passing","notes":"Migration 20261107100000_books_started_on (column, checks, trigger, update grant); BookDetail.started_on; 'Started on <date>' on /books/[id]; updateStatus revalidates /stats. Book-page baselines mask /Started on/; F035 scrolls to top before its screenshot."}

@@ -44,5 +44,5 @@ test("finishing a book sets its page to the total", async ({ page }) => {
   await expect(page.getByText(/Page \d+ of/)).toHaveCount(0);
   await page.mouse.move(0, 0);
   await expectAccessible(page);
-  await expect(page).toHaveScreenshot("F038-finish-progress.png", { stylePath: "e2e/hide-dev-overlay.css" });
+  await expect(page).toHaveScreenshot("F038-finish-progress.png", { stylePath: "e2e/hide-dev-overlay.css", mask: [page.getByText(/Started on/)] });
 });
