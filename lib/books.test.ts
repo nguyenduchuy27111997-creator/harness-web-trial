@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { booksHref, countByStatus, filterBooks, formatFinishDate, insertBook, listBooks, parseBookFields, parseNewBook, parseProgress, parseRating, parseReview, parseSearch, parseSort, parseStatus, parseStatusFilter, formatProgress, progressPercent, removeBook, sortBooks, type ShelfBook, updateBookFields, updateBookProgress, updateBookRating, updateBookReview, updateBookStatus } from "./books";
+import { booksHref, countByStatus, filterBooks, formatFinishDate, formatReadDays, insertBook, listBooks, parseBookFields, parseNewBook, parseProgress, parseRating, parseReview, parseSearch, parseSort, parseStatus, parseStatusFilter, formatProgress, progressPercent, removeBook, sortBooks, type ShelfBook, updateBookFields, updateBookProgress, updateBookRating, updateBookReview, updateBookStatus } from "./books";
 
 function stubClient(result: { data: unknown; error: { message: string } | null }) {
   const calls: unknown[][] = [];
@@ -126,6 +126,13 @@ describe("parseStatus", () => {
 describe("formatFinishDate", () => {
   it("writes the date out in long form", () => {
     expect(formatFinishDate("2026-11-02")).toBe("November 2, 2026");
+  });
+});
+
+describe("formatReadDays", () => {
+  it("counts both days and pluralises", () => {
+    expect(formatReadDays("2026-10-01", "2026-10-01")).toBe("Read in 1 day");
+    expect(formatReadDays("2026-10-01", "2026-10-12")).toBe("Read in 12 days");
   });
 });
 
