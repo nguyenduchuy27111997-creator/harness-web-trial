@@ -41,6 +41,13 @@ One person per account, on desktop or phone. They add a book in a few seconds, m
 - See all my quotes on `/quotes`, newest first, each with its book's title linking to the book. Search them by text or book title; the search is kept in the URL (`?q=`).
 - Deleting a book deletes its notes and quotes. No one else can see or change my notes and quotes.
 
+### M6: reading history
+- Moving a book to Reading records the date I started it (today); moving it back to Want to read clears it. The book's page shows when I started and finished it, and for a finished book how many days I read it.
+- Edit a book's start and finish dates on its page. Dates cannot be in the future, and the finish date cannot be before the start date; errors show next to the field.
+- Read a finished book again: "Read again" moves it to Reading with today's start date and keeps the earlier read (start date, finish date, rating) in the book's past reads, listed newest first on its page. Delete a past read after confirming.
+- `/stats` counts every read I finished this year, past reads included, and shows how many books I finished in each month of this year and how many pages I read this year.
+- `/stats/<year>` is my year in review: the books I finished that year with their ratings, my average rating and highest rated books that year, and links to the previous and next year. No one else can see my reading history.
+
 ## Out of scope
 - Book search APIs, covers, ISBN lookup, sharing, social features, import/export.
 - Password reset, social login, email confirmation.
@@ -57,3 +64,4 @@ Next.js + Supabase (the nextjs-supabase preset).
 - M3: I can fix a typo in a book's title, find a book by part of its author's name, sort my finished books by rating, and see my progress toward a goal of 20 books this year.
 - M4: I can make a "Travel" shelf, put two books on it, filter my list to that shelf together with the Reading tab, and see that I am 40% through a 250-page book.
 - M5: I can write a note on a book, save a quote from page 42 of it, find that quote on `/quotes` by a word in it, and after deleting the book its quote is gone.
+- M6: I can see that I read a book in 12 days after fixing its start date, read it again and still see the first read, and see on `/stats/<year>` the books I finished that year.

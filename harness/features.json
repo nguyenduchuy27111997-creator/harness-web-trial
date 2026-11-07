@@ -730,6 +730,188 @@
         "As B, open A's book URL /books/<id>: the book not found page shows, with none of A's notes or quotes",
         "With B's session against the local Supabase, reading, updating or deleting A's note and quote by id returns or changes no rows (an integration test the verifier runs); signed in again as A, the note and the quote are unchanged"
       ]
+    },
+    {
+      "id": "F052",
+      "milestone": "M6",
+      "priority": 52,
+      "complexity": "M",
+      "title": "Moving a book to Reading records today's start date",
+      "depends_on": ["F010"],
+      "touches": ["supabase/migrations/*start*", "app/books/[id]/**", "components/book-status-form*", "lib/books*", "e2e/*reading-dates*"],
+      "acceptance": [
+        "Signed in, add 'Middlemarch' (Want to read) and open its page: no start date is shown",
+        "Change its status to Reading: the page shows 'Started' with today's date, also after reload",
+        "Change it back to Want to read: the start date is gone, also after reload",
+        "A book that was already Reading or Finished before this change shows no start date and still opens without errors"
+      ]
+    },
+    {
+      "id": "F053",
+      "milestone": "M6",
+      "priority": 53,
+      "complexity": "S",
+      "title": "The book page shows when I started and finished it and how many days I read it",
+      "depends_on": ["F052"],
+      "touches": ["app/books/[id]/page.tsx", "components/*reading-dates*", "lib/books*", "e2e/*reading-dates*"],
+      "acceptance": [
+        "Add 'Persuasion', move it to Reading, then to Finished: the page shows 'Started' and 'Finished' with today's date and 'Read in 1 day'",
+        "A finished book with no start date shows only 'Finished' with its date and no 'Read in' text",
+        "A book that is Reading shows 'Started' and no 'Finished' or 'Read in' text"
+      ],
+      "owner_check": true
+    },
+    {
+      "id": "F054",
+      "milestone": "M6",
+      "priority": 54,
+      "complexity": "M",
+      "title": "Edit a book's start and finish dates on its page",
+      "depends_on": ["F053"],
+      "touches": ["app/books/[id]/**", "components/*reading-dates*", "components/*dates-form*", "lib/books*", "e2e/*edit-dates*"],
+      "acceptance": [
+        "On a finished book's page click 'Edit dates': a Started field and a Finished field show with the current dates, with Save and Cancel",
+        "Set Started to 2026-10-01 and Finished to 2026-10-12 and click Save: the page shows those dates and 'Read in 12 days', also after reload",
+        "Open 'Edit dates' again and click Cancel: the dates are unchanged",
+        "On a book that is Reading, 'Edit dates' shows only the Started field; saving 2026-10-05 shows that date"
+      ]
+    },
+    {
+      "id": "F055",
+      "milestone": "M6",
+      "priority": 55,
+      "complexity": "S",
+      "title": "Date validation: no future dates, finish not before start",
+      "depends_on": ["F054"],
+      "touches": ["app/books/[id]/actions.ts", "components/*dates-form*", "lib/books*", "lib/forms*", "e2e/*dates-validation*"],
+      "acceptance": [
+        "On a finished book, set Started to a date after Finished and click Save: an error next to Finished says the finish date cannot be before the start date, and nothing is saved",
+        "Set Finished to tomorrow and click Save: an error next to Finished says the date cannot be in the future",
+        "Clear the Started field and save: the start date is removed and the page shows no 'Read in' text",
+        "Fix the dates and save: the errors are gone and the new dates show"
+      ]
+    },
+    {
+      "id": "F056",
+      "milestone": "M6",
+      "priority": 56,
+      "complexity": "M",
+      "title": "Read a finished book again, keeping the earlier read",
+      "depends_on": ["F053", "F011"],
+      "touches": ["supabase/migrations/*reads*", "app/books/[id]/**", "components/*read-again*", "components/*past-reads*", "lib/reads*", "lib/books*", "e2e/*read-again*"],
+      "acceptance": [
+        "A finished book rated 4 stars shows a 'Read again' button; a book that is Reading or Want to read does not",
+        "Click 'Read again': the book is Reading with today's start date, no finish date and no rating, also after reload",
+        "A 'Past reads' section on the page lists the earlier read with its start date, finish date and 4 stars",
+        "Finish it again, rate it 5 stars and read it again: Past reads lists both reads, newest first"
+      ],
+      "owner_check": true
+    },
+    {
+      "id": "F057",
+      "milestone": "M6",
+      "priority": 57,
+      "complexity": "S",
+      "title": "Delete a past read after confirming",
+      "depends_on": ["F056"],
+      "touches": ["app/books/[id]/**", "components/*past-reads*", "lib/reads*", "e2e/*past-reads*"],
+      "acceptance": [
+        "With two past reads, click 'Delete' next to one: a confirm dialog asks whether to delete the read",
+        "Click Cancel: both past reads are still listed",
+        "Click 'Delete' again and confirm: that read is gone, also after reload, and the book and the other read are unchanged",
+        "With no past reads the Past reads section is not shown"
+      ]
+    },
+    {
+      "id": "F058",
+      "milestone": "M6",
+      "priority": 58,
+      "complexity": "S",
+      "title": "Stats count every read finished this year, past reads included",
+      "depends_on": ["F057", "F015", "F023"],
+      "touches": ["app/stats/**", "lib/goals*", "lib/stats*", "lib/reads*", "e2e/stats*"],
+      "acceptance": [
+        "Finish 'Middlemarch' today and read it again, then finish it again: /stats says 2 books finished this year",
+        "With a goal of 20, Stats shows '2 of 20 books finished this year'",
+        "Delete one past read on the book page: /stats says 1 book finished this year",
+        "The average rating on /stats is unchanged by past reads: it is the average of the books' current ratings"
+      ]
+    },
+    {
+      "id": "F059",
+      "milestone": "M6",
+      "priority": 59,
+      "complexity": "M",
+      "title": "Stats show how many books I finished in each month of this year",
+      "depends_on": ["F058", "F054"],
+      "touches": ["app/stats/**", "components/*monthly*", "lib/stats*", "e2e/*monthly*"],
+      "acceptance": [
+        "/stats shows a 'Finished by month' chart with the 12 months of this year, each with its count, readable as text by a screen reader",
+        "Finish two books and set their finish dates to the 3rd and the 20th of March this year: March shows 2 and the other months 0",
+        "A book finished last year is not counted in any month",
+        "With no books finished this year, the chart shows 0 for every month"
+      ]
+    },
+    {
+      "id": "F060",
+      "milestone": "M6",
+      "priority": 60,
+      "complexity": "S",
+      "title": "Stats show how many pages I read this year",
+      "depends_on": ["F058", "F035"],
+      "touches": ["app/stats/**", "lib/stats*", "e2e/*pages-read*"],
+      "acceptance": [
+        "Finish a 250-page book and a 120-page book this year: /stats shows '370 pages read this year'",
+        "A book finished this year with no total pages is not counted, and Stats still shows the pages of the others",
+        "Read the 250-page book again and finish it: Stats shows '620 pages read this year'",
+        "With no pages read this year, Stats shows '0 pages read this year'"
+      ]
+    },
+    {
+      "id": "F061",
+      "milestone": "M6",
+      "priority": 61,
+      "complexity": "M",
+      "title": "Year in review at /stats/<year>: the books I finished that year",
+      "depends_on": ["F058", "F054"],
+      "touches": ["app/stats/[year]/**", "app/stats/page.tsx", "lib/stats*", "components/*year-review*", "e2e/*year-review*"],
+      "acceptance": [
+        "/stats has a 'Year in review' link to /stats/<this year>",
+        "/stats/<this year> says how many books I finished that year and lists them newest finished first, each with its title linking to the book, its finish date and its rating",
+        "A book read twice this year is listed once per read",
+        "/stats/2020 with nothing finished that year says I finished no books in 2020; /stats/abc and a year after this one show the not found page"
+      ],
+      "owner_check": true
+    },
+    {
+      "id": "F062",
+      "milestone": "M6",
+      "priority": 62,
+      "complexity": "S",
+      "title": "Year in review shows my average and highest rated books, with links to other years",
+      "depends_on": ["F061"],
+      "touches": ["app/stats/[year]/**", "lib/stats*", "components/*year-review*", "e2e/*year-review*"],
+      "acceptance": [
+        "With books rated 5, 5 and 3 finished this year, /stats/<this year> shows an average rating of 4.3 and a 'Highest rated' list with the two 5-star books",
+        "A year with no rated books shows no average and no Highest rated list",
+        "Set one book's finish date to last year: /stats/<this year> has a 'Previous year' link to /stats/<last year>, which lists that book and has a 'Next year' link back",
+        "/stats/<this year> has no 'Next year' link"
+      ]
+    },
+    {
+      "id": "F063",
+      "milestone": "M6",
+      "priority": 63,
+      "complexity": "S",
+      "title": "No one else can see my reading history",
+      "depends_on": ["F057", "F062", "F016"],
+      "touches": ["e2e/*history-isolation*", "supabase/migrations/*reads*"],
+      "acceptance": [
+        "Account A finishes 'Middlemarch', reads it again and finishes it again",
+        "Sign out and sign up account B: /stats says B finished 0 books this year and /stats/<this year> lists none of A's books",
+        "As B, open A's book URL /books/<id>: the book not found page shows, with none of A's dates or past reads",
+        "With B's session against the local Supabase, reading, updating or deleting A's past read by id returns or changes no rows (an integration test the verifier runs); signed in again as A, both reads are unchanged"
+      ]
     }
   ]
 }
