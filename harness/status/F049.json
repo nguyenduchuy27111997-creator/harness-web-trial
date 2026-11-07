@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Quote search on /quotes via filterQuotes/quotesHref; QuoteSearchForm wraps SearchForm with an href builder and is always shown (decision 0012)."
+}

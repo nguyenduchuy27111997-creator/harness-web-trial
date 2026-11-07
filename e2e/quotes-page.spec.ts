@@ -49,3 +49,59 @@ test("quotes page lists my quotes newest first", async ({ page }) => {
   await expect(page).toHaveURL(middlemarchUrl);
   await expect(page.getByRole("heading", { name: "Middlemarch" })).toBeVisible();
 });
+
+// F049: search my quotes by text or book title, kept in the URL.
+const MIDDLEMARCH = "It is a narrow mind which cannot look at a subject from various points of view.";
+const PERSUASION = "She had been forced into prudence in her youth, she learned romance as she grew older.";
+
+test("search quotes by text or book title", async ({ page }) => {
+  test.slow();
+  await signUpAs(page, `f049-${process.env.HARNESS_LANE ?? "local"}-${Date.now()}@example.com`);
+  const saveQuote = async (title: string, author: string, text: string) => {
+    await openNewBookPage(page, title, author);
+    const item = page.getByRole("list", { name: "Quotes from this book" }).getByRole("listitem").first();
+    await expect(async () => {
+      await page.getByRole("textbox", { name: "Quote", exact: true }).fill(text);
+      await page.getByRole("button", { name: "Save quote" }).click();
+      await expect(item).toContainText(text, { timeout: 3000 });
+    }).toPass();
+  };
+  await saveQuote("Middlemarch", "George Eliot", MIDDLEMARCH);
+  await saveQuote("Persuasion", "Jane Austen", PERSUASION);
+
+  await page.goto("/quotes");
+  const items = page.getByRole("list", { name: "My quotes" }).getByRole("listitem");
+  const search = page.getByRole("search").getByLabel("Search");
+
+  await search.fill("NARROW");
+  await search.press("Enter");
+  await expect(page).toHaveURL(/\/quotes\?q=NARROW$/);
+  await expect(items).toHaveCount(1);
+  await expect(items.first()).toContainText(MIDDLEMARCH);
+
+  await search.fill("persua");
+  await search.press("Enter");
+  await expect(page).toHaveURL(/\/quotes\?q=persua$/);
+  await expect(items).toHaveCount(1);
+  await expect(items.first()).toContainText(PERSUASION);
+  await page.reload();
+  await expect(search).toHaveValue("persua");
+  await expect(items).toHaveCount(1);
+  await expect(items.first()).toContainText(PERSUASION);
+
+  await search.fill("zzz");
+  await search.press("Enter");
+  await expect(page.getByText("No quotes match “zzz”.")).toBeVisible();
+  await page.getByRole("link", { name: "Clear search" }).click();
+  await expect(page).toHaveURL(/\/quotes$/);
+  await expect(items).toHaveCount(2);
+  await expect(search).toHaveValue("");
+
+  await search.fill("narrow");
+  await search.press("Enter");
+  await expect(items).toHaveCount(1);
+  await search.fill("");
+  await search.press("Enter");
+  await expect(page).toHaveURL(/\/quotes$/);
+  await expect(items).toHaveCount(2);
+});
