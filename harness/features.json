@@ -648,6 +648,7 @@
       "complexity": "S",
       "title": "Edit a quote on a book's page",
       "depends_on": ["F045"],
+      "touches": ["app/books/[id]/page.tsx", "app/books/[id]/actions.ts", "lib/quotes*", "components/*quote*", "e2e/*quote*"],
       "acceptance": [
         "With a quote on page 42, click its 'Edit' button: the Quote and Page fields show prefilled, with Save and Cancel buttons",
         "Change the text and the page to 43 and save: the quote shows the new text and 'Page 43', also after reload",
@@ -676,6 +677,7 @@
       "complexity": "M",
       "title": "Quotes page lists all my quotes newest first, linking to their books",
       "depends_on": ["F044"],
+      "touches": ["app/quotes/**", "lib/quotes*", "components/site-header*", "components/*quote*", "e2e/*quote*"],
       "acceptance": [
         "Sign up a new account: the header has a 'Quotes' link; click it and land on /quotes, where one sentence says I have no quotes yet",
         "Add 'Middlemarch' and 'Persuasion', save a quote on page 42 of Middlemarch, then a quote with no page from Persuasion",
@@ -691,6 +693,7 @@
       "complexity": "S",
       "title": "Search my quotes by text or book title, kept in the URL",
       "depends_on": ["F048"],
+      "touches": ["app/quotes/**", "lib/quotes*", "components/*quote*", "e2e/*quote*"],
       "acceptance": [
         "With a quote 'a narrow mind' from 'Middlemarch' and a quote 'half agony, half hope' from 'Persuasion', on /quotes search 'NARROW': the URL has q=NARROW and only the Middlemarch quote shows",
         "Search 'persua': only the Persuasion quote shows, matched by its book title; reload keeps the search box text and the result",
@@ -705,6 +708,7 @@
       "complexity": "S",
       "title": "Deleting a book deletes its notes and quotes",
       "depends_on": ["F014", "F040", "F048"],
+      "touches": ["app/books/[id]/actions.ts", "e2e/delete-book*", "e2e/*cascade*"],
       "acceptance": [
         "Add 'Middlemarch' and 'Persuasion', write a note on Middlemarch and save a quote on page 42 of each",
         "Delete Middlemarch from its page after confirming: /quotes shows only the Persuasion quote, also after reload",
@@ -719,6 +723,7 @@
       "complexity": "S",
       "title": "No one else can see or change my notes and quotes",
       "depends_on": ["F042", "F046", "F049", "F016"],
+      "touches": ["e2e/*isolation*", "supabase/migrations/*notes*", "supabase/migrations/*quotes*"],
       "acceptance": [
         "Account A adds 'Middlemarch', writes a note and saves a quote with the word 'narrow' in it",
         "Sign out and sign up account B: /quotes says B has no quotes, and searching /quotes?q=narrow shows no quotes",

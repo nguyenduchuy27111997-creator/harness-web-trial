@@ -43,6 +43,25 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"notes": {
+                  Row: {
+                    "body": string,"book_id": string,"created_at": string,"id": string,"user_id": string
+                  }
+                  Insert: {
+                    "body": string,"book_id": string,"created_at"?: string,"id"?: string,"user_id"?: string
+                  }
+                  Update: {
+                    "body"?: string,"book_id"?: string,"created_at"?: string,"id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "notes_book_id_user_id_fkey"
+      columns: ["book_id","user_id"]
+isOneToOne: false
+      referencedRelation: "books"
+      referencedColumns: ["id","user_id"]
+    }
+                  ]
                 },"quotes": {
                   Row: {
                     "body": string,"book_id": string,"created_at": string,"id": string,"page": number | null,"user_id": string

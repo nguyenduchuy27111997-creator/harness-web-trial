@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Notes table (migration 20261106100000_notes.sql), lib/notes.ts, addNote action, BookNotes/NoteForm on /books/[id]. Book-page baselines updated because the page now shows Notes."
+}

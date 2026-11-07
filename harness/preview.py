@@ -130,18 +130,18 @@ class Preview:
 
     # sessions ------------------------------------------------------------------------
     def qa_browser(self, job, wt):
-        """A CDP endpoint for the session's Playwright MCP, when someone is watching and the machine has room; else None
-        (the MCP starts its own browser, as without the office)."""
+        """A CDP endpoint for the session's Playwright MCP when the machine has room, else None (the MCP starts its own
+        browser, as without the office). Whether anyone watches yet does not matter: the session's verifier opens a
+        Chrome either way, and someone who opens the office mid-session then sees QA too; the camera attaches only then."""
         exe = chrome()
-        with self.lock:
-            watched = self.viewers > 0
-        if not (self.enabled and watched and exe and not self.busy):
+        if not (self.enabled and exe and not self.busy):
             return None
         port = free_port()
         profile = self.home / "qa" / job
         profile.mkdir(parents=True, exist_ok=True)
         proc = subprocess.Popen([exe, "--headless=new", f"--remote-debugging-port={port}", "--remote-debugging-address=127.0.0.1",
-                                 f"--user-data-dir={profile}", "--no-first-run", "--no-default-browser-check", "about:blank"],
+                                 f"--user-data-dir={profile}", "--no-first-run", "--no-default-browser-check",
+                                 "--use-mock-keychain", "about:blank"],  # no Keychain read (secd) at each start
                                 cwd=wt, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                                 start_new_session=True)
         endpoint = f"http://127.0.0.1:{port}"
@@ -352,6 +352,18 @@ class Preview:
                     with contextlib.suppress(ValueError):
                         path = path.relative_to(lane["wt"])
                     self.send({"op": "edited", "job": e["job"], "path": str(path)})
+
+    def shutdown(self):
+        """Every lane's dev server and QA Chrome, gone: the loop ends with sessions it never saw out (a stop, a crash).
+        Seen for real: each such end left a headless Chrome (qa/<job> profile) running for good."""
+        with self.lock:
+            lanes, self.lanes = list(self.lanes.values()), {}
+        qa, self.qa = list(self.qa.values()), {}
+        for proc in [lane["dev"] for lane in lanes] + [q[0] for q in qa]:
+            if proc:
+                with contextlib.suppress(OSError):
+                    os.killpg(proc.pid, 15)
+        self.stop()
 
     def stop(self):
         cam, self.cam = self.cam, None

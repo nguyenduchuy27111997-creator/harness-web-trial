@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "removeQuote in lib/quotes.ts, deleteQuote action, ConfirmDeleteButton per quote in BookQuotes. F044 baseline updated for the new buttons (decision 0011). Not blocking: every Delete button is named just 'Delete' (book's and each quote's); F046 may want distinct accessible names."
+}

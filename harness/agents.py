@@ -166,7 +166,8 @@ class Agents:
         cap = cap or self.caps[job["id"]]
         with PORT_LOCK:
             port = free_port(self.opts.port_base + 1, taken={j.get("port") for j in self.state["jobs"].values()})
-            job["port"] = port
+            if not lens:  # a lens beside the job's own session (a test-writer beside the coder) leaves it the port
+                job["port"] = port
         env = {**os.environ, "PORT": str(port), "HARNESS_LANE": job["id"], "HARNESS_AUTONOMOUS": "1",
                "HARNESS_STAGE": job["stage"],
                "HARNESS_TESTS": str(preview.PREVIEW.tests_path(job["id"])),  # the kit's reporters write each test here
@@ -180,7 +181,7 @@ class Agents:
                "project" if SANDBOX else "project,local", "--strict-mcp-config",
                "--exclude-dynamic-system-prompt-sections"]  # the same system prompt in every lane: cache hits
         if agent:
-            cmd += ["--agent", agent]
+            cmd += ["--agent", agent] + self.agent_def(job, agent)
         browser = not lens and self.stack.get("verify", "browser") == "browser"  # an API is verified with curl: no browser
         if SANDBOX:
             env = {k: v for k, v in env.items() if ENV_KEEP.match(k) or k in self.stack.get("env_allow", [])}
@@ -188,7 +189,7 @@ class Agents:
             if job["stage"] in ("review", "fixing"):
                 cmd += ["--disallowedTools", "WebFetch"]
         if browser:
-            qa = preview.PREVIEW.qa_browser(job["id"], job["worktree"])  # someone watching: the office sees QA's browser
+            qa = preview.PREVIEW.qa_browser(job["id"], job["worktree"])  # the office can see QA's browser, now or once someone opens it
             cmd += ["--mcp-config", str(self.session_mcp(job, port, qa)) if SANDBOX or qa else "harness/loop-mcp.json",
                     "--allowedTools", "mcp__playwright"]
         if STREAM:
@@ -270,6 +271,27 @@ class Agents:
         if subtype == "success" and (d.get("is_error") or proc.returncode != 0):
             subtype = "error"  # seen with the network down: "success", is_error, and an API error as the result
         return float(d.get("total_cost_usd", 0)), subtype, str(d.get("result") or "")
+
+    def agent_def(self, job, agent):
+        """--agents <file> with main's definition, when the job's worktree has none: it was made before a kit upgrade
+        that added the agent. Seen on the web trial: the dispatcher failed on three held PRs with "--agent
+        'dispatcher' not found". Agent files are protected, so main's copy is the one any branch would have."""
+        if (Path(job["worktree"]) / f".claude/agents/{agent}.md").exists():
+            return []
+        src = self.root / f".claude/agents/{agent}.md"
+        if not src.exists():
+            return []
+        _, head, body = src.read_text().split("---", 2)
+        fields = dict(line.split(":", 1) for line in head.strip().splitlines() if ":" in line)
+        spec = {"description": fields.get("description", "").strip(), "prompt": body.strip()}
+        if fields.get("tools"):
+            spec["tools"] = [t.strip() for t in fields["tools"].split(",") if t.strip()]
+        if fields.get("model"):
+            spec["model"] = fields["model"].strip()
+        f = self.home / "sandbox" / f"agent-{agent}.json"
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(json.dumps({agent: spec}))
+        return ["--agents", str(f)]
 
     def session_settings(self, job):
         """The sandbox for one session: harness/loop-settings.json as main has it (never the branch's copy) and
