@@ -24,3 +24,10 @@ export async function listPastReads(supabase: SupabaseClient<Database>, bookId: 
   if (error) throw new Error(error.message);
   return data;
 }
+
+// Filtering on the book as well as the id keeps the bound book and the deleted row in agreement.
+export async function removeRead(supabase: SupabaseClient<Database>, bookId: string, id: string): Promise<boolean> {
+  const { data, error } = await supabase.from("reads").delete().eq("id", id).eq("book_id", bookId).select("id");
+  if (error) throw new Error(error.message);
+  return data.length > 0;
+}

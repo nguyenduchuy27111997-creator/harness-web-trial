@@ -1,0 +1,1 @@
+{"status": "passing", "notes": "Delete on each past read via ConfirmDeleteButton; removeRead in lib/reads.ts, deletePastRead action. Refreshed F056-past-reads baseline (new Delete button)."}
