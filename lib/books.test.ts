@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { booksHref, countByStatus, filterBooks, formatFinishDate, formatReadDays, insertBook, listBooks, parseBookFields, parseNewBook, parseProgress, parseRating, parseReview, parseSearch, parseSort, parseStatus, parseStatusFilter, formatProgress, progressPercent, removeBook, sortBooks, type ShelfBook, updateBookFields, updateBookProgress, updateBookRating, updateBookReview, updateBookStatus } from "./books";
+import { booksHref, countByStatus, filterBooks, formatFinishDate, formatReadDays, insertBook, listBooks, parseBookFields, parseNewBook, parseProgress, parseRating, parseReadingDates, parseReview, parseSearch, parseSort, parseStatus, parseStatusFilter, formatProgress, progressPercent, removeBook, sortBooks, type ShelfBook, updateBookFields, updateBookProgress, updateBookRating, updateBookReview, updateBookStatus, updateReadingDates } from "./books";
 
 function stubClient(result: { data: unknown; error: { message: string } | null }) {
   const calls: unknown[][] = [];
@@ -370,5 +370,47 @@ describe("countByStatus", () => {
   it("counts all and each status", () => {
     const book = (status: "want_to_read" | "reading" | "finished") => ({ id: status, title: "t", author: "a", created_at: "", status });
     expect(countByStatus([book("reading"), book("finished"), book("finished")])).toEqual({ all: 3, want_to_read: 0, reading: 1, finished: 2 });
+  });
+});
+
+describe("parseReadingDates", () => {
+  it("reads both dates of a finished book and only started for a reading one", () => {
+    expect(parseReadingDates(form({ started_on: "2026-10-01", finished_on: "2026-10-12" }), "finished")).toEqual({
+      ok: true,
+      value: { started_on: "2026-10-01", finished_on: "2026-10-12" },
+    });
+    expect(parseReadingDates(form({ started_on: "2026-10-05", finished_on: "junk" }), "reading")).toEqual({
+      ok: true,
+      value: { started_on: "2026-10-05" },
+    });
+  });
+
+  it("clears an empty started date", () => {
+    expect(parseReadingDates(form({ started_on: " ", finished_on: "2026-10-12" }), "finished")).toEqual({
+      ok: true,
+      value: { started_on: null, finished_on: "2026-10-12" },
+    });
+  });
+
+  it("rejects malformed dates and an empty finish date", () => {
+    expect(parseReadingDates(form({ started_on: "2026-02-30", finished_on: "" }), "finished")).toEqual({
+      ok: false,
+      fieldErrors: { started_on: "Enter a valid date", finished_on: "Finish date is required" },
+    });
+    expect(parseReadingDates(form({ started_on: "", finished_on: "10/12/2026" }), "finished")).toEqual({
+      ok: false,
+      fieldErrors: { finished_on: "Enter a valid date" },
+    });
+  });
+});
+
+describe("updateReadingDates", () => {
+  it("is true when a row changed and false when none did", async () => {
+    expect(await updateReadingDates(updateClient({ data: [{ id: "x" }], error: null }), "x", "reading", { started_on: null })).toBe(true);
+    expect(await updateReadingDates(updateClient({ data: [], error: null }), "x", "reading", { started_on: null })).toBe(false);
+  });
+
+  it("throws on a database error", async () => {
+    await expect(updateReadingDates(updateClient({ data: null, error: { message: "boom" } }), "x", "reading", { started_on: null })).rejects.toThrow("boom");
   });
 });

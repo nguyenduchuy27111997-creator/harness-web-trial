@@ -262,3 +262,40 @@ export function progressPercent(current: number, total: number): number {
 export function formatProgress(current: number, total: number): string {
   return `Page ${current} of ${total} (${progressPercent(current, total)}%)`;
 }
+
+export type DatesFormState = FormState<"started_on" | "finished_on"> & { saved?: true };
+
+function isValidDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
+// Shape only: empty or malformed dates. `finished_on` is read only for a finished book.
+export function parseReadingDates(
+  formData: FormData,
+  status: BookStatus,
+): Parsed<{ started_on: string | null; finished_on?: string }, "started_on" | "finished_on"> {
+  const started = String(formData.get("started_on") ?? "").trim();
+  const finished = String(formData.get("finished_on") ?? "").trim();
+  const fieldErrors: FieldErrors<"started_on" | "finished_on"> = {};
+  if (started && !isValidDate(started)) fieldErrors.started_on = "Enter a valid date";
+  if (status === "finished") {
+    if (!finished) fieldErrors.finished_on = "Finish date is required";
+    else if (!isValidDate(finished)) fieldErrors.finished_on = "Enter a valid date";
+  }
+  if (Object.keys(fieldErrors).length > 0) return { ok: false, fieldErrors };
+  return { ok: true, value: status === "finished" ? { started_on: started || null, finished_on: finished } : { started_on: started || null } };
+}
+
+// false when no row changed: missing, someone else's (RLS), or the status changed meanwhile.
+export async function updateReadingDates(
+  supabase: SupabaseClient<Database>,
+  id: string,
+  status: BookStatus,
+  dates: { started_on: string | null; finished_on?: string },
+): Promise<boolean> {
+  const { data, error } = await supabase.from("books").update(dates).eq("id", id).eq("status", status).select("id");
+  if (error) throw new Error(error.message);
+  return data.length > 0;
+}
