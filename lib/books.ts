@@ -271,10 +271,11 @@ function isValidDate(value: string): boolean {
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
-// Shape only: empty or malformed dates. `finished_on` is read only for a finished book.
+// Empty or malformed dates, dates after `today`, a start after the finish. `finished_on` is read only for a finished book.
 export function parseReadingDates(
   formData: FormData,
   status: BookStatus,
+  today: string = new Date().toISOString().slice(0, 10),
 ): Parsed<{ started_on: string | null; finished_on?: string }, "started_on" | "finished_on"> {
   const started = String(formData.get("started_on") ?? "").trim();
   const finished = String(formData.get("finished_on") ?? "").trim();
@@ -283,6 +284,13 @@ export function parseReadingDates(
   if (status === "finished") {
     if (!finished) fieldErrors.finished_on = "Finish date is required";
     else if (!isValidDate(finished)) fieldErrors.finished_on = "Enter a valid date";
+  }
+  if (started && !fieldErrors.started_on && started > today) fieldErrors.started_on = "The date cannot be in the future";
+  if (status === "finished" && finished && !fieldErrors.finished_on) {
+    if (finished > today) fieldErrors.finished_on = "The date cannot be in the future";
+    else if (started && !fieldErrors.started_on && started > finished) {
+      fieldErrors.finished_on = "The finish date cannot be before the start date";
+    }
   }
   if (Object.keys(fieldErrors).length > 0) return { ok: false, fieldErrors };
   return { ok: true, value: status === "finished" ? { started_on: started || null, finished_on: finished } : { started_on: started || null } };

@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "parseReadingDates (lib/books.ts) now rejects dates after today (UTC) on the field and a start after the finish (error on Finished). 'Today' is the UTC date per the M6 design, so users ahead of UTC may see their local today refused late in the evening."
+}
