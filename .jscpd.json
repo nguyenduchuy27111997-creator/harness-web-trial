@@ -9,6 +9,7 @@
     "**/playwright-report/**",
     "**/test-results/**",
     "**/*.d.ts",
+    "**/lib/database.types.ts",
     "**/supabase/**",
     "**/harness/**"
   ],

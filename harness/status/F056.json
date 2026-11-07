@@ -1,0 +1,1 @@
+{"status": "passing", "notes": "Read again via public.read_again() (migration 20261108100000_reads.sql), lib/reads.ts, readBookAgain action, ReadAgainButton and PastReads. Verifier PASS."}
