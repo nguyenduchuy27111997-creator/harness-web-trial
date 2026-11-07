@@ -69,6 +69,7 @@ export async function deleteBook(id: string, _formData: FormData): Promise<void>
   await requireUser();
   if (isUuid(id)) await removeBook(await createClient(), id);
   revalidatePath("/books");
+  revalidatePath("/quotes");
   redirect("/books");
 }
 

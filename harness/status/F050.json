@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Cascade comes from the M5 composite foreign keys (on delete cascade); deleteBook now also revalidates /quotes. Test: e2e/delete-book-cascade.spec.ts. Branch built on agent/F049 head (PR #126 still open at the time)."
+}
