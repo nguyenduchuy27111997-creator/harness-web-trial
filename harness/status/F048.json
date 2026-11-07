@@ -1,4 +1,4 @@
 {
   "status": "passing",
-  "notes": "/quotes lists all own quotes newest first (listQuotes, embedded book id/title), each with text, 'Page N' when set, and a link to its book. Header gains 'Quotes' between Shelves and Stats, so every signed-in visual baseline was regenerated (header only)."
+  "notes": "/quotes lists all own quotes newest first (listQuotes, embedded book title), each with its text, 'Page N' when set and its book title linking to /books/<id>; empty state 'You have no quotes yet.'; header 'Quotes' link between Shelves and Stats. The header change refreshed every signed-in visual baseline. Under heavy machine load (load avg 30-50) unrelated e2e tests time out on hydration races (list-progress, progress-validation, shelves-delete, stats goal tests); they pass on rerun."
 }

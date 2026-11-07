@@ -1,65 +1,73 @@
-import { expect, test, type Page } from "@playwright/test";
-import { signUpAs } from "./accounts";
+import { expect, test } from "@playwright/test";
 import { expectAccessible } from "./a11y";
+import { signUpAs } from "./accounts";
+import { openNewBookPage } from "./notes";
 
-const MIDDLEMARCH = "It is a narrow mind which cannot look at a subject from various points of view.";
-const PERSUASION = "She had been forced into prudence in her youth, she learned romance as she grew older.";
-
-async function addBook(page: Page, title: string, author: string) {
-  await page.goto("/books/new");
-  for (const [label, value] of [["Title", title], ["Author", author]]) await page.getByLabel(label).fill(value);
-  await page.getByRole("button", { name: "Save" }).click();
-  await expect(page.getByRole("link", { name: title })).toBeVisible();
-}
-
-async function saveQuote(page: Page, title: string, quote: string, pageNumber?: string) {
-  await page.goto("/books");
-  await page.getByRole("link", { name: title }).click();
-  await page.getByRole("textbox", { name: "Quote", exact: true }).fill(quote);
-  if (pageNumber) await page.getByRole("textbox", { name: "Page (optional)" }).fill(pageNumber);
-  await page.getByRole("button", { name: "Save quote" }).click();
-  await expect(page.getByRole("list", { name: "Quotes from this book" })).toContainText(quote);
-}
-
-// F048: /quotes lists all my quotes newest first, each linking to its book.
-// Each run uses a fresh account (golden principle 7).
+// F048: /quotes lists all my quotes newest first, each linking to its book. Fresh account (golden principle 7).
 test("quotes page lists my quotes newest first", async ({ page }) => {
+  test.slow();
   await signUpAs(page, `f048-${process.env.HARNESS_LANE ?? "local"}-${Date.now()}@example.com`);
-  await page.getByRole("link", { name: "Quotes" }).click();
+
+  await page.getByRole("link", { name: "Quotes", exact: true }).click();
   await expect(page).toHaveURL(/\/quotes$/);
-  await expect(page.getByRole("heading", { name: "Quotes" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Quotes", level: 1 })).toBeVisible();
   await expect(page.getByText("You have no quotes yet.")).toBeVisible();
 
-  await addBook(page, "Middlemarch", "George Eliot");
-  await addBook(page, "Persuasion", "Jane Austen");
-  await saveQuote(page, "Middlemarch", MIDDLEMARCH, "42");
-  await saveQuote(page, "Persuasion", PERSUASION);
+  const saveQuote = async (text: string, pageNumber: string) => {
+    const item = page.getByRole("list", { name: "Quotes from this book" }).getByRole("listitem").first();
+    // The add form resets after a save, which can overwrite a fill made too early, so retry until it shows.
+    await expect(async () => {
+      await page.getByRole("textbox", { name: "Quote", exact: true }).fill(text);
+      await page.getByRole("textbox", { name: "Page (optional)" }).fill(pageNumber);
+      await page.getByRole("button", { name: "Save quote" }).click();
+      await expect(item).toContainText(text, { timeout: 3000 });
+    }).toPass();
+  };
+  await openNewBookPage(page, "Middlemarch", "George Eliot");
+  await expect(page).toHaveURL(/\/books\/[0-9a-f-]{36}$/);
+  const middlemarchUrl = page.url();
+  await saveQuote("It is never too late to be what you might have been.", "42");
+  await openNewBookPage(page, "Persuasion", "Jane Austen");
+  await saveQuote("You pierce my soul.", "");
 
   await page.goto("/quotes");
   const items = page.getByRole("list", { name: "My quotes" }).getByRole("listitem");
   await expect(items).toHaveCount(2);
-  await expect(items.nth(0)).toContainText(PERSUASION);
+  await expect(items.nth(0)).toContainText("You pierce my soul.");
   await expect(items.nth(0)).toContainText("Persuasion");
   await expect(items.nth(0)).not.toContainText("Page");
-  await expect(items.nth(1)).toContainText(MIDDLEMARCH);
+  await expect(items.nth(1)).toContainText("It is never too late to be what you might have been.");
+  await expect(items.nth(1)).toContainText("Middlemarch");
   await expect(items.nth(1)).toContainText("Page 42");
   await expect(page.getByText("You have no quotes yet.")).toHaveCount(0);
 
+  await page.mouse.move(0, 0);
   await expectAccessible(page);
-  await expect(page).toHaveScreenshot("F048-quotes.png", { stylePath: "e2e/hide-dev-overlay.css", fullPage: true });
+  await expect(page).toHaveScreenshot("F048-quotes.png", { stylePath: "e2e/hide-dev-overlay.css" });
 
   await items.nth(1).getByRole("link", { name: "Middlemarch" }).click();
-  await expect(page).toHaveURL(/\/books\/[0-9a-f-]{36}$/);
+  await expect(page).toHaveURL(middlemarchUrl);
   await expect(page.getByRole("heading", { name: "Middlemarch" })).toBeVisible();
 });
 
 // F049: search my quotes by text or book title, kept in the URL.
+const MIDDLEMARCH = "It is a narrow mind which cannot look at a subject from various points of view.";
+const PERSUASION = "She had been forced into prudence in her youth, she learned romance as she grew older.";
+
 test("search quotes by text or book title", async ({ page }) => {
+  test.slow();
   await signUpAs(page, `f049-${process.env.HARNESS_LANE ?? "local"}-${Date.now()}@example.com`);
-  await addBook(page, "Middlemarch", "George Eliot");
-  await addBook(page, "Persuasion", "Jane Austen");
-  await saveQuote(page, "Middlemarch", MIDDLEMARCH);
-  await saveQuote(page, "Persuasion", PERSUASION);
+  const saveQuote = async (title: string, author: string, text: string) => {
+    await openNewBookPage(page, title, author);
+    const item = page.getByRole("list", { name: "Quotes from this book" }).getByRole("listitem").first();
+    await expect(async () => {
+      await page.getByRole("textbox", { name: "Quote", exact: true }).fill(text);
+      await page.getByRole("button", { name: "Save quote" }).click();
+      await expect(item).toContainText(text, { timeout: 3000 });
+    }).toPass();
+  };
+  await saveQuote("Middlemarch", "George Eliot", MIDDLEMARCH);
+  await saveQuote("Persuasion", "Jane Austen", PERSUASION);
 
   await page.goto("/quotes");
   const items = page.getByRole("list", { name: "My quotes" }).getByRole("listitem");

@@ -72,6 +72,11 @@ OFFLINE_MAX = float(os.environ.get("LOOP_OFFLINE_MAX", str(12 * 3600)))
 # Claude's API, not the work: "API Error: Connection error", a 5xx, overloaded. Paused like the usage limit, never an attempt.
 API_DOWN = re.compile(r"API Error: (Connection error|Can't reach the API|Request timed out|5\d\d\b)|overloaded_error"
                       r"|ENOTFOUND|EAI_AGAIN|ECONNRESET|ECONNREFUSED|fetch failed", re.I)
+# Claude Code logged out on the machine: every session fails at once until the owner logs in again. Seen on the web
+# trial: "Failed to authenticate: OAuth session expired" used up all three attempts of F048 and of a rule in 3 minutes.
+AUTH = re.compile(r"Failed to authenticate|authentication_error|Invalid API key|OAuth (session|token) (has )?expired"
+                  r"|Please run /login", re.I)
+AUTH_PAUSE = float(os.environ.get("LOOP_AUTH_PAUSE") or 600)  # how often to try again while logged out
 API_PROBE = os.environ.get("LOOP_API_PROBE", "api.anthropic.com:443")  # empty: no probe (tests)
 INFRA_PAUSE = float(os.environ.get("LOOP_LIMIT_PAUSE") or 300)  # first wait when the API is down; then twice, 4 and 6 times as long
 # A session longer than this is stuck (the longest of two real trials took 22 minutes): its process group is killed.

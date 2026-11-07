@@ -46,8 +46,8 @@ describe("parseQuote", () => {
   });
 });
 
-// A select query that records its calls and resolves on the last order.
-const listStub = (result: { data: unknown; error: { message: string } | null }) => {
+// A select query that resolves on its last order (by id).
+const stub = (result: { data: unknown; error: { message: string } | null }) => {
   const calls: unknown[][] = [];
   const query = {
     select: (columns: string) => (calls.push(["select", columns]), query),
@@ -62,7 +62,6 @@ const listStub = (result: { data: unknown; error: { message: string } | null }) 
 };
 
 describe("listBookQuotes", () => {
-  const stub = listStub;
   it("lists the book's quotes newest first", async () => {
     const rows = [{ id: "q", body: "A", page: null, created_at: "2026-11-06T10:00:00+00:00" }];
     const { supabase, calls } = stub({ data: rows, error: null });
@@ -86,9 +85,8 @@ describe("listBookQuotes", () => {
 });
 
 describe("listQuotes", () => {
-  const stub = listStub;
   it("lists all quotes newest first with their book", async () => {
-    const rows = [{ id: "q", body: "A", page: 4, created_at: "2026-11-06T10:00:00+00:00", book: { id: BOOK, title: "Emma" } }];
+    const rows = [{ id: "q", body: "A", page: 42, created_at: "2026-11-06T10:00:00+00:00", book: { id: BOOK, title: "T" } }];
     const { supabase, calls } = stub({ data: rows, error: null });
     expect(await listQuotes(supabase)).toEqual(rows);
     expect(calls).toEqual([

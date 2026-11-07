@@ -707,7 +707,7 @@
       "priority": 50,
       "complexity": "S",
       "title": "Deleting a book deletes its notes and quotes",
-      "depends_on": ["F014", "F040", "F048"],
+      "depends_on": ["F014", "F040", "F048", "F049"],
       "touches": ["app/books/[id]/actions.ts", "e2e/delete-book*", "e2e/*cascade*"],
       "acceptance": [
         "Add 'Middlemarch' and 'Persuasion', write a note on Middlemarch and save a quote on page 42 of each",

@@ -6,6 +6,7 @@ import json
 import re
 import time
 
+import integrity
 from common import (  # noqa: F401
     backlog, git, health, lang, now, preview, DONE, GIT_LOCK, MIN_SESSION, Path, TRANSIENT, WAITING_HUMAN,
     WAIT_FOR_HUMAN,
@@ -125,7 +126,10 @@ class Scheduler:
                     continue
                 dj = self.job(dep)
                 if dj and dj["stage"] in ("review", "fixing", "ci", "waiting_base", "merging") and base == "main":
-                    base = dj["branch"]  # stack on the open PR
+                    if self.stale_base(f, dj):
+                        ok = False
+                    else:
+                        base = dj["branch"]  # stack on the open PR
                 else:
                     ok = False
             if ok and on_main and base != "main" and git(
@@ -154,18 +158,44 @@ class Scheduler:
     def lease(self, f):
         """(ok, base) for a feature that says which files it touches: free, it builds on main; held by one open PR,
         it stacks on that PR's branch; held by a lane still building, or by two PRs, it waits."""
-        holders = [j for j in self.state["jobs"].values() if j["id"] != f["id"] and not j.get("kind")
-                   and j["stage"] in ("building", "review", "fixing", "ci", "waiting_base", "merging")
+        # A feature that depends on this one waits for it: building on it would stack each on the other.
+        # Seen in the web trial: F048 was rebuilt on F049's PR, and F049's PR waited for F048 to merge.
+        after = self.dependents(f["id"])
+        holders = [j for j in self.state["jobs"].values() if j["id"] != f["id"] and j["id"] not in after
+                   and not j.get("kind") and j["stage"] in ("building", "review", "fixing", "ci", "waiting_base", "merging")
                    and overlap(f["touches"], self.footprint(j))]
         if not holders:
             return True, "main"
         if len(holders) == 1 and holders[0]["stage"] != "building":
-            return True, holders[0]["branch"]
-        why = ", ".join(j["id"] for j in holders)
+            return (False, "main") if self.stale_base(f, holders[0]) else (True, holders[0]["branch"])
+        self.wait(f, f"{', '.join(j['id'] for j in holders)} holds files it touches")
+        return False, "main"
+
+    def wait(self, f, why):
         if self.state.setdefault("lease_waits", {}).get(f["id"]) != why:
             self.state["lease_waits"][f["id"]] = why
-            self.event(f["id"], f"waits: {why} holds files it touches")
-        return False, "main"
+            self.event(f["id"], f"waits: {why}")
+
+    def dependents(self, fid):
+        """The features that depend on fid, directly or through others."""
+        out, todo = set(), [fid]
+        while todo:
+            cur = todo.pop()
+            for other in self.main.values():
+                if cur in other.get("depends_on", []) and other["id"] not in out:
+                    out.add(other["id"])
+                    todo.append(other["id"])
+        return out
+
+    def stale_base(self, f, j):
+        """Whether j's PR branch has older protected harness files than main (a kit upgrade since it branched).
+        A feature built on it would roll them back, and the integrity guard refuses that. Seen in the web trial:
+        F048 rebuilt on F049's branch from kit 5.27.6 was refused for integrity.py, scheduler.py and check.sh."""
+        names = git("diff", "--name-only", "origin/main", f"origin/{j['branch']}", cwd=self.root, check=False).stdout.split()
+        if any(integrity.PROTECTED.match(p) for p in names):
+            self.wait(f, f"{j['id']}'s branch has older harness files than main")
+            return True
+        return False
 
     def needs_design(self, f):
         return (f.get("type") != "bug" and f.get("status") != "passing" and f.get("milestone")
@@ -236,10 +266,14 @@ class Scheduler:
                     job["quality"] = json.loads(q.read_text())
                 except ValueError:
                     pass
-            if res.get("subtype") in ("limit", "infra"):
-                self.pause(job, stage, infra=res["subtype"] == "infra")
+            if job["stage"] in DONE:  # dropped while the session ran; seen for real: its result would bring it back
+                self.event(fid, f"the {stage} session ended after the job was {job['stage']}; its result is not used")
+                continue
+            if res.get("subtype") in ("limit", "infra", "auth"):
+                self.pause(job, stage, kind=res["subtype"])
                 continue
             self.state.pop("infra_since", None)  # a session got through: the API is back
+            self.state.pop("auth_since", None)
             self.state["infra_pauses"] = 0
             try:
                 {"building": self.finish_build, "review": self.finish_review, "fixing": self.finish_fix}[stage](job, res)

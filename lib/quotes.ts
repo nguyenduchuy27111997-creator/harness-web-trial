@@ -41,7 +41,7 @@ export async function listBookQuotes(supabase: SupabaseClient<Database>, bookId:
   return data;
 }
 
-// All the signed-in user's quotes (RLS), newest first, each with its book's id and title.
+// All the signed-in user's quotes (Row Level Security), newest first, each with its book.
 export async function listQuotes(supabase: SupabaseClient<Database>): Promise<Quote[]> {
   const { data, error } = await supabase
     .from("quotes")
@@ -75,4 +75,28 @@ export async function insertQuote(
   if (!error) return "ok";
   if (error.code === "23503" || error.code === "42501") return "missing";
   throw new Error(error.message);
+}
+
+// Filtered on the book too, so a quote id that belongs to another book matches nothing.
+export async function removeQuote(supabase: SupabaseClient<Database>, bookId: string, id: string): Promise<boolean> {
+  const { data, error } = await supabase.from("quotes").delete().eq("id", id).eq("book_id", bookId).select("id");
+  if (error) throw new Error(error.message);
+  return data.length > 0;
+}
+
+// Filtering on the book as well as the id keeps the bound book, the page limit and the changed row in agreement.
+export async function updateQuote(
+  supabase: SupabaseClient<Database>,
+  bookId: string,
+  id: string,
+  quote: { body: string; page: number | null },
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("quotes")
+    .update({ body: quote.body, page: quote.page })
+    .eq("id", id)
+    .eq("book_id", bookId)
+    .select("id");
+  if (error) throw new Error(error.message);
+  return data.length > 0;
 }

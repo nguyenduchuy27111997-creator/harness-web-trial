@@ -1,4 +1,4 @@
 {
   "status": "passing",
-  "notes": "Migration 20261106120000_quotes.sql, lib/quotes.ts (parseQuote, listBookQuotes, insertQuote), addQuote action, BookQuotes + QuoteForm on /books/[id], next to main's Notes section. The 'Save quote' button made { name: 'Save' } clicks on the book page ambiguous in book-review, book-status and notes-add: they now say 'Save status' (decision 0010); book-page baselines updated."
+  "notes": "Rebuilt on origin/main (F042/F043 notes edit/delete) as one commit; features.json is main's. Book-page 'Save' clicks name 'Save status' (no button there is named exactly 'Save'). Book-page baselines refreshed incl. F042/F043."
 }
