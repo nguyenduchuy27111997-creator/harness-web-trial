@@ -164,6 +164,12 @@ export function formatFinishDate(date: string): string {
   return new Intl.DateTimeFormat("en-US", { dateStyle: "long", timeZone: "UTC" }).format(new Date(`${date}T00:00:00Z`));
 }
 
+// ("2026-10-01", "2026-10-12") -> "Read in 12 days"
+export function formatReadDays(startedOn: string, finishedOn: string): string {
+  const days = Math.round((Date.parse(`${finishedOn}T00:00:00Z`) - Date.parse(`${startedOn}T00:00:00Z`)) / 86_400_000) + 1;
+  return `Read in ${days} ${days === 1 ? "day" : "days"}`;
+}
+
 export type RatingFormState = FormState<"rating"> & { saved?: true };
 
 export function parseRating(formData: FormData): Parsed<number, "rating"> {
