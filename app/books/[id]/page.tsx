@@ -8,13 +8,16 @@ import { BookNotes } from "@/components/book-notes";
 import { DeleteBookButton } from "@/components/delete-book-button";
 import { EditBookForm } from "@/components/edit-book-form";
 import { EditDatesForm } from "@/components/edit-dates-form";
+import { PastReads } from "@/components/past-reads";
 import { ProgressForm } from "@/components/progress-form";
+import { ReadAgainButton } from "@/components/read-again-button";
 import { RatingForm } from "@/components/rating-form";
 import { ReadingDates } from "@/components/reading-dates";
 import { ReviewForm } from "@/components/review-form";
 import { StatusBadge } from "@/components/status-badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getBook } from "@/lib/books";
+import { listPastReads } from "@/lib/reads";
 import { listNotes } from "@/lib/notes";
 import { listBookQuotes } from "@/lib/quotes";
 import { listBookShelfIds, listShelves } from "@/lib/shelves";
@@ -30,6 +33,7 @@ import {
   deleteBook,
   editBook,
   editDates,
+  readBookAgain,
   removeFromShelf,
   saveProgress,
   saveRating,
@@ -43,12 +47,13 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   await requireUser();
   const supabase = await createClient();
-  const [book, shelves, shelfIds, notes, quotes] = await Promise.all([
+  const [book, shelves, shelfIds, notes, quotes, pastReads] = await Promise.all([
     getBook(supabase, id),
     listShelves(supabase),
     listBookShelfIds(supabase, id),
     listNotes(supabase, id),
     listBookQuotes(supabase, id),
+    listPastReads(supabase, id),
   ]);
   if (!book) notFound();
   return (
@@ -88,7 +93,9 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
         />
       )}
       {book.status === "finished" && <RatingForm rating={book.rating} action={saveRating.bind(null, book.id)} />}
+      {book.status === "finished" && <ReadAgainButton action={readBookAgain.bind(null, book.id)} />}
       {book.status === "finished" && <ReviewForm review={book.review} action={saveReview.bind(null, book.id)} />}
+      <PastReads reads={pastReads} />
       <BookNotes
         notes={notes}
         action={addNote.bind(null, book.id)}

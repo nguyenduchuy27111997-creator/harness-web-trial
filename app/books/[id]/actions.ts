@@ -25,6 +25,7 @@ import {
   type ReviewFormState,
   type StatusFormState,
 } from "@/lib/books";
+import { readAgain } from "@/lib/reads";
 import { insertNote, parseNote, removeNote, updateNote, type NoteFormState } from "@/lib/notes";
 import { insertQuote, parseQuote, removeQuote, updateQuote, type QuoteFormState } from "@/lib/quotes";
 import { addBookToShelf, parseShelfChoice, removeBookFromShelf, type AddToShelfFormState } from "@/lib/shelves";
@@ -306,4 +307,12 @@ export async function editDates(
   revalidatePath(`/books/${bookId}`);
   revalidatePath("/stats");
   return { saved: true };
+}
+
+export async function readBookAgain(bookId: string, _formData: FormData): Promise<void> {
+  await requireUser();
+  if (isUuid(bookId)) await readAgain(await createClient(), bookId);
+  revalidatePath("/books");
+  revalidatePath(`/books/${bookId}`);
+  revalidatePath("/stats");
 }

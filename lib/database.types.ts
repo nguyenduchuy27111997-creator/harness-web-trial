@@ -94,6 +94,25 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"reads": {
+                  Row: {
+                    "book_id": string,"created_at": string,"finished_on": string,"id": string,"rating": number | null,"started_on": string | null,"user_id": string
+                  }
+                  Insert: {
+                    "book_id": string,"created_at"?: string,"finished_on": string,"id"?: string,"rating"?: number | null,"started_on"?: string | null,"user_id"?: string
+                  }
+                  Update: {
+                    "book_id"?: string,"created_at"?: string,"finished_on"?: string,"id"?: string,"rating"?: number | null,"started_on"?: string | null,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "reads_book_id_user_id_fkey"
+      columns: ["book_id","user_id"]
+isOneToOne: false
+      referencedRelation: "books"
+      referencedColumns: ["id","user_id"]
+    }
+                  ]
                 },"shelves": {
                   Row: {
                     "created_at": string,"id": string,"name": string,"user_id": string
@@ -113,7 +132,9 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            [_ in never]: never
+            "read_again":
+{ Args: { "p_book_id": string }; Returns: boolean
+                           }
           }
           Enums: {
             [_ in never]: never
