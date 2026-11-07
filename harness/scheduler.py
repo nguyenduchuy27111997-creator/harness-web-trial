@@ -206,7 +206,7 @@ class Scheduler:
     def lanes_busy(self):
         # A lane is free only once its result is collected: a finished but uncollected
         # session still holds its lane and its cost has not been counted yet.
-        return len(self.threads)
+        return len(self.threads) + len(getattr(self, "twins", ()))  # a best-of-2's second build holds a lane too
 
     def apply_answers(self):
         for path in sorted(self.home.glob("answer-*.json")):
@@ -246,6 +246,7 @@ class Scheduler:
                     continue
                 job.setdefault("answers", []).append(a["text"])
                 job["fix_rounds"] = job["review_failures"] = 0  # the answer earns the usual two rounds
+                job["bug_counts"], job["bug_seen"] = [], {}  # and progress is judged afresh from it
                 job["answered"] = True
                 self.start_fix(job, f"{job.get('question') or 'The PR was held.'}\n\nThe human answered: {a['text']}")
             elif job and job["stage"] in WAITING_HUMAN:
@@ -312,6 +313,7 @@ class Scheduler:
                     raise  # the network, not the job: the whole tick is retried
                 self.set_stage(job, "held", note=f"loop error: {e}", question=f"{job['id']}: the loop hit an error: {e}")
         self.watch_main()
+        self.flush_questions()
         self.watch_runner()
         self.alerts()
         self.keep_history()

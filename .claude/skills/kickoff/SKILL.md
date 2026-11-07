@@ -26,6 +26,7 @@ Goal: leave the repo so that any later session can start work in under a minute 
    - `complexity`: `S`, `M` or `L`. `L` means a session on the default model is unlikely to finish it; the loop runs `L` features on the large model. Prefer splitting an `L` feature over keeping it.
    - `owner_check: true` (optional): the human checks it against what they meant once it merges, because a passing test cannot tell (the look of a key screen, the wording of a flow). The loop also picks the first UI feature of each milestone and about one in four.
    - Leave out `status` and `notes`: every feature starts failing, and its state lives in `harness/status/<id>.json` once a session works on it.
+6b. Agent team (optional, P33): when `HARNESS_AGENT_TEAMS=1` is set and agent teams are on in this session (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`; they never run headless), split step 6 into a team instead of writing it alone: one teammate per milestone drafts that milestone's features into a file of its own under `docs/plans/kickoff/`, with the rules above, and messages the others about dependencies that cross milestones; you stay the lead, merge the drafts into `harness/features.json` with unique priorities, and run step 7 on the whole. Without both, write the backlog yourself as above.
 7. Analyze before committing. Check and fix:
    - every scope item in the spec maps to at least one feature, and every feature maps to a scope item
    - nothing listed as out of scope has a feature

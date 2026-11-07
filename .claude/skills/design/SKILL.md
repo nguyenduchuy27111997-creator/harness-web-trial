@@ -45,6 +45,9 @@ Use exactly these sections. Describe what this milestone adds or changes; refer 
 <choices made here, with the alternative rejected and why; a choice that changes an earlier design or decision also gets a file in docs/decisions/>
 ```
 
+### With an agent team (optional, P33)
+When `HARNESS_AGENT_TEAMS=1` is set and agent teams are on in this session (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`; never in the loop, which runs headless), write the doc as a team: one teammate drafts Data model and Migrations, one the Contract, one Modules and NFR, each in its own file under `docs/plans/design-<M>/`, messaging each other where the sections meet (a table the contract reads, a module that owns an endpoint). You stay the lead: merge the drafts into `docs/design/<M>.md`, make the sections agree, and go on to step 3. The architect still approves the merged doc alone.
+
 ## 3. Make it enforceable
 If `harness/PRESET.md` lists design gates, update their configuration to match the doc (for example the import rules in `.dependency-cruiser.cjs`). Do not write product code, migrations or tests: features do that.
 

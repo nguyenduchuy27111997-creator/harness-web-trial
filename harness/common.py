@@ -57,6 +57,7 @@ UI = re.compile(r"\.(tsx|jsx|vue|svelte|css|scss|html)$")  # what users see: the
 QUERY = re.compile(r"(^|/)(migrations|supabase|db|database|queries)(/|\.|$)|\.sql$", re.I)  # and at data access
 SKEPTIC_MODEL = os.environ.get("LOOP_SKEPTIC_MODEL", "sonnet")  # checks each [bug] before a fix is paid for
 DOCTOR_MODEL = os.environ.get("LOOP_DOCTOR_MODEL", "haiku")  # reads a red CI log before the fix session
+ASK_EVERY = float(os.environ.get("LOOP_ASK_EVERY", "7200"))  # seconds between pushes of questions that can wait
 # With only work that waits on the owner left, the loop stays up this long for an answer (on the PR, or loop.py answer),
 # starting no session meanwhile; 0 stops at once, as before. Seen on the web trial: it stopped, the answer sat unread.
 WAIT_FOR_HUMAN = float(os.environ.get("LOOP_WAIT_FOR_HUMAN", "86400"))

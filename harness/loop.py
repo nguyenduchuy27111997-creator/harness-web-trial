@@ -94,10 +94,10 @@ class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge, dispa
         if getattr(self.opts, "resuming", False):  # the same run goes on: its start, spend and budget stay
             state["resumes"] = state.get("resumes", 0) + 1
             state.pop("crashed", None)
-            state.update(running=True, stop_reason="", pid=os.getpid())
+            state.update(running=True, stop_reason="", pid=os.getpid(), team={})  # no session of the last run is at work
             return state
         state.update(started=now(), spent=0.0, cut_off=[], budget=self.opts.budget, lanes=self.opts.lanes,
-                     milestone=self.opts.milestone, running=True, stop_reason="", pid=os.getpid(), resumes=0,
+                     milestone=self.opts.milestone, running=True, stop_reason="", pid=os.getpid(), resumes=0, team={},
                      opts={k: getattr(self.opts, k) for k in OPT_KEYS})
         state.pop("crashed", None)
         return state
@@ -131,8 +131,13 @@ class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge, dispa
         if stage in WAITING_HUMAN and question:
             key = f"ask:{job['id']}:{hashlib.sha1(question.encode()).hexdigest()[:8]}"
             detail = (notify.config(self.home) or {}).get("detail")
-            self.push(key, lang.say("{id} needs you", id=job["id"]), question if detail else f"{job.get('title', '')}: {job.get('note') or stage}",
-                      priority=4, click=job.get("pr_url"))
+            line = question if detail else f"{job.get('title', '')}: {job.get('note') or stage}"
+            if stage != "reverted" and ASK_EVERY and time.time() - self.state.get("asked_at", 0) < ASK_EVERY:
+                # Not urgent: it goes out with the others at most every LOOP_ASK_EVERY (P32). A red main is pushed now.
+                self.state.setdefault("ask_queue", {})[key] = {"id": job["id"], "line": line, "click": job.get("pr_url")}
+            else:
+                self.state["asked_at"] = time.time()
+                self.push(key, lang.say("{id} needs you", id=job["id"]), line, priority=4, click=job.get("pr_url"))
             try:
                 self.ask_on_github(job, key)
             except Exception as e:  # a comment that did not go out never stops the stage change; the push did
@@ -151,6 +156,25 @@ class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge, dispa
         notify.send(self.home, title, message, priority=priority, click=click, wait=wait)
         notify.desktop(title, message)
 
+    def flush_questions(self):
+        """The questions held back since the last push, as one push, once LOOP_ASK_EVERY has passed (or the loop
+        stops). One already answered, or no longer waiting, is left out."""
+        queue = self.state.get("ask_queue") or {}
+        if not queue or (time.time() - self.state.get("asked_at", 0) < ASK_EVERY and not self.state.get("stop_reason")):
+            return
+        self.state["ask_queue"] = {}
+        live = {k: q for k, q in queue.items() if (self.job(q["id"]) or {}).get("stage") in WAITING_HUMAN}
+        if not live:
+            return
+        self.state["asked_at"] = time.time()
+        if len(live) == 1:
+            (key, q), = live.items()
+            return self.push(key, lang.say("{id} needs you", id=q["id"]), q["line"], priority=4, click=q["click"])
+        self.push("asks:" + hashlib.sha1("".join(sorted(live)).encode()).hexdigest()[:8],
+                  lang.say("{n} questions need you", n=len(live)), "\n".join(f"{q['id']}: {q['line']}" for q in live.values())[:1500],
+                  priority=4)
+        self.state.setdefault("notified", {}).update({k: now() for k in live})
+
     def quality_path(self, fid, fresh=False):
         """Where a session's check writes its numbers; emptied when a session starts, so old numbers are never new."""
         f = self.home / "quality" / f"{fid}.json"
@@ -162,11 +186,14 @@ class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge, dispa
     def keep_history(self):
         """Hourly, the old streams and films go (history.py). And once a day, the days before today that have no
         summary yet get one: Claude's when the budget has room for it, else one made from the numbers. What the
-        office's questions cost (ask.py, asked through the dashboard) is added to the spend here."""
+        office's questions cost (ask.py, asked through the dashboard) is added to the spend here. "spent" is this
+        run's, against its budget; "spent_today" is the day's by every run, so the office's panel does not read $0
+        after a restart."""
         asked = round(sum(a.get("cost", 0) for a in ask.asked(self.home)), 4)
         if asked > self.state.get("ask_spent", 0):
             self.state["spent"] = round(self.state["spent"] + asked - self.state.get("ask_spent", 0), 4)
             self.state["ask_spent"] = asked
+        self.state["spent_today"] = round(self.spent_today(), 2)
         if time.time() - getattr(self, "pruned", 0) > 3600:
             self.pruned = time.time()
             history.prune(self.home)
@@ -470,6 +497,7 @@ class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge, dispa
             self.save()
             self.write_history()
             self.event("loop", f"stopped: {self.state['stop_reason']} · spent ${self.state['spent']:.2f}")
+            self.flush_questions()  # what was held back goes out now
             self.push(f"end:{self.state['started']}", lang.say("Loop stopped: {why}", why=self.state["stop_reason"])[:120],
                       "\n".join(digest_for(self.home, self.state)), wait=True)
 
@@ -551,6 +579,8 @@ def serve_dashboard(home, root):
                 f = home / "history.jsonl"
                 rows = [json.loads(line) for line in f.read_text().splitlines()[-50:]] if f.exists() else []
                 body, kind = json.dumps(rows).encode(), "application/json"
+            elif path == "/team.json":  # the agent team for the office: who is at work, per role, the dispatcher (P33)
+                body, kind = json.dumps(dispatcher.team(home)).encode(), "application/json"
             elif path == "/metrics.json":
                 body, kind = json.dumps(metrics.card([home])).encode(), "application/json"
             elif path == "/health.json":
@@ -881,7 +911,9 @@ def cmd_start(root, a):
         os.dup2(log.fileno(), 2)
         os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
     loop = Loop(root, a)
-    preview.PREVIEW.configure(root, loop.home, loop.stack.get("verify", "browser") == "browser")
+    # The lanes' apps and QA's Chrome are for the office to show: without a dashboard there is no office. The kit's own
+    # tests run that way, and each session there opened a headless Chrome that nobody could see.
+    preview.PREVIEW.configure(root, loop.home, loop.stack.get("verify", "browser") == "browser" and not a.no_dashboard)
     loop.state["dashboard"] = serve_dashboard(loop.home, root) if not a.no_dashboard else ""
     loop.save()
     loop.run()
@@ -1126,7 +1158,7 @@ def main():
     s.add_argument("--session-budget", type=float, default=3.0)
     s.add_argument("--model", default="sonnet")
     s.add_argument("--large-model", default="opus")
-    s.add_argument("--retries", type=int, default=2)
+    s.add_argument("--retries", type=int, default=3)  # one try per rung of the model ladder (agents.rung)
     s.add_argument("--port-base", type=int, default=43100)
     s.add_argument("--foreground", action="store_true")
     s.add_argument("--no-dashboard", action="store_true")

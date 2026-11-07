@@ -2,8 +2,8 @@
 for the dashboard (and the office viewer). One `Session` per Claude run reads its lines; `BUS` holds the last
 events of every session and every loop event, numbered, for /stream (SSE) and /snapshot.json.
 
-An event: {id, at, job, stage, role, kind, ...}. role is "main" for the session the loop started, or the
-subagent's type (reviewer, verifier, architect...). kinds:
+An event: {id, at, job, stage, role, kind, ...}. role is "main" for the session the loop started (with agent: its
+name when it runs as one, --agent reviewer), or the subagent's type (reviewer, verifier, architect...). kinds:
   session_start {model}         text {text}            thinking {tokens}
   tool {tool, use_id, what}     tool_delta {use_id, partial}   (Write/Edit input as it streams)
   tool_done {use_id, error}     file_edit {path, tool, doc, old, new}
@@ -81,8 +81,9 @@ BUS = Bus()
 class Session:
     """Turns one session's stream-json lines into events on the bus and in its stream file."""
 
-    def __init__(self, job, stage, path, evidence=None, bus=BUS, keep=None):
+    def __init__(self, job, stage, path, evidence=None, bus=BUS, keep=None, agent=None):
         self.job, self.stage, self.path, self.bus = job, stage, Path(path), bus
+        self.agent = agent  # the agent the session runs as (--agent reviewer, dispatcher...): on its own events
         self.roles = {}  # Agent/Task tool_use id -> subagent type
         self.blocks = {}  # streamed content block index -> tool_use id of a Write/Edit being written
         self.result = None
@@ -101,6 +102,8 @@ class Session:
             old.unlink(missing_ok=True)  # the newest `keep` stream files stay (the loop keeps days instead: history.py)
 
     def emit(self, role, kind, **fields):
+        if role == "main" and self.agent:
+            fields["agent"] = self.agent
         event = self.bus.publish({"job": self.job, "stage": self.stage, "role": role, "kind": kind, **fields})
         with self.path.open("a") as f:
             f.write(json.dumps(event) + "\n")

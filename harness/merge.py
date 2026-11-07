@@ -9,6 +9,9 @@ from common import (  # noqa: F401
 )
 
 
+MEMORY = re.compile(r"^\.claude/agent-memory/")  # the agents' notes (memory: project): two lanes' notes are joined
+
+
 class Merge:
     # stage: ci, waiting on base, merging ------------------------------------------------
     def pr_checks(self, job):
@@ -252,16 +255,20 @@ class Merge:
         try:
             gen = json.loads((Path(wt) / "harness/generated.json").read_text())
         except (OSError, ValueError):
-            return False
+            gen = {}
         done = []
         for _ in range(200):  # one round per commit that conflicts
             files = git("diff", "--name-only", "--diff-filter=U", cwd=wt, check=False).stdout.split()
             if files:
-                if not all(f in gen for f in files):
+                if not all(f in gen or MEMORY.match(f) for f in files):
                     return False
                 for f in files:
-                    git("checkout", "--ours", "--", f, cwd=wt)  # in a rebase, "ours" is main's side
-                for cmd in dict.fromkeys(gen[f] for f in files):
+                    if MEMORY.match(f):  # an agent's notes: keep both sides' lines, main's first
+                        sides = [git("show", f":{n}:{f}", cwd=wt, check=False).stdout.splitlines() for n in (2, 3)]
+                        (Path(wt) / f).write_text("\n".join(dict.fromkeys(sides[0] + sides[1])) + "\n")
+                    else:
+                        git("checkout", "--ours", "--", f, cwd=wt)  # in a rebase, "ours" is main's side
+                for cmd in dict.fromkeys(gen[f] for f in files if f in gen):
                     if run(["bash", "-c", cmd], cwd=wt).returncode != 0:
                         return False
                 git("add", "--", *files, cwd=wt)
@@ -272,7 +279,10 @@ class Merge:
             else:  # stopped for another reason (a hook, say): never drop a commit
                 return False
             if step.returncode == 0:
-                self.event(job["id"], f"conflict only in generated {', '.join(done)}; regenerated it from the merged code")
+                notes = [f for f in done if MEMORY.match(f)]
+                self.event(job["id"], f"conflict only in generated {', '.join(done)}; regenerated it from the merged code"
+                           if not notes else f"conflict only in generated files or agents' notes ({', '.join(done)}); "
+                                             "regenerated or joined them")
                 return True
         return False
 

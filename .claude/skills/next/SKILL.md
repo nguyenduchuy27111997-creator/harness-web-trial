@@ -29,6 +29,10 @@ Anything after the feature id is context from the human (for example an answer t
 - Read `docs/design/<milestone>.md` if it exists and build to it: its data model, migrations, contract and module rules. The reviewer flags any departure as a bug.
 - If the feature cannot be built on the design, do not diverge silently. Change the design doc as little as possible, write why in a new decision in `docs/decisions/`, and spawn the `architect` subagent on the milestone (foreground). The integrity guard refuses a changed design doc without a fresh architect PASS for exactly its content.
 - Follow `docs/golden-principles.md`.
+- A feature of `complexity` L (`python3 harness/next_feature.py --get <id> complexity`) whose work falls into parts with separate files (for example the data layer, the server actions, the page): split it.
+  - Write the contract the parts share (names, routes, types, function signatures) and give each part its own files; no file belongs to two parts.
+  - Spawn one `part-coder` subagent per part, all in one message so they run at the same time, each with the feature id, its part, its files and the contract.
+  - Wait for all of them, then join the parts yourself: fill what they said was missing, make the names meet, and run the full checks. Two or three parts is usual; a feature that does not split cleanly is built as one.
 - `type: bug`: first write the e2e test that reproduces the bug and watch it fail, then fix.
 - `type: chore` titled `Baseline: ...`: the behavior already exists. Write its e2e test and verify; change no product code. If it does not work, mark it `blocked` with `blocked_reason: needs_human`.
 - UI: follow `docs/design-system.md` if it exists: tokens, base components, the states it asks for. End the feature's e2e test with a visual baseline of its final state if the stack has them (see `harness/PRESET.md`). Update another feature's baseline only when your acceptance changes that page; the `designer` subagent reviews every changed baseline.
@@ -37,12 +41,12 @@ Anything after the feature id is context from the human (for example an answer t
 - If the feature needs a design choice that is in neither the design doc nor `docs/decisions/`, make the smallest reasonable choice and record it as a new decision file.
 
 ## 4. Verify
-- `./scripts/check.sh` must pass.
+- `./scripts/check.sh` must pass. In the loop (`HARNESS_AUTONOMOUS=1`), start it in the background and spawn the verifier (below) at the same time, on the same app, instead of one after the other; if either fails, fix it and run both again.
 - Review: spawn the `reviewer` subagent on your uncommitted diff (`git diff HEAD` plus new files). Fix only `bug` findings and violations of a golden principle. Ignore the rest; do not over-engineer. Re-run `check.sh` if you changed anything. In the loop (`HARNESS_AUTONOMOUS=1`), skip this step: the loop's review stage runs the reviewer and the other lenses on the PR, so a review here would be paid for twice.
 - Spawn the `verifier` subagent with the feature id. Do not mark passing on your own judgment.
 - Wait for each subagent's result before you go on (run it in the foreground if your Agent tool lets you choose). Never end your turn while a subagent you spawned is still running: in a headless run the session ends with your turn, and the loop counts unfinished work as a failed attempt.
 - A hook saves the verifier's report as `harness/evidence/<id>.md`, next to its screenshots in `harness/evidence/<id>/`. Never write or edit anything under `harness/evidence/` yourself. A feature cannot be committed as `passing` without a fresh PASS there.
-- If the verifier fails it, fix and re-verify. After 3 failed rounds, set `status` to `blocked` and `blocked_reason` to `failed`, write what you tried and what still fails in `notes`, and go to step 5. The loop retries it later with a stronger model.
+- If the verifier fails it, fix and re-verify. Go on while each round passes more of its `CRITERION` lines. After 2 rounds in a row with no more passing, the same criterion failing the same way a third time, or 5 rounds in all, set `status` to `blocked` and `blocked_reason` to `failed`, write what you tried and what still fails in `notes`, and go to step 5. The loop retries it later a rung higher (more effort, an advisor, then a stronger model).
 - If the feature needs something only a human can provide (an API key, an account, a product decision), mark it `blocked` right away with `blocked_reason: needs_human` and what the human must do in `notes`. Do not fake it.
 
 ## 5. Close the session

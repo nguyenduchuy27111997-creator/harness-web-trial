@@ -158,14 +158,16 @@ class Agents:
         self.threads[job["id"]] = (t, holder, job["stage"])  # the result is for this stage, whatever happens meanwhile
         t.start()
 
-    def claude(self, job, prompt, model, turns=200, lane_note=True, agent=None, cap=None, solo=False):
+    def claude(self, job, prompt, model, turns=200, lane_note=True, agent=None, cap=None, solo=False, effort=None):
         """One headless Claude run in the job's worktree. Returns (cost, subtype, text). With `agent`, that
         subagent runs as the session itself (`--agent`, no relay session): read-only lenses without a browser,
         several at once for one job; `solo`, an agent that works in the worktree alone, as a build does (the merger)."""
         lens = agent and not solo
         cap = cap or self.caps[job["id"]]
         with PORT_LOCK:
-            port = free_port(self.opts.port_base + 1, taken={j.get("port") for j in self.state["jobs"].values()})
+            held = self.__dict__.setdefault("held_ports", set())  # sessions that are no job's own (a best-of-2 twin)
+            port = free_port(self.opts.port_base + 1, taken={j.get("port") for j in self.state["jobs"].values()} | held)
+            held.add(port)
             if not lens:  # a lens beside the job's own session (a test-writer beside the coder) leaves it the port
                 job["port"] = port
         env = {**os.environ, "PORT": str(port), "HARNESS_LANE": job["id"], "HARNESS_AUTONOMOUS": "1",
@@ -182,6 +184,8 @@ class Agents:
                "--exclude-dynamic-system-prompt-sections"]  # the same system prompt in every lane: cache hits
         if agent:
             cmd += ["--agent", agent] + self.agent_def(job, agent)
+        if effort:
+            cmd += ["--effort", effort]
         browser = not lens and self.stack.get("verify", "browser") == "browser"  # an API is verified with curl: no browser
         if SANDBOX:
             env = {k: v for k, v in env.items() if ENV_KEEP.match(k) or k in self.stack.get("env_allow", [])}
@@ -197,7 +201,13 @@ class Agents:
         attempt = job.get("attempts", 0) + 1
         live = stream.Session(job["id"], job["stage"],
                               self.home / "streams" / f"{job['id']}-{attempt}{'-' + agent if agent else ''}.jsonl",
-                              evidence=Path(job["worktree"]) / "harness/evidence" / job["id"])
+                              evidence=Path(job["worktree"]) / "harness/evidence" / job["id"], agent=agent)
+        member = f"{job['id']}:{agent or 'main'}:{port}"  # the team the office shows: who works on what, now (P33)
+        self.state.setdefault("team", {})[member] = {"job": job["id"], "role": agent or ("architect" if job.get("kind") == "design" else
+                                                                            "learner" if job.get("kind") == "rule" else
+                                                                            {"fixing": "fixer"}.get(job["stage"], "coder")),
+                                                     "model": model,
+                                                     "stage": job["stage"], "since": now()}
         proc = subprocess.Popen(cmd, cwd=job["worktree"], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                 text=True, start_new_session=True)
         self.procs.add(proc)
@@ -225,6 +235,8 @@ class Agents:
         for r in readers:  # a process the session left behind may hold the pipe: never wait on it for long
             r.join(30)
         self.procs.discard(proc)
+        self.held_ports.discard(port)
+        self.state.get("team", {}).pop(member, None)
         if not lens:
             preview.PREVIEW.session_end(job["id"])
             stop_processes_in(job["worktree"])
@@ -330,12 +342,27 @@ class Agents:
         f.write_text(json.dumps(cfg, indent=2))
         return f
 
-    def model_for(self, job):
+    def rung(self, job):
+        """Where a build stands on the model ladder (DESIGN.md 15.3, P30): 0 the default model, 1 the same at high
+        effort, 2 the same with the advisor (the large model) planning first, 3 the large model. Each failed attempt
+        goes one up, and the last try is on 3; a design, a rule or an L feature starts there. Then a human decides."""
         f = self.main.get(job["id"], {})
-        large = job.get("kind") or f.get("complexity") == "L" or job.get("attempts", 0)
-        if large and job.get("kind") != "design" and self.day_share() >= DAY_SHED[1]:
-            return self.opts.model  # near the daily cap: the default model; a design still gets the large one
-        return self.opts.large_model if large else self.opts.model
+        n = job.get("attempts", 0)
+        if job.get("kind") or f.get("complexity") == "L":
+            r = 3
+        else:  # the last try --retries allows is always on the large model, whatever rungs that skips
+            r = 3 if n and n >= self.opts.retries else min(n, 2)
+        if job.get("kind") != "design" and self.day_share() >= DAY_SHED[1]:
+            r = min(r, 1)  # near the daily cap: no large model, as advisor or coder; a design still gets it
+        return r
+
+    def max_attempts(self, job):
+        """Tries after the first: --retries (3 by default, one per rung); one that starts on the large model, at most 2."""
+        f = self.main.get(job["id"], {})
+        return min(self.opts.retries, 2) if job.get("kind") or f.get("complexity") == "L" else self.opts.retries
+
+    def model_for(self, job):
+        return self.opts.large_model if self.rung(job) == 3 else self.opts.model
 
     def fix_model(self, job):
         """The large model fixes, except (LOOP_FIX_SONNET=1) a first fix of an S/M feature's review or CI bugs:

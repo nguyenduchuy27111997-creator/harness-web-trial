@@ -140,15 +140,38 @@ def parse(text):
     return {"raw": (text or "").strip()[:500]}
 
 
+def decisions(home):
+    """Each question with its advice and, once known, what really happened: one row per question, oldest first."""
+    f = Path(home) / "decisions.jsonl"
+    by = {}
+    for line in (f.read_text().splitlines() if f.exists() else []):
+        if line.strip():
+            r = json.loads(line)
+            by.setdefault(r["key"], {}).update(r)
+    return list(by.values())
+
+
+def team(home):
+    """For the office (/team.json, P33): who works on what now, each role's sessions, dollars and minutes over the
+    merged features, what review caught, and the dispatcher's last advice beside what happened."""
+    import metrics
+    state = json.loads((Path(home) / "state.json").read_text()) if (Path(home) / "state.json").exists() else {}
+    jobs = list(state.get("jobs", {}).values())
+    merged = [j for j in jobs if metrics.FEATURE.match(j["id"]) and j.get("stage") == "merged"]
+    failures = metrics.rows(Path(home) / "failures.jsonl")
+    roles = metrics.roles(merged, failures)
+    asked = [s for j in jobs for s in j.get("sessions", []) if s.get("stage") == "dispatcher"]
+    roles["dispatcher"] = {"sessions": len(asked), "cost": round(sum(s.get("cost", 0) for s in asked), 2),
+                           "minutes_p50": round(metrics.quantile([s.get("seconds", 0) / 60 for s in asked], 0.5))}
+    return {"now": sorted(state.get("team", {}).values(), key=lambda m: (m["job"], m["role"])),
+            "roles": roles, "dispatcher": MODE or "off", "decisions": decisions(home)[-20:]}
+
+
 def report(home):
     """Each question, the dispatcher's advice and what really happened, newest last."""
-    f = Path(home) / "decisions.jsonl"
-    rows = [json.loads(x) for x in f.read_text().splitlines() if x.strip()] if f.exists() else []
-    by = {}
-    for r in rows:
-        by.setdefault(r["key"], {}).update(r)
+    rows = decisions(home)
     out = []
-    for r in by.values():
+    for r in rows:
         a = r.get("advice", {})
         said = a.get("action") or (f"touches for {len(a['touches'])} features" if a.get("touches") else a.get("raw", "")[:80])
         said = f"(no answer: {r['error'][:60]})" if r.get("error") else said
@@ -157,5 +180,5 @@ def report(home):
         out.append(f"{r.get('at', '')[:16]}  {r['job']:<8} {r.get('event', ''):<10} would: {said}"
                    + (f" ({a.get('confidence')})" if a.get("confidence") is not None else "") + f"  |  then: {did}")
     cost = sum(r.get("cost", 0) for r in rows)
-    out.append(f"{len(by)} questions, ${cost:.2f}" if by else "No dispatcher questions yet (LOOP_DISPATCHER=suggest turns it on).")
+    out.append(f"{len(rows)} questions, ${cost:.2f}" if rows else "No dispatcher questions yet (LOOP_DISPATCHER=suggest turns it on).")
     return "\n".join(out)

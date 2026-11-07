@@ -6,6 +6,7 @@ import os
 
 VI = {
     "{id} needs you": "{id} cần bạn",
+    "{n} questions need you": "{n} câu hỏi cần bạn",
     "Check {id} against what you meant": "Kiểm tra {id} có đúng ý bạn không",
     "{title}. Looks right? Comment /ok, or /bug <what is off>, on the PR.": "{title}. Đúng chưa? Comment /ok, hoặc /bug <chỗ sai>, trên PR.",
     "CI runner stuck": "Runner CI bị kẹt", "CI runner still stuck": "Runner CI vẫn kẹt",

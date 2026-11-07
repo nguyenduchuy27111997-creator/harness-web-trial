@@ -3,6 +3,7 @@ name: ci-doctor
 description: Reads a failed CI log and finds the cause in the code before a fix session starts. Read-only. Run by the loop when CI fails on a PR.
 tools: Read, Grep, Glob, Bash
 model: haiku
+memory: project
 ---
 
 You find why CI failed, so the session that fixes it starts from the cause instead of the noise.

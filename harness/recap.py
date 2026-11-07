@@ -91,7 +91,7 @@ def film(ffmpeg, scenes, text, out, voice_name):
         talk = float(probe) if re.fullmatch(r"[\d.]+", probe) else 0.0
         each = max(SCENE, (talk + 1.5) / len(scenes))
         total = each * len(scenes)
-        cmd = [*NICE, ffmpeg, "-y", "-v", "error"]
+        cmd = [*NICE, ffmpeg, "-y", "-v", "error", "-timelimit", "600"]  # it stops itself: the timeout below dies with this process
         for s in scenes:
             cmd += ["-loop", "1", "-t", f"{each:.2f}", "-i", str(s)]
         has_voice = voice.exists() and talk > 0
