@@ -37,3 +37,20 @@ export async function setFinishedOn(page: Page, iso: string) {
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByRole("button", { name: "Edit dates" })).toBeVisible();
 }
+
+// On a Reading book's page: saves its total pages (and page 1) under "Progress".
+export async function setTotalPages(page: Page, total: string) {
+  await page.getByLabel("Total pages").fill(total);
+  await page.getByLabel("Current page").fill("1");
+  await page.getByRole("button", { name: "Save progress" }).click();
+  await expect(page.getByText(`Page 1 of ${total}`)).toBeVisible();
+}
+
+// Sets the status to Finished and waits for "Saved".
+export async function finishBook(page: Page) {
+  await pick(page, "Status", "Finished");
+  await page.getByRole("button", { name: "Save status" }).click();
+  // Wait for the save to land: a Finished book has no Progress form (its own "Saved" would match first otherwise).
+  await expect(page.getByRole("button", { name: "Save progress" })).toBeHidden();
+  await expect(page.getByRole("status").first()).toHaveText("Saved");
+}

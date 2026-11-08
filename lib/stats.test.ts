@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { countByMonth, formatAverage, getFinishedByMonth, getStats, listFinishedReads, summarizeStats } from "./stats";
+import { countByMonth, formatAverage, formatPagesRead, getFinishedByMonth, getStats, listFinishedReads, sumPages, summarizeStats } from "./stats";
 
 describe("summarizeStats", () => {
   it("counts books and ignores unrated ones in the average", () => {
@@ -101,13 +101,13 @@ describe("getStats", () => {
     const stats = await getStats(client, new Date("2026-12-31T23:30:00Z"));
     expect(calls).toContainEqual(["books", "gte", "finished_on", "2026-01-01"]);
     expect(calls).toContainEqual(["reads", "lt", "finished_on", "2027-01-01"]);
-    expect(stats).toEqual({ finishedThisYear: 1, averageRating: 3 });
+    expect(stats).toEqual({ finishedThisYear: 1, averageRating: 3, pagesRead: 0 });
   });
 
   it("counts past reads but averages only the books' ratings", async () => {
     const year = new Date().getUTCFullYear();
-    const { client } = stub({ data: [book("b1", `${year}-02-01`, 4)], error: null }, { data: [read("r1", "b1", `${year}-01-01`, 1)], error: null });
-    expect(await getStats(client)).toEqual({ finishedThisYear: 2, averageRating: 4 });
+    const { client } = stub({ data: [book("b1", `${year}-02-01`, 4, 250), book("b2", `${year}-02-02`, null)], error: null }, { data: [read("r1", "b1", `${year}-01-01`, 1, 250)], error: null });
+    expect(await getStats(client)).toEqual({ finishedThisYear: 3, averageRating: 4, pagesRead: 500 });
   });
 
   it("throws on a database error", async () => {
@@ -132,5 +132,21 @@ describe("getFinishedByMonth", () => {
     const { client, calls } = stub({ data: [book("b1", "2026-03-03", null)], error: null }, { data: [read("r1", "b1", "2026-03-20", null), read("r2", "b1", "2026-07-01", null)], error: null });
     expect(await getFinishedByMonth(client, new Date("2026-12-31T23:30:00Z"))).toEqual([0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 0, 0]);
     expect(calls).toContainEqual(["books", "gte", "finished_on", "2026-01-01"]);
+  });
+});
+
+describe("sumPages", () => {
+  it("sums total pages, a null adds 0", () => {
+    expect(sumPages([{ totalPages: 250 }, { totalPages: null }, { totalPages: 120 }])).toBe(370);
+    expect(sumPages([])).toBe(0);
+  });
+});
+
+describe("formatPagesRead", () => {
+  it("formats the count with its noun", () => {
+    expect(formatPagesRead(370)).toBe("370 pages read this year");
+    expect(formatPagesRead(1)).toBe("1 page read this year");
+    expect(formatPagesRead(0)).toBe("0 pages read this year");
+    expect(formatPagesRead(1200)).toBe("1,200 pages read this year");
   });
 });
