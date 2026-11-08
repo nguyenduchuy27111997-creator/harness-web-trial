@@ -1,0 +1,1 @@
+{"status": "passing", "notes": "Delete on each past read via ConfirmDeleteButton, deletePastRead action, removeRead in lib/reads.ts. Test-writer spec e2e/past-reads-delete.spec.ts passes (already waits for the dialog to be hidden). Verifier PASS, designer PASS. F056-past-reads baseline refreshed (new Delete button only)."}

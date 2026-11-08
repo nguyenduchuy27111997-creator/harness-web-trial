@@ -1,9 +1,16 @@
 import { StarIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { formatFinishDate } from "@/lib/books";
 import type { PastRead } from "@/lib/reads";
 
-export function PastReads({ reads }: { reads: PastRead[] }) {
+export function PastReads({
+  reads,
+  deleteAction,
+}: {
+  reads: PastRead[];
+  deleteAction: (readId: string, formData: FormData) => Promise<void>;
+}) {
   if (reads.length === 0) return null;
   return (
     <section className="flex flex-col gap-2">
@@ -32,6 +39,12 @@ export function PastReads({ reads }: { reads: PastRead[] }) {
                     </span>
                   </p>
                 )}
+                <ConfirmDeleteButton
+                  heading="Delete this read?"
+                  description="This past read will be deleted. This cannot be undone."
+                  size="sm"
+                  action={deleteAction.bind(null, read.id)}
+                />
               </CardContent>
             </Card>
           </li>

@@ -34,6 +34,7 @@ import {
   editBook,
   editDates,
   readBookAgain,
+  deletePastRead,
   removeFromShelf,
   saveProgress,
   saveRating,
@@ -95,7 +96,7 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
       {book.status === "finished" && <RatingForm rating={book.rating} action={saveRating.bind(null, book.id)} />}
       {book.status === "finished" && <ReadAgainButton action={readBookAgain.bind(null, book.id)} />}
       {book.status === "finished" && <ReviewForm review={book.review} action={saveReview.bind(null, book.id)} />}
-      <PastReads reads={pastReads} />
+      <PastReads reads={pastReads} deleteAction={deletePastRead.bind(null, book.id)} />
       <BookNotes
         notes={notes}
         action={addNote.bind(null, book.id)}

@@ -25,7 +25,7 @@ import {
   type ReviewFormState,
   type StatusFormState,
 } from "@/lib/books";
-import { readAgain } from "@/lib/reads";
+import { readAgain, removeRead } from "@/lib/reads";
 import { insertNote, parseNote, removeNote, updateNote, type NoteFormState } from "@/lib/notes";
 import { insertQuote, parseQuote, removeQuote, updateQuote, type QuoteFormState } from "@/lib/quotes";
 import { addBookToShelf, parseShelfChoice, removeBookFromShelf, type AddToShelfFormState } from "@/lib/shelves";
@@ -315,4 +315,10 @@ export async function readBookAgain(bookId: string, _formData: FormData): Promis
   revalidatePath("/books");
   revalidatePath(`/books/${bookId}`);
   revalidatePath("/stats");
+}
+
+export async function deletePastRead(bookId: string, readId: string, _formData: FormData): Promise<void> {
+  await requireUser();
+  if (isUuid(bookId) && isUuid(readId)) await removeRead(await createClient(), bookId, readId);
+  revalidatePath(`/books/${bookId}`);
 }
