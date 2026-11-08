@@ -1,5 +1,5 @@
 {
-  "version": "5.33.20",
+  "version": "5.33.21",
   "preset": "nextjs-supabase",
   "files": {
     ".claude/agents/advisor.md": "e7a83e9817e031dfa49a2671940111ea252614b123ef8c48dc15cd3aac0b2c52",
@@ -72,7 +72,7 @@
     "harness/lang.py": "5fc1e40ff400b755ea6ce9eed885c4ada96cec42a61b9014e92c06c534f6fa4a",
     "harness/loop-mcp.json": "10e61de4f6a91e39ec5085d6ef3c868a099002cce515f26ba6d763a39f2b85b4",
     "harness/loop-settings.json": "72420e6f742a4d2bbf89bd1bd9cfd7db41b5d09a6c4a9c321bf5031ce3acd1b6",
-    "harness/loop.py": "316e87a49975cb8e7a52208f203edcef5d2afecf7761a0196dedac25d6e77a18",
+    "harness/loop.py": "b25324467b79e64d3d19cf4757eb2139eed3c43f53f1738866b2378dd188feca",
     "harness/merge.py": "115a69cb7a2dfbc8495d76254abc6e5f4788f12ea64b49eeebb3d88a2fa42d16",
     "harness/metrics.py": "9909ebfa10d67ea6e16b558169b2860eb0264c39a5195d9ccb139652311fcf97",
     "harness/next_feature.py": "67048fa47db2878ecd2fdfdffcda50ddf4201a411de553a01f500fef6c83556c",

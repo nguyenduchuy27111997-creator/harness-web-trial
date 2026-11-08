@@ -90,6 +90,8 @@ class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge, dispa
         state["milestone_over"] = {}
         state["ci_blocked"] = False  # GitHub Actions starting no jobs; checked again each run
         state.pop("ci_stalled", None)  # the runner gave up on this run: a new run tries it again
+        for k in ("stop_now", "probe_failing", "probe_since", "infra_since"):  # nor a give-up on Docker or the API
+            state.pop(k, None)
         state["runner_restarts"] = []
         if getattr(self.opts, "resuming", False):  # the same run goes on: its start, spend and budget stay
             state["resumes"] = state.get("resumes", 0) + 1
@@ -871,8 +873,10 @@ def cmd_start(root, a):
     elif not a.foreground and service_plist(root).exists():
         # The service runs the loop, so launchd brings it back after a crash or a reboot.
         (home / "next-run.json").write_text(json.dumps({k: getattr(a, k) for k in OPT_KEYS}))
-        run([runner.LAUNCHCTL, "kickstart", "-k", f"gui/{os.getuid()}/{service_label(root)}"], timeout=60)
-        for _ in range(40):
+        # No loop runs (checked above), so no -k; and no waiting on launchctl, which once hung for 60 s.
+        subprocess.Popen([runner.LAUNCHCTL, "kickstart", f"gui/{os.getuid()}/{service_label(root)}"],
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+        for _ in range(240):
             time.sleep(0.25)
             state = json.loads((home / "state.json").read_text()) if (home / "state.json").exists() else {}
             if state.get("running") and alive(state.get("pid")) and not (home / "next-run.json").exists():
