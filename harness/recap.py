@@ -186,8 +186,8 @@ def wanted(home, state, days=2):
                    and (j.get("merged_at") or "") >= since and j["id"] not in have["features"]),
                   key=lambda j: j.get("merged_at") or "", reverse=True)
     out = [("feature", j["id"]) for j in jobs]
-    out += [("day", x["day"]) for x in history.days(home)[-3:] if x["summary"] and x["day"] not in have["days"]
-            and x["day"] < datetime.date.today().isoformat()]
+    summed = [x["day"] for x in history.days(home) if x["summary"] and x["day"] < datetime.date.today().isoformat()]
+    out += [("day", d) for d in summed[:3] if d not in have["days"]]  # the three newest: days() is newest first
     return out
 
 

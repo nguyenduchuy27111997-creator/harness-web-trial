@@ -174,6 +174,8 @@ class Agents:
                "HARNESS_STAGE": job["stage"],
                "HARNESS_TESTS": str(preview.PREVIEW.tests_path(job["id"])),  # the kit's reporters write each test here
                "HARNESS_QUALITY": str(self.quality_path(job["id"], fresh=True))}  # and check.sh its numbers (quality.py)
+        if lens:  # it changes nothing, so the stop gate lets it end (stop-gate.sh)
+            env["HARNESS_READONLY"] = "1"
         if lane_note:
             prompt += (f"\n\n(This lane's app runs on http://localhost:{port}: PORT is set, and ./init.sh and the "
                        "e2e tests use it. Never use port 3000 or another app's port.)")

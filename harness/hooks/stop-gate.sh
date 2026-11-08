@@ -6,6 +6,9 @@
 # A review session changes nothing, so there is nothing to gate. Seen for real: a review that ended its
 # turn to wait for its subagents sat in check.sh until the hook timed out (10 min), three times.
 [ "${HARNESS_STAGE:-}" = "review" ] && exit 0
+# Nor does a read-only agent run as the session (a lens, the dispatcher). Seen on the web trial: the dispatcher,
+# asked about held F057 and F058 in their red worktrees, was blocked 8 times and its JSON answer was lost.
+[ "${HARNESS_READONLY:-0}" = "1" ] && exit 0
 
 input=$(cat)
 # Block up to 8 times per session, then let it stop (no endless loop). Once is not
