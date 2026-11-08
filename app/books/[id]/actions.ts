@@ -215,6 +215,20 @@ export async function deleteNote(bookId: string, noteId: string, _formData: Form
   revalidatePath(`/books/${bookId}`);
 }
 
+// The book must exist and the quote must fit it; otherwise the form state to return.
+async function checkQuote(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  bookId: string,
+  formData: FormData,
+): Promise<{ error: QuoteFormState } | { error?: undefined; parsed: Extract<ReturnType<typeof parseQuote>, { ok: true }> }> {
+  const book = await getBook(supabase, bookId);
+  if (!book) return { error: { formError: "Book not found" } as QuoteFormState };
+  const parsed = parseQuote(formData, book.total_pages);
+  if (parsed.ok) return { parsed };
+  const values = { quote: String(formData.get("quote") ?? ""), page: String(formData.get("page") ?? "") };
+  return { error: { fieldErrors: parsed.fieldErrors, values } as QuoteFormState };
+}
+
 export async function addQuote(
   bookId: string,
   _prev: QuoteFormState,
@@ -224,15 +238,9 @@ export async function addQuote(
   if (!isUuid(bookId)) return { formError: "Book not found" };
   try {
     const supabase = await createClient();
-    const book = await getBook(supabase, bookId);
-    if (!book) return { formError: "Book not found" };
-    const parsed = parseQuote(formData, book.total_pages);
-    if (!parsed.ok) {
-      return {
-        fieldErrors: parsed.fieldErrors,
-        values: { quote: String(formData.get("quote") ?? ""), page: String(formData.get("page") ?? "") },
-      };
-    }
+    const checked = await checkQuote(supabase, bookId, formData);
+    if (checked.error) return checked.error;
+    const parsed = checked.parsed;
     if ((await insertQuote(supabase, bookId, parsed.value)) === "missing") return { formError: "Book not found" };
   } catch {
     return { formError: "Could not save. Try again." };
@@ -253,15 +261,9 @@ export async function editQuote(
   if (!isUuid(quoteId)) return { formError: "Quote not found" };
   try {
     const supabase = await createClient();
-    const book = await getBook(supabase, bookId);
-    if (!book) return { formError: "Book not found" };
-    const parsed = parseQuote(formData, book.total_pages);
-    if (!parsed.ok) {
-      return {
-        fieldErrors: parsed.fieldErrors,
-        values: { quote: String(formData.get("quote") ?? ""), page: String(formData.get("page") ?? "") },
-      };
-    }
+    const checked = await checkQuote(supabase, bookId, formData);
+    if (checked.error) return checked.error;
+    const parsed = checked.parsed;
     if (!(await updateQuote(supabase, bookId, quoteId, parsed.value))) return { formError: "Quote not found" };
   } catch {
     return { formError: "Could not save. Try again." };

@@ -27,21 +27,31 @@ describe("formatAverage", () => {
 });
 
 describe("getStats", () => {
-  function stub(result: { data: unknown; error: { message: string } | null }) {
+  type Result = { data: unknown; error: { message: string } | null };
+  function stub(books: Result, reads: Result = { data: [], error: null }) {
     const calls: unknown[][] = [];
-    const query = {
-      select: () => query,
-      gte: (...args: unknown[]) => (calls.push(["gte", ...args]), query),
-      lt: (...args: unknown[]) => (calls.push(["lt", ...args]), Promise.resolve(result)),
+    const from = (table: string) => {
+      const query = {
+        select: () => query,
+        gte: (...args: unknown[]) => (calls.push([table, "gte", ...args]), query),
+        lt: (...args: unknown[]) => (calls.push([table, "lt", ...args]), Promise.resolve(table === "books" ? books : reads)),
+      };
+      return query;
     };
-    return { client: { from: () => query } as unknown as SupabaseClient<Database>, calls };
+    return { client: { from } as unknown as SupabaseClient<Database>, calls };
   }
 
   it("limits to the UTC calendar year", async () => {
     const { client, calls } = stub({ data: [{ rating: 3 }], error: null });
     const stats = await getStats(client, new Date("2026-12-31T23:30:00Z"));
-    expect(calls).toEqual([["gte", "finished_on", "2026-01-01"], ["lt", "finished_on", "2027-01-01"]]);
+    expect(calls).toContainEqual(["books", "gte", "finished_on", "2026-01-01"]);
+    expect(calls).toContainEqual(["reads", "lt", "finished_on", "2027-01-01"]);
     expect(stats).toEqual({ finishedThisYear: 1, averageRating: 3 });
+  });
+
+  it("counts past reads but averages only the books' ratings", async () => {
+    const { client } = stub({ data: [{ rating: 4 }], error: null }, { data: [{ rating: 1 }], error: null });
+    expect(await getStats(client)).toEqual({ finishedThisYear: 2, averageRating: 4 });
   });
 
   it("throws on a database error", async () => {

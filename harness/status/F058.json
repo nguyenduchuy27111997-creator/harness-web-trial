@@ -1,0 +1,1 @@
+{"status": "passing", "notes": "getStats counts books plus reads finished this year; average stays on books current ratings. Verifier PASS. Also extracted checkQuote helper in app/books/[id]/actions.ts to bring jscpd back under 3% after the test-writer spec added a clone."}

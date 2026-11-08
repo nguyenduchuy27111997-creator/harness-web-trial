@@ -10,15 +10,22 @@ export function summarizeStats(rows: { rating: number | null }[]): Stats {
 }
 
 // Row Level Security limits the rows to the signed-in user's own; the year is the UTC calendar year.
+// The count includes past reads finished this year; the average is of the books' current ratings only.
 export async function getStats(supabase: SupabaseClient<Database>, now = new Date()): Promise<Stats> {
   const year = now.getUTCFullYear();
-  const { data, error } = await supabase
-    .from("books")
-    .select("rating")
-    .gte("finished_on", `${year}-01-01`)
-    .lt("finished_on", `${year + 1}-01-01`);
-  if (error) throw new Error(error.message);
-  return summarizeStats(data);
+  const [books, reads] = await Promise.all(
+    (["books", "reads"] as const).map((table) =>
+      supabase
+        .from(table)
+        .select("rating")
+        .gte("finished_on", `${year}-01-01`)
+        .lt("finished_on", `${year + 1}-01-01`),
+    ),
+  );
+  if (books.error) throw new Error(books.error.message);
+  if (reads.error) throw new Error(reads.error.message);
+  const stats = summarizeStats(books.data);
+  return { ...stats, finishedThisYear: stats.finishedThisYear + reads.data.length };
 }
 
 export function formatAverage(value: number | null): string {
