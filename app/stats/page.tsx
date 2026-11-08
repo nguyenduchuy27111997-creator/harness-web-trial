@@ -4,7 +4,7 @@ import { ChangeGoal, GoalForm } from "@/components/goal-form";
 import { MonthlyChart } from "@/components/monthly-chart";
 import { Progress } from "@/components/ui/progress";
 import { getReadingGoal, goalProgress } from "@/lib/goals";
-import { formatAverage, getFinishedByMonth, getStats } from "@/lib/stats";
+import { formatAverage, formatPagesRead, getFinishedByMonth, getStats } from "@/lib/stats";
 import { createClient, requireUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Stats · Bookshelf" };
@@ -18,6 +18,7 @@ export default async function StatsPage() {
       <h1 className="font-heading text-4xl font-semibold tracking-tight">Stats</h1>
       <p>Books finished this year: {stats.finishedThisYear}</p>
       <p>Average rating: {formatAverage(stats.averageRating)}</p>
+      <p>{formatPagesRead(stats.pagesRead)}</p>
       <MonthlyChart byMonth={byMonth} />
       {goal === null ? (
         <section className="flex flex-col gap-3">

@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "sumPages/formatPagesRead in lib/stats.ts, Stats.pagesRead from getStats (past reads included), line on /stats. Test-writer helper finishBook got one wait (Save progress hidden) because the progress form's stale 'Saved' matched first and the test left before the status save landed. Stats-page baselines updated for the new line."
+}

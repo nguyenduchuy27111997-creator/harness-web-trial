@@ -1,9 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
 
-export type Stats = { finishedThisYear: number; averageRating: number | null };
+export type Stats = { finishedThisYear: number; averageRating: number | null; pagesRead: number };
 
-export function summarizeStats(rows: { rating: number | null }[]): Stats {
+export function summarizeStats(rows: { rating: number | null }[]): Omit<Stats, "pagesRead"> {
   const ratings = rows.flatMap((row) => (row.rating === null ? [] : [row.rating]));
   const average = ratings.length === 0 ? null : ratings.reduce((sum, r) => sum + r, 0) / ratings.length;
   return { finishedThisYear: rows.length, averageRating: average === null ? null : Math.round(average * 10) / 10 };
@@ -61,6 +61,7 @@ export async function getStats(supabase: SupabaseClient<Database>, now = new Dat
   return {
     finishedThisYear: reads.length,
     averageRating: summarizeStats(reads.filter((r) => r.pastReadId === null)).averageRating,
+    pagesRead: sumPages(reads),
   };
 }
 
@@ -73,6 +74,15 @@ export function countByMonth(reads: { finishedOn: string }[]): number[] {
 
 export async function getFinishedByMonth(supabase: SupabaseClient<Database>, now = new Date()): Promise<number[]> {
   return countByMonth(await listFinishedReads(supabase, now.getUTCFullYear()));
+}
+
+// A read whose book has no total pages adds 0.
+export function sumPages(reads: { totalPages: number | null }[]): number {
+  return reads.reduce((sum, r) => sum + (r.totalPages ?? 0), 0);
+}
+
+export function formatPagesRead(n: number): string {
+  return `${n.toLocaleString("en-US")} ${n === 1 ? "page" : "pages"} read this year`;
 }
 
 export function formatAverage(value: number | null): string {
