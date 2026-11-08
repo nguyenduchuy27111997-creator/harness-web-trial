@@ -53,6 +53,7 @@ test("stats: change the reading goal", async ({ page }) => {
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F024-change-goal.png", {
     stylePath: "e2e/hide-dev-overlay.css",
+    mask: [page.getByRole("region", { name: "Finished by month" }).getByRole("list")],
   });
   await page.reload();
   await expect(

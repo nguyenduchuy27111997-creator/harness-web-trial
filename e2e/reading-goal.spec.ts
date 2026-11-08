@@ -37,5 +37,5 @@ test("stats: set a reading goal and see progress", async ({ page }) => {
   await expect(page.getByText("1 of 20 books finished this year")).toBeVisible();
   await expect(page.getByRole("progressbar", { name: "Reading goal progress" })).toHaveAttribute("aria-valuenow", "5");
   await expectAccessible(page);
-  await expect(page).toHaveScreenshot("F023-reading-goal.png", { stylePath: "e2e/hide-dev-overlay.css" });
+  await expect(page).toHaveScreenshot("F023-reading-goal.png", { stylePath: "e2e/hide-dev-overlay.css", mask: [page.getByRole("region", { name: "Finished by month" }).getByRole("list")] });
 });

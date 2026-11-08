@@ -64,6 +64,17 @@ export async function getStats(supabase: SupabaseClient<Database>, now = new Dat
   };
 }
 
+// 12 counts, index 0 = January, by the month of finishedOn (an ISO date).
+export function countByMonth(reads: { finishedOn: string }[]): number[] {
+  const counts = Array<number>(12).fill(0);
+  for (const read of reads) counts[Number(read.finishedOn.slice(5, 7)) - 1] += 1;
+  return counts;
+}
+
+export async function getFinishedByMonth(supabase: SupabaseClient<Database>, now = new Date()): Promise<number[]> {
+  return countByMonth(await listFinishedReads(supabase, now.getUTCFullYear()));
+}
+
 export function formatAverage(value: number | null): string {
   return value === null ? "No ratings yet" : value.toFixed(1);
 }

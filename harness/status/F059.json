@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Finished-by-month chart on /stats (components/monthly-chart.tsx, countByMonth + getFinishedByMonth in lib/stats.ts). Stats/getStats unchanged, so no existing assertion was edited; design M6 and decision 0014 changed with an architect PASS. Five other /stats baselines changed only by the added section (F015, F023, F024, F027, F058); four of them now mask the chart list so they do not depend on the month."
+}

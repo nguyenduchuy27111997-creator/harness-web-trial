@@ -29,3 +29,11 @@ export async function finishAndRateBook(page: Page, stars: number) {
 
 // The "Past reads" block; the design doc gives the heading, not the container.
 export const pastReadsBlock = (page: Page) => page.getByRole("heading", { name: "Past reads" }).locator("xpath=..");
+
+// Opens "Edit dates" on a finished book's page and saves its finish date (YYYY-MM-DD).
+export async function setFinishedOn(page: Page, iso: string) {
+  await page.getByRole("button", { name: "Edit dates" }).click();
+  await page.getByLabel("Finished").fill(iso);
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Edit dates" })).toBeVisible();
+}
