@@ -39,7 +39,7 @@ test("stats: finished this year and average rating", async ({ page }) => {
   await expect(page.getByText("Books finished this year: 3")).toBeVisible();
   await expect(page.getByText("Average rating: 4.5")).toBeVisible();
   await expectAccessible(page);
-  await expect(page).toHaveScreenshot("F015-stats.png", { stylePath: "e2e/hide-dev-overlay.css" });
+  await expect(page).toHaveScreenshot("F015-stats.png", { stylePath: "e2e/hide-dev-overlay.css", mask: [page.getByRole("region", { name: "Finished by month" }).getByRole("list")] });
 
   await page.getByRole("link", { name: "My books" }).click();
   await expect(page).toHaveURL(/\/books$/);

@@ -83,5 +83,5 @@ test("the average rating ignores past reads", async ({ page }) => {
   await expect(page.getByText("Books finished this year: 3")).toBeVisible();
   await expect(page.getByText("Average rating: 3.5")).toBeVisible();
   await expectAccessible(page);
-  await expect(page).toHaveScreenshot("F058-stats-count-reads.png", { stylePath: "e2e/hide-dev-overlay.css" });
+  await expect(page).toHaveScreenshot("F058-stats-count-reads.png", { stylePath: "e2e/hide-dev-overlay.css", mask: [page.getByRole("region", { name: "Finished by month" }).getByRole("list")] });
 });

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { formatAverage, getStats, listFinishedReads, summarizeStats } from "./stats";
+import { countByMonth, formatAverage, getFinishedByMonth, getStats, listFinishedReads, summarizeStats } from "./stats";
 
 describe("summarizeStats", () => {
   it("counts books and ignores unrated ones in the average", () => {
@@ -113,5 +113,24 @@ describe("getStats", () => {
   it("throws on a database error", async () => {
     const { client } = stub({ data: null, error: { message: "boom" } });
     await expect(getStats(client)).rejects.toThrow("boom");
+  });
+});
+
+describe("countByMonth", () => {
+  it("counts reads per month, January first", () => {
+    const counts = countByMonth([{ finishedOn: "2026-03-03" }, { finishedOn: "2026-03-20" }, { finishedOn: "2026-12-31" }, { finishedOn: "2026-01-01" }]);
+    expect(counts).toEqual([1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1]);
+  });
+
+  it("is twelve zeros without reads", () => {
+    expect(countByMonth([])).toEqual(Array(12).fill(0));
+  });
+});
+
+describe("getFinishedByMonth", () => {
+  it("counts current and past reads of the UTC year by month", async () => {
+    const { client, calls } = stub({ data: [book("b1", "2026-03-03", null)], error: null }, { data: [read("r1", "b1", "2026-03-20", null), read("r2", "b1", "2026-07-01", null)], error: null });
+    expect(await getFinishedByMonth(client, new Date("2026-12-31T23:30:00Z"))).toEqual([0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 0, 0]);
+    expect(calls).toContainEqual(["books", "gte", "finished_on", "2026-01-01"]);
   });
 });
