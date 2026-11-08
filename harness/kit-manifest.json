@@ -1,5 +1,5 @@
 {
-  "version": "5.33.19",
+  "version": "5.33.20",
   "preset": "nextjs-supabase",
   "files": {
     ".claude/agents/advisor.md": "e7a83e9817e031dfa49a2671940111ea252614b123ef8c48dc15cd3aac0b2c52",
@@ -225,7 +225,7 @@
     "init.sh": "ecce06abea33014c055e0d491247666bcef02e55969252d2e9ad7ed7507e48f2",
     "lighthouserc.cjs": "e47c2ddc72ec0a31f197a0de1831bb07dbd798f257a6949cfa0d149dcc7dbd0c",
     "playwright.config.ts": "f85ce7b916ce3714a3a7aebe905ad4a560cdbfc46d4defdbba80573ef7eb4557",
-    "scripts/check.sh": "4c3da0d72e3a4fbe3abfaf5dc1babf13d1519f601781e03a22ca947ebff9a4dc",
+    "scripts/check.sh": "e5f4a11f3c535dfbba0d63d9665dd871dd604d9bc8567aca9372d53b8febc107",
     "scripts/db-reset.sh": "1b63126d524a61e21e68e0c322bd7aa55c18c15d6b98b69f7594d18bf33afc00",
     "scripts/db-types.sh": "49e4b51cfdd784cc6d7b60c972dd7c4340ff82f140c8528d0ce4dd31ec7bfbed",
     "scripts/db-up.sh": "32f0a337e6009ea1c36789354550d560007f90cf280454c9847068d970b298ce",
