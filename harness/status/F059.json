@@ -1,0 +1,1 @@
+{"status": "passing", "notes": "Finished by month chart on /stats (components/monthly-chart.tsx, countByMonth + Stats.byMonth in lib/stats.ts). Baselines of other /stats specs updated."}

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { formatAverage, getStats, summarizeStats } from "./stats";
+import { countByMonth, formatAverage, getStats, summarizeStats } from "./stats";
 
 describe("summarizeStats", () => {
   it("counts books and ignores unrated ones in the average", () => {
@@ -42,20 +42,27 @@ describe("getStats", () => {
   }
 
   it("limits to the UTC calendar year", async () => {
-    const { client, calls } = stub({ data: [{ rating: 3 }], error: null });
+    const { client, calls } = stub({ data: [{ rating: 3, finished_on: "2026-03-03" }], error: null });
     const stats = await getStats(client, new Date("2026-12-31T23:30:00Z"));
     expect(calls).toContainEqual(["books", "gte", "finished_on", "2026-01-01"]);
     expect(calls).toContainEqual(["reads", "lt", "finished_on", "2027-01-01"]);
-    expect(stats).toEqual({ finishedThisYear: 1, averageRating: 3 });
+    expect(stats).toEqual({ finishedThisYear: 1, averageRating: 3, byMonth: [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0] });
   });
 
   it("counts past reads but averages only the books' ratings", async () => {
-    const { client } = stub({ data: [{ rating: 4 }], error: null }, { data: [{ rating: 1 }], error: null });
-    expect(await getStats(client)).toEqual({ finishedThisYear: 2, averageRating: 4 });
+    const { client } = stub({ data: [{ rating: 4, finished_on: "2026-03-03" }], error: null }, { data: [{ rating: 1, finished_on: "2026-03-20" }], error: null });
+    expect(await getStats(client)).toEqual({ finishedThisYear: 2, averageRating: 4, byMonth: [0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0] });
   });
 
   it("throws on a database error", async () => {
     const { client } = stub({ data: null, error: { message: "boom" } });
     await expect(getStats(client)).rejects.toThrow("boom");
+  });
+});
+
+describe("countByMonth", () => {
+  it("counts by month, January first", () => {
+    expect(countByMonth([])).toEqual(Array(12).fill(0));
+    expect(countByMonth(["2026-01-05", "2026-03-03", "2026-03-20"])).toEqual([1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
   });
 });

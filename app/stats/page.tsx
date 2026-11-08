@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { saveGoal } from "@/app/stats/actions";
 import { ChangeGoal, GoalForm } from "@/components/goal-form";
+import { MonthlyChart } from "@/components/monthly-chart";
 import { Progress } from "@/components/ui/progress";
 import { getReadingGoal, goalProgress } from "@/lib/goals";
 import { formatAverage, getStats } from "@/lib/stats";
@@ -17,6 +18,7 @@ export default async function StatsPage() {
       <h1 className="font-heading text-4xl font-semibold tracking-tight">Stats</h1>
       <p>Books finished this year: {stats.finishedThisYear}</p>
       <p>Average rating: {formatAverage(stats.averageRating)}</p>
+      <MonthlyChart counts={stats.byMonth} />
       {goal === null ? (
         <section className="flex flex-col gap-3">
           <p>Set a reading goal for this year: how many books do you want to finish?</p>

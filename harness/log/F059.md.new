@@ -1,0 +1,5 @@
+## 2026-11-09 12:00 · passing
+- Did: added countByMonth, Stats.byMonth, MonthlyChart on /stats; refreshed /stats baselines of F015/F023/F024/F027/F058.
+- Verified by: verifier PASS, check.sh green (79 e2e), test-writer spec F059-monthly-chart.
+- Next session should know: getStats still queries books/reads separately (no listFinishedReads yet); mobile month labels are tight (designer may judge).
+
