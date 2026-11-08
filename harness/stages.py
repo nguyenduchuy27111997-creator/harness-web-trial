@@ -73,7 +73,9 @@ class Stages:
             prompt += (f"\n\n(A test-writer agent is writing this feature's e2e test now, in this worktree. Write no e2e test "
                        f"of your own for the acceptance. Before you verify (step 4), wait for {ready} to exist: check every "
                        "30 seconds, for up to 20 minutes. It lists the test files: build until they pass and commit them "
-                       "with your work exactly as they are, since the loop rejects a commit that changes them. If one is "
+                       "with your work exactly as they are, since the loop rejects a commit that changes them, unless the "
+                       "change only waits for the app (a dialog to close, a request to settle) and removes or loosens no "
+                       "check: a skeptic reads such a change. If one is "
                        f"wrong (it asks for what the acceptance does not say), do not change it: write why to {issue}, set "
                        "the feature blocked with blocked_reason failed, and stop; the test-writer writes it again. If it "
                        "lists no files, write the test yourself as usual.)")
@@ -246,6 +248,7 @@ class Stages:
             with (self.home / "loop.log").open("a") as f:
                 f.write(f"{now()} {job['id']} test-writer failed: {e!r}\n")
         job["locked_tests"] = {x: hashlib.sha256((Path(wt) / x).read_text().encode()).hexdigest() for x in files}
+        job["locked_blobs"] = {x: git("hash-object", "-w", x, cwd=wt).stdout.strip() for x in files}  # to diff against
         ready.write_text(json.dumps({"files": files}) + "\n")
         return cost
 
@@ -257,6 +260,38 @@ class Stages:
             if r.returncode != 0 or hashlib.sha256(r.stdout.encode()).hexdigest() != digest:
                 out.append(path)
         return out
+
+    def timing_only(self, job, changed):
+        """A change to the test-writer's test that only waits for the app (a dialog to close, a request to settle) is
+        let through when the skeptic finds no check removed or loosened; the new version is then the locked one. Seen
+        on the web trial: F057's test checked a count of 0 under an open dialog and failed 1 or 2 runs in 3, and the
+        coder and fixer had no way to fix it but to stop."""
+        wt = job["worktree"]
+        blobs = job.get("locked_blobs") or {}
+        if any(p not in blobs for p in changed):  # dropped, or locked before its version was kept: cannot be judged
+            return False
+        diff = "\n".join(run(["git", "diff", blobs[p], f"HEAD:{p}"], cwd=wt).stdout for p in changed)
+        if not diff.strip():
+            return False
+        cost, subtype, text = self.claude(
+            job, f"Feature {job['id']}: its code was written to the test-writer's e2e test, which it may not change. "
+                 f"This change to that test claims to only wait for the app longer:\n```diff\n{diff[:8000]}\n```\n"
+                 "Finding:\n1. [bug] The change removes, loosens or skips a check the test made (an assertion, an "
+                 "expected text or count, a step), rather than only waiting for the app.\n\nReply one line `1: KEEP` "
+                 "if that is so, or `1: DROP — <why>` if every change only waits. Nothing else.",
+            SKEPTIC_MODEL, turns=20, lane_note=False, agent="skeptic", cap=round(min(0.3, max(self.free_budget(), 0.01)), 2))
+        self.merge_telemetry(job)
+        job["cost"] = round(job.get("cost", 0) + cost, 4)
+        self.state["spent"] = round(self.state["spent"] + cost, 4)
+        if subtype != "success" or ("1", "DROP") not in {(n, v) for n, v, _ in VERDICT.findall(text)}:
+            return False
+        for p in changed:
+            r = run(["git", "show", f"HEAD:{p}"], cwd=wt)
+            job["locked_tests"][p] = hashlib.sha256(r.stdout.encode()).hexdigest()
+            blobs[p] = git("rev-parse", f"HEAD:{p}", cwd=wt).stdout.strip()
+        self.event(job["id"], f"the test-writer's test changed only to wait for the app ({', '.join(changed)}); "
+                              "the skeptic found no check loosened")
+        return True
 
     def finish_build(self, job, res):
         wt = job["worktree"]
@@ -292,7 +327,7 @@ class Stages:
                                                "which an agent may not. Answer how to build it without them, or change "
                                                "them yourself in a chat session first, then answer to build it again.")
             return self.retry(job, "integrity guard: " + lines[0])
-        if changed := self.changed_tests(job):
+        if (changed := self.changed_tests(job)) and not self.timing_only(job, changed):
             git("update-ref", f"refs/harness/rejected/{job['id']}-{int(time.time())}", "HEAD", cwd=wt)
             git("reset", "-q", "--hard", job["base_sha"], cwd=wt)
             return self.retry(job, f"the coder changed the test-writer's test ({', '.join(changed)}); build to it "
@@ -645,7 +680,11 @@ class Stages:
                   + f"Then run ./scripts/check.sh, spawn the verifier subagent for {job['id']} again, "
                   f"keep harness/status/{job['id']}.json passing only if the verifier passes (set it blocked with "
                   f"blocked_reason failed otherwise), add a short entry at the top of harness/log/{job['id']}.md, "
-                  "and commit everything.")
+                  "and commit everything."
+                  + (f"\n\nThe test-writer's tests ({', '.join(job['locked_tests'])}) are locked: the loop rejects a fix "
+                     "that changes them, unless the change only waits for the app (a dialog to close, a request to "
+                     "settle) and removes or loosens no check. A skeptic reads such a change."
+                     if job.get("locked_tests") else ""))
         if job.get("fix_guard_base"):  # a conflict with main: the merger, as the session itself
             cost, subtype, text = self.claude(job, prompt, self.agent_model(job, "merger"), agent="merger", solo=True)
         else:
@@ -681,7 +720,8 @@ class Stages:
         merged = git("merge-base", "--is-ancestor", guard_base, "HEAD", cwd=wt, check=False).returncode == 0
         if job.get("fix_guard_base") and not merged and not cut:
             check.returncode, check.stdout = 1, "main was not merged into the branch"
-        if check.returncode == 0 and (changed := self.changed_tests(job)):  # a fix is the coder too: the test stays
+        if check.returncode == 0 and (changed := self.changed_tests(job)) and not self.timing_only(job, changed):
+            # a fix is the coder too: the test stays
             check.returncode, check.stdout = 1, f"the fix changed the test-writer's test ({', '.join(changed)})"
         if cut and self.starved(job, res):  # undo it and try again with a full budget: the round is given back
             git("reset", "-q", "--hard", job["fix_base"], cwd=wt)
