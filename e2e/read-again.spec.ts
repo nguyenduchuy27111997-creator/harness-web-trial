@@ -1,29 +1,19 @@
 import { expect, test, type Page } from "@playwright/test";
 import { expectAccessible } from "./a11y";
 import { signUpAs } from "./accounts";
+import { addAndOpenBook, saveStatus } from "./books";
 
 // F056: read a finished book again; the earlier read is kept under "Past reads".
 // Each test uses a fresh account and its own book (golden principle 7).
 const long = (d = new Date()) => new Intl.DateTimeFormat("en-US", { dateStyle: "long", timeZone: "UTC" }).format(d);
 
-async function pick(page: Page, combobox: string, option: string) {
-  await page.getByRole("combobox", { name: combobox }).click();
-  await page.getByRole("option", { name: option, exact: true }).click();
-}
-
 async function addBook(page: Page, title: string, status: string) {
-  await page.goto("/books/new");
-  await page.getByLabel("Author").fill("George Eliot");
-  await page.getByLabel("Title").fill(title);
-  await pick(page, "Status", status);
-  await page.getByRole("button", { name: "Save", exact: true }).click();
-  await page.getByRole("link", { name: title }).click();
+  await addAndOpenBook(page, title, status);
   await expect(page.getByRole("heading", { name: title })).toBeVisible();
 }
 
 async function setStatus(page: Page, name: string) {
-  await pick(page, "Status", name);
-  await page.getByRole("button", { name: "Save status" }).click();
+  await saveStatus(page, name);
   await expect(page.getByRole("status").first()).toHaveText("Saved");
 }
 

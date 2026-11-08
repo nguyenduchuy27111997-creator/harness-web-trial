@@ -1,0 +1,1 @@
+{"status": "passing", "notes": "getStats is built on listFinishedReads(supabase, year) and FinishedRead per design M6 (books + past reads merged and sorted); count is reads.length, average over current reads only (pastReadId null). Stub-client tests cover the merge and sort. Gate green, verifier PASS."}
