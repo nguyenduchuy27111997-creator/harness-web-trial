@@ -85,6 +85,13 @@ export function formatPagesRead(n: number): string {
   return `${n.toLocaleString("en-US")} ${n === 1 ? "page" : "pages"} read this year`;
 }
 
+// A four-digit year from 1000 to the current one, else null.
+export function parseYear(value: string, now = new Date()): number | null {
+  if (!/^\d{4}$/.test(value)) return null;
+  const year = Number(value);
+  return year >= 1000 && year <= now.getUTCFullYear() ? year : null;
+}
+
 export function formatAverage(value: number | null): string {
   return value === null ? "No ratings yet" : value.toFixed(1);
 }

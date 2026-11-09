@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { countByMonth, formatAverage, formatPagesRead, getFinishedByMonth, getStats, listFinishedReads, sumPages, summarizeStats } from "./stats";
+import { countByMonth, formatAverage, formatPagesRead, getFinishedByMonth, getStats, listFinishedReads, parseYear, sumPages, summarizeStats } from "./stats";
 
 describe("summarizeStats", () => {
   it("counts books and ignores unrated ones in the average", () => {
@@ -148,5 +148,17 @@ describe("formatPagesRead", () => {
     expect(formatPagesRead(1)).toBe("1 page read this year");
     expect(formatPagesRead(0)).toBe("0 pages read this year");
     expect(formatPagesRead(1200)).toBe("1,200 pages read this year");
+  });
+});
+
+describe("parseYear", () => {
+  const now = new Date("2026-11-09T12:00:00Z");
+  it("accepts four digits from 1000 to this year", () => {
+    expect(parseYear("2026", now)).toBe(2026);
+    expect(parseYear("2020", now)).toBe(2020);
+    expect(parseYear("1000", now)).toBe(1000);
+  });
+  it("rejects anything else", () => {
+    for (const v of ["abc", "2027", "999", "0999", "20260", "", " 2020", "2e3", "-2020"]) expect(parseYear(v, now)).toBeNull();
   });
 });

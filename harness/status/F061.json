@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Year in review: /stats/[year] (parseYear, YearReview, not-found with HTTP 404), 'Year in review' link on /stats, overview moved to app/stats/(overview)/. 7 /stats baselines regenerated (only the link shifts content). 404 tab title is 'Page not found \u00b7 Bookshelf'; list titles are serif (font-heading)."
+}

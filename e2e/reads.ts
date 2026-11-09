@@ -54,3 +54,12 @@ export async function finishBook(page: Page) {
   await expect(page.getByRole("button", { name: "Save progress" })).toBeHidden();
   await expect(page.getByRole("status").first()).toHaveText("Saved");
 }
+
+// Opens "Edit dates" on a Reading or Finished book and saves both dates (YYYY-MM-DD), so the finish date is never before the start date.
+export async function setReadDates(page: Page, startedOn: string, finishedOn: string) {
+  await page.getByRole("button", { name: "Edit dates" }).click();
+  await page.getByLabel("Started", { exact: true }).fill(startedOn);
+  await page.getByLabel("Finished", { exact: true }).fill(finishedOn);
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Edit dates" })).toBeVisible();
+}
