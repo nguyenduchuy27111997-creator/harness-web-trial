@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { countByMonth, formatAverage, formatPagesRead, getFinishedByMonth, getStats, listFinishedReads, parseYear, sumPages, summarizeStats } from "./stats";
+import { countByMonth, formatAverage, formatPagesRead, getFinishedByMonth, getStats, listFinishedReads, parseYear, sumPages, summarizeStats, summarizeYear } from "./stats";
 
 describe("summarizeStats", () => {
   it("counts books and ignores unrated ones in the average", () => {
@@ -160,5 +160,19 @@ describe("parseYear", () => {
   });
   it("rejects anything else", () => {
     for (const v of ["abc", "2027", "999", "0999", "20260", "", " 2020", "2e3", "-2020"]) expect(parseYear(v, now)).toBeNull();
+  });
+});
+
+describe("summarizeYear", () => {
+  const read = (rating: number | null, pastReadId: string | null = null) => ({ bookId: "b", title: "T", finishedOn: "2026-01-01", rating, totalPages: null, pastReadId });
+  it("averages every rated read and lists all tied for the top rating", () => {
+    const reads = [read(5), read(5, "p1"), read(3), read(null)];
+    const summary = summarizeYear(reads);
+    expect(summary.count).toBe(4);
+    expect(summary.averageRating).toBe(4.3);
+    expect(summary.highestRated).toEqual([reads[0], reads[1]]);
+  });
+  it("has no average and no highest rated without ratings", () => {
+    expect(summarizeYear([read(null)])).toEqual({ count: 1, averageRating: null, highestRated: [] });
   });
 });

@@ -65,6 +65,17 @@ export async function getStats(supabase: SupabaseClient<Database>, now = new Dat
   };
 }
 
+// The average covers every rated read, a re-read on its own; highestRated is every rated read tied for the top rating, in list order.
+export function summarizeYear(reads: FinishedRead[]): { count: number; averageRating: number | null; highestRated: FinishedRead[] } {
+  const rated = reads.filter((r) => r.rating !== null);
+  const top = Math.max(...rated.map((r) => r.rating ?? 0));
+  return {
+    count: reads.length,
+    averageRating: summarizeStats(rated).averageRating,
+    highestRated: rated.filter((r) => r.rating === top),
+  };
+}
+
 // 12 counts, index 0 = January, by the month of finishedOn (an ISO date).
 export function countByMonth(reads: { finishedOn: string }[]): number[] {
   const counts = Array<number>(12).fill(0);
