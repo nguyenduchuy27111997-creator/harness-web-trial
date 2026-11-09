@@ -1,5 +1,5 @@
 {
-  "version": "5.33.21",
+  "version": "5.33.22",
   "preset": "nextjs-supabase",
   "files": {
     ".claude/agents/advisor.md": "e7a83e9817e031dfa49a2671940111ea252614b123ef8c48dc15cd3aac0b2c52",
@@ -15,7 +15,7 @@
     ".claude/agents/security-reviewer.md": "ef10f4f0570c9d82ed817281254d156171ef62684fa558db493b0ff2b83fe1f1",
     ".claude/agents/skeptic.md": "ff49a02f0746e6c6206232ef0deab6076c81130a261b763e939276eec35a30ed",
     ".claude/agents/summarizer.md": "cf1a9b010f5f7b867d4edc295476b79d37821862f1017f5af331ae382ffbd3ec",
-    ".claude/agents/test-writer.md": "aeb13cd9d9a98ee855fbbcd9d3bd9d23f5fd648f46881db1287087ebbbf9243d",
+    ".claude/agents/test-writer.md": "2d4916029463898bccce8bd3fe1ccb3b2209016664e5a4a482a0f974b7a91e68",
     ".claude/agents/verifier.md": "75cf991105e19c5c886a60e54b50914562c9ae97c2e4f18101e3ac300d1f402b",
     ".claude/settings.json": "9247f25cf94dc2c3f10bdcbd953cd7f9ae415f67e4e41b472d7fdd4bbbda9fd8",
     ".claude/skills/adopt/SKILL.md": "f8eeb0fdad00f583847ed082736f95782141d1b59bb9b62874d968d2dbc6b872",
