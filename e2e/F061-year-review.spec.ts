@@ -45,7 +45,7 @@ test("the review counts the year's finished reads, newest first, a book read twi
   await page.goto(`/stats/${year}`);
   await expect(page.getByRole("heading", { name: `${year} in review` })).toBeVisible();
   await expect(page.getByText(`You finished 2 books in ${year}.`)).toBeVisible();
-  const rows = page.getByRole("listitem").filter({ has: page.getByRole("link", { name: twice }) });
+  const rows = page.getByRole("list", { name: "Finished reads" }).getByRole("listitem").filter({ has: page.getByRole("link", { name: twice }) });
   await expect(rows).toHaveCount(2);
   await expect(page.getByRole("link", { name: lastYear })).toHaveCount(0);
   // Newest finished first. The stars text ("2 stars") is the plainest reading of "its rating".
@@ -56,7 +56,7 @@ test("the review counts the year's finished reads, newest first, a book read twi
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F061-year-review.png", {
     stylePath: "e2e/hide-dev-overlay.css",
-    mask: [page.getByRole("list").filter({ has: rows.first() })],
+    mask: [page.getByRole("list").filter({ has: rows.first() }), page.getByRole("link", { name: tag })],
   });
 
   await rows.first().getByRole("link", { name: twice }).click();
