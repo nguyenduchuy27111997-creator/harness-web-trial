@@ -16,6 +16,6 @@ The project was installed with the harness-kit `nextjs-supabase` preset, so the 
 
 ## Consequences
 - Every worktree and loop lane shares one local database, so tests never reset it (golden principle 7).
-- Local runs use the installed Google Chrome; CI installs Chromium.
-- Visual baselines (`toHaveScreenshot`) render differently on macOS and Linux, so they are compared on the machine the agents run on and skipped in CI.
+- e2e runs in Playwright's Linux browser in Docker (`scripts/browser.sh`), locally and in CI, so the visual baselines (`toHaveScreenshot`) are the same pixels everywhere and compared everywhere. The browser reaches the local app and Supabase through Playwright's loopback tunnel.
+- CI runs the e2e suite in parallel shards on GitHub's runners; loop sessions run only their feature's specs.
 - Staging needs Supabase branching on the project and the tokens listed in `scripts/deploy-staging.sh`.

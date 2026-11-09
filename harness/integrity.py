@@ -40,7 +40,7 @@ RULE_MAX_LINES = 15  # real rule PRs added 4 to 6 lines
 # settings, agents and skills that steer sessions, and the gate. CI runs this file from the base branch,
 # so a branch cannot loosen the list for itself.
 PROTECTED = re.compile(r"^(harness/[^/]+\.py|harness/hooks/|harness/loop-[^/]+\.json|\.githooks/|\.github/"
-                       r"|\.claude/(settings[^/]*\.json|agents/|skills/)|scripts/(check|deploy|rollback)\.sh|\.npmrc)")
+                       r"|\.claude/(settings[^/]*\.json|agents/|skills/)|scripts/(check|deploy|rollback|e2e|browser)\.sh|\.npmrc)")
 DESIGN = re.compile(r"^docs/design/([A-Za-z0-9_-]+)\.md$")
 STATUS_DIR = "harness/status/"
 EDITABLE = {"status", "notes", "blocked_reason", "attempts"}

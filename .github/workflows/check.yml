@@ -17,6 +17,9 @@ jobs:
     timeout-minutes: ${{ fromJSON(vars.HARNESS_CI_TIMEOUT || '30') }}  # a hung step fails, never blocks the loop
     env:
       CI: "1"
+      # On GitHub's runners the e2e job below runs the suite in shards. A self-hosted runner shares one machine
+      # and one CI Supabase stack, so there this job runs it whole, as before.
+      HARNESS_E2E: ${{ vars.HARNESS_RUNS_ON && 'all' || 'skip' }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
@@ -99,4 +102,35 @@ jobs:
           path: |
             playwright-report/
             .lighthouseci/
+          retention-days: 7
+
+  e2e:
+    # The whole e2e suite, split over parallel GitHub runners (HARNESS_E2E_SHARDS, default 4): each runner brings
+    # its own Supabase stack and Playwright's Linux browser in Docker (scripts/browser.sh), the same one sessions
+    # use on the Mac, so the visual baselines are compared here too. Loop sessions run only their feature's specs
+    # (HARNESS_E2E=feature); this job is what runs everything before merge.
+    if: ${{ !vars.HARNESS_RUNS_ON }}
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ fromJSON(vars.HARNESS_CI_TIMEOUT || '30') }}
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(vars.HARNESS_E2E_SHARDS || '[1,2,3,4]') }}
+    env:
+      CI: "1"
+      HARNESS_E2E: shard
+      HARNESS_SHARD: ${{ matrix.shard }}/${{ strategy.job-total }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: scripts/e2e.sh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: failure()
+        with:
+          name: playwright-report-${{ matrix.shard }}
+          path: playwright-report/
           retention-days: 7

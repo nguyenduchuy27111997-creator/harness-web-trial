@@ -41,13 +41,7 @@ scripts/db-types.sh --check                     # lib/database.types.ts matches 
 # With no dev server running from here, start e2e from a clean dev cache: a stale .next/dev kept F015's
 # e2e in Fast Refresh reload loops, and agents may not rm -rf it themselves.
 [ -n "$(dev_servers_here)" ] || rm -rf .next/dev
-# One e2e suite at a time on this machine (lanes, the verifier): two at once time out under load.
-# A test that failed runs once more, alone on one worker, before it fails the gate: in M6 of the web trial
-# (load 25-45 on 12 CPUs) F057's and F058's fixes each lost two rounds to 30 s timeouts in unrelated specs,
-# different ones each run, that passed run on their own. A real failure fails again and is what gets reported.
-python3 scripts/one-at-a-time.py e2e bash -c 'npx playwright test || {
-  echo "e2e: rerunning only the failed tests, one worker"; npx playwright test --last-failed --workers=1; }'
-# (the suite includes the visual baselines, e2e/__screenshots__/)
+scripts/e2e.sh                                  # in Docker's Linux browser; HARNESS_E2E picks the specs
 
 python3 harness/validate_backlog.py
 python3 harness/quality.py || true             # the office's numbers, only in the loop ($HARNESS_QUALITY)

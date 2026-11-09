@@ -174,6 +174,10 @@ class Agents:
                "HARNESS_STAGE": job["stage"],
                "HARNESS_TESTS": str(preview.PREVIEW.tests_path(job["id"])),  # the kit's reporters write each test here
                "HARNESS_QUALITY": str(self.quality_path(job["id"], fresh=True))}  # and check.sh its numbers (quality.py)
+        # check.sh runs only this feature's e2e specs (Next.js preset, scripts/e2e.sh); CI runs the whole suite
+        # before merge. HARNESS_E2E=all in the loop's own environment keeps the whole suite in every session.
+        env.setdefault("HARNESS_E2E", "feature")
+        env["HARNESS_FEATURE"] = job["id"]
         if lens:  # it commits nothing (a lens, the dispatcher; the test-writer leaves its file to the coder), so the stop gate lets it end
             env["HARNESS_READONLY"] = "1"
         if lane_note:
