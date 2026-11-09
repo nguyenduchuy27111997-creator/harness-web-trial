@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { saveGoal } from "@/app/stats/actions";
 import { ChangeGoal, GoalForm } from "@/components/goal-form";
 import { MonthlyChart } from "@/components/monthly-chart";
@@ -20,6 +21,9 @@ export default async function StatsPage() {
       <p>Average rating: {formatAverage(stats.averageRating)}</p>
       <p>{formatPagesRead(stats.pagesRead)}</p>
       <MonthlyChart byMonth={byMonth} />
+      <Link href={`/stats/${new Date().getUTCFullYear()}`} className="self-start text-primary hover:underline">
+        Year in review
+      </Link>
       {goal === null ? (
         <section className="flex flex-col gap-3">
           <p>Set a reading goal for this year: how many books do you want to finish?</p>

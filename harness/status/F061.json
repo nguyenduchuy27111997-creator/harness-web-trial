@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Year in review: /stats/[year] (parseYear, YearReview, not-found with HTTP 404), 'Year in review' link on /stats, overview moved to app/stats/(overview)/. 7 /stats baselines regenerated (only the link shifts content). Minor: the tab title on the 404 page repeats the bad year (generateMetadata does not parse it)."
+}
