@@ -1,0 +1,1 @@
+{"status": "passing", "notes": "No product change: existing RLS on public.reads (select/insert/delete own, no update grant) already isolates history. Added the test-writer e2e spec F063-history-isolation."}
