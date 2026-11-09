@@ -12,7 +12,7 @@ export function YearReview({ year, reads }: { year: number; reads: FinishedRead[
         <ul className="flex flex-col gap-3">
           {reads.map((read) => (
             <li key={`${read.bookId}-${read.pastReadId ?? "current"}`} className="flex flex-col gap-1">
-              <Link href={`/books/${read.bookId}`} className="font-medium text-primary hover:underline">
+              <Link href={`/books/${read.bookId}`} className="font-heading font-medium text-primary hover:underline">
                 {read.title}
               </Link>
               <span className="text-sm text-muted-foreground">Finished on {formatFinishDate(read.finishedOn)}</span>
