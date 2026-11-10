@@ -21,7 +21,9 @@
       "priority": 2,
       "complexity": "S",
       "title": "Sign in and sign out from the header",
-      "depends_on": ["F001"],
+      "depends_on": [
+        "F001"
+      ],
       "acceptance": [
         "Sign up a new account, then click Sign out in the header: land on /sign-in",
         "On /sign-in enter that email with a wrong password, click Sign in: see 'Invalid email or password' and stay on /sign-in",
@@ -35,7 +37,9 @@
       "priority": 3,
       "complexity": "S",
       "title": "Signed-out visitors are sent to sign in",
-      "depends_on": ["F002"],
+      "depends_on": [
+        "F002"
+      ],
       "acceptance": [
         "While signed out, open /books: end up on /sign-in",
         "Sign in from there: land on /books",
@@ -48,7 +52,9 @@
       "priority": 4,
       "complexity": "M",
       "title": "Empty shelf on /books",
-      "depends_on": ["F001"],
+      "depends_on": [
+        "F001"
+      ],
       "acceptance": [
         "Sign up a new account and open /books",
         "See the heading 'My books', one sentence saying the shelf is empty, and an 'Add book' button",
@@ -62,7 +68,9 @@
       "priority": 5,
       "complexity": "M",
       "title": "Add a book",
-      "depends_on": ["F004"],
+      "depends_on": [
+        "F004"
+      ],
       "acceptance": [
         "Signed in, open /books/new: see Title, Author and Status fields; Status shows 'Want to read' by default",
         "Enter title 'Middlemarch' and author 'George Eliot', leave Status, click Save",
@@ -76,7 +84,9 @@
       "priority": 6,
       "complexity": "S",
       "title": "Add-book validation errors next to the field",
-      "depends_on": ["F005"],
+      "depends_on": [
+        "F005"
+      ],
       "acceptance": [
         "On /books/new click Save with Title and Author empty: 'Title is required' shows next to Title and 'Author is required' next to Author, and no book is added",
         "Enter a 201-character title: an error next to Title says it must be at most 200 characters",
@@ -90,7 +100,9 @@
       "priority": 7,
       "complexity": "S",
       "title": "Book list newest first with status badges",
-      "depends_on": ["F005"],
+      "depends_on": [
+        "F005"
+      ],
       "acceptance": [
         "Sign up a new account, add 'First Book' (Want to read), then 'Second Book' (Reading), then 'Third Book' (Finished)",
         "On /books the order is Third Book, Second Book, First Book",
@@ -105,7 +117,10 @@
       "priority": 8,
       "complexity": "S",
       "title": "I only see my own books",
-      "depends_on": ["F007", "F003"],
+      "depends_on": [
+        "F007",
+        "F003"
+      ],
       "acceptance": [
         "Sign up account A and add a book with a unique title",
         "Sign out, sign up account B, open /books: B sees the empty state and not A's book",
@@ -118,7 +133,9 @@
       "priority": 9,
       "complexity": "S",
       "title": "Book page at /books/<id>",
-      "depends_on": ["F008"],
+      "depends_on": [
+        "F008"
+      ],
       "acceptance": [
         "Signed in with one book, click its title on /books: land on /books/<id>",
         "See the title as the page heading, the author, the status badge and a 'Back to my books' link",
@@ -132,7 +149,9 @@
       "priority": 10,
       "complexity": "M",
       "title": "Change a book's status; finishing records today's date",
-      "depends_on": ["F009"],
+      "depends_on": [
+        "F009"
+      ],
       "acceptance": [
         "On a 'Want to read' book's page, change Status to 'Reading' and save: the badge shows Reading, also on /books after reload",
         "Change Status to 'Finished' and save: the page shows 'Finished on <today's date>'",
@@ -145,7 +164,9 @@
       "priority": 11,
       "complexity": "M",
       "title": "Rate a finished book 1 to 5 stars",
-      "depends_on": ["F010"],
+      "depends_on": [
+        "F010"
+      ],
       "acceptance": [
         "On a 'Reading' book's page there is no rating control",
         "Mark it Finished: a 5-star rating control appears",
@@ -159,7 +180,9 @@
       "priority": 12,
       "complexity": "S",
       "title": "Write a short review of a finished book",
-      "depends_on": ["F010"],
+      "depends_on": [
+        "F010"
+      ],
       "acceptance": [
         "On a 'Finished' book's page, type a review 'Loved the ending.' and save: after reload the review text is shown",
         "Enter 2,001 characters and save: an error next to the review field says it must be at most 2,000 characters and the old review is kept",
@@ -172,7 +195,9 @@
       "priority": 13,
       "complexity": "M",
       "title": "Filter the list by status with tabs kept in the URL",
-      "depends_on": ["F008"],
+      "depends_on": [
+        "F008"
+      ],
       "acceptance": [
         "Add one book of each status, open /books: tabs All, Want to read, Reading, Finished; All is selected and all three books show",
         "Click 'Reading': the URL becomes /books?status=reading and only the Reading book shows",
@@ -187,7 +212,9 @@
       "priority": 14,
       "complexity": "S",
       "title": "Delete a book after confirming",
-      "depends_on": ["F009"],
+      "depends_on": [
+        "F009"
+      ],
       "acceptance": [
         "On a book's page click Delete: a dialog asks to confirm",
         "Click Cancel: the dialog closes and the book is still there",
@@ -200,7 +227,9 @@
       "priority": 15,
       "complexity": "M",
       "title": "Stats page: finished this year and average rating",
-      "depends_on": ["F011"],
+      "depends_on": [
+        "F011"
+      ],
       "acceptance": [
         "Sign up a new account and open /stats: see 'Books finished this year: 0' and 'Average rating: No ratings yet'",
         "Finish two books today and rate them 4 and 5 stars, finish a third without a rating",
@@ -215,7 +244,9 @@
       "priority": 16,
       "complexity": "S",
       "title": "Book not found page for missing or other users' books",
-      "depends_on": ["F009"],
+      "depends_on": [
+        "F009"
+      ],
       "acceptance": [
         "As account A add a book and note its /books/<id> URL",
         "Sign out, sign in as account B and open that URL: see a 'Book not found' page with a link back to /books, served with HTTP status 404",
@@ -229,7 +260,9 @@
       "priority": 17,
       "complexity": "S",
       "title": "Fix: signed-in user sees the sign-in or sign-up form instead of their books",
-      "depends_on": ["F003"],
+      "depends_on": [
+        "F003"
+      ],
       "acceptance": [
         "Sign up a new account: land on /books with Sign out in the header",
         "While signed in, open /sign-in: end up on /books, not the sign-in form",
@@ -243,7 +276,9 @@
       "priority": 18,
       "complexity": "M",
       "title": "Edit a book's title and author from its page",
-      "depends_on": ["F009"],
+      "depends_on": [
+        "F009"
+      ],
       "acceptance": [
         "Signed in, add 'Midlemarch' by 'George Eliot' and open its page /books/<id>",
         "Click Edit: Title and Author fields appear filled with the current values, with Save and Cancel buttons",
@@ -259,7 +294,9 @@
       "priority": 19,
       "complexity": "S",
       "title": "Edit-book validation errors next to the field",
-      "depends_on": ["F018"],
+      "depends_on": [
+        "F018"
+      ],
       "acceptance": [
         "On a book's page click Edit, clear Title and Author, click Save: 'Title is required' shows next to Title and 'Author is required' next to Author",
         "Enter a 201-character title: an error next to Title says it must be at most 200 characters",
@@ -274,7 +311,9 @@
       "priority": 20,
       "complexity": "M",
       "title": "Search my shelf by title or author, kept in the URL",
-      "depends_on": ["F013"],
+      "depends_on": [
+        "F013"
+      ],
       "acceptance": [
         "Sign up a new account and add 'Middlemarch' by 'George Eliot' (Finished), 'Silas Marner' by 'George Eliot' (Reading) and 'Emma' by 'Jane Austen' (Reading)",
         "On /books type 'ELIO' in the search field and submit: the URL becomes /books?q=ELIO and only Middlemarch and Silas Marner show",
@@ -290,7 +329,9 @@
       "priority": 21,
       "complexity": "S",
       "title": "Search with no matches offers to clear the search",
-      "depends_on": ["F020"],
+      "depends_on": [
+        "F020"
+      ],
       "acceptance": [
         "Signed in with at least one book, open /books?q=zzzz: one sentence says no books match 'zzzz' and a 'Clear search' link shows",
         "Click 'Clear search': the URL is /books and all books show",
@@ -303,7 +344,10 @@
       "priority": 22,
       "complexity": "M",
       "title": "Sort the list by newest, title or rating, kept in the URL",
-      "depends_on": ["F011", "F020"],
+      "depends_on": [
+        "F011",
+        "F020"
+      ],
       "acceptance": [
         "Sign up a new account and add, in this order, 'Bravo' (Finished, rated 3), 'Alpha' (Finished, rated 5), 'Charlie' (Finished, no rating), 'Delta' (Reading)",
         "Open /books: the sort control shows 'Newest added' and the order is Delta, Charlie, Alpha, Bravo",
@@ -319,7 +363,9 @@
       "priority": 23,
       "complexity": "M",
       "title": "Set a reading goal for this year on Stats",
-      "depends_on": ["F015"],
+      "depends_on": [
+        "F015"
+      ],
       "acceptance": [
         "Sign up a new account and open /stats: a sentence invites me to set a reading goal for this year, with a number field and a 'Set goal' button",
         "Finish one book today, then on /stats enter 20 and click 'Set goal': see '1 of 20 books finished this year' and a progress bar at 5%",
@@ -334,7 +380,9 @@
       "priority": 24,
       "complexity": "S",
       "title": "Change this year's reading goal",
-      "depends_on": ["F023"],
+      "depends_on": [
+        "F023"
+      ],
       "acceptance": [
         "With a goal of 20 and one book finished this year, on /stats click 'Change goal': the number field shows 20",
         "Enter 10 and save: see '1 of 10 books finished this year' and the progress bar at 10%, also after reload",
@@ -348,7 +396,11 @@
       "priority": 25,
       "complexity": "M",
       "title": "Fix: after moving between pages, hidden earlier pages leave duplicate main regions, field ids and doubled field names",
-      "depends_on": ["F002", "F010", "F018"],
+      "depends_on": [
+        "F002",
+        "F010",
+        "F018"
+      ],
       "acceptance": [
         "In a fresh browser open /sign-up, sign up a new account and land on /books: the document has exactly one <main> element",
         "Click Sign out and land on /sign-in: the document has exactly one <main>, one element with id=\"email\" and one with id=\"password\", and the accessibility tree names the fields 'Email' and 'Password' (not 'Email Email')",
@@ -364,7 +416,10 @@
       "priority": 26,
       "complexity": "S",
       "title": "Fix: with the edit form open, a book page has two buttons both named 'Save', so a screen reader user cannot tell them apart",
-      "depends_on": ["F010", "F018"],
+      "depends_on": [
+        "F010",
+        "F018"
+      ],
       "acceptance": [
         "Signed in, add 'Midlemarch' by 'George Eliot' and open its page /books/<id>",
         "Click Edit: the Title and Author fields appear, and no two buttons on the page have the same accessible name",
@@ -380,7 +435,9 @@
       "priority": 27,
       "complexity": "S",
       "title": "Fix: once 'Change goal' is open on Stats there is no way to close it without saving or reloading",
-      "depends_on": ["F024"],
+      "depends_on": [
+        "F024"
+      ],
       "acceptance": [
         "Signed in with a reading goal of 20, open /stats: see '0 of 20 books finished this year' and a 'Change goal' button",
         "Click 'Change goal': the Reading goal field shows 20, and next to 'Save goal' there is a 'Cancel' button",
@@ -395,7 +452,9 @@
       "priority": 28,
       "complexity": "M",
       "title": "Shelves page: make a named shelf",
-      "depends_on": ["F008"],
+      "depends_on": [
+        "F008"
+      ],
       "acceptance": [
         "Sign up a new account: the header has a 'Shelves' link; click it and land on /shelves, where one sentence says I have no shelves yet, with a Name field and a 'Create shelf' button",
         "Enter 'Travel' and click 'Create shelf': 'Travel' shows in the list of shelves, also after reload",
@@ -410,7 +469,9 @@
       "priority": 29,
       "complexity": "S",
       "title": "Shelf name validation: required, at most 40 characters, unique",
-      "depends_on": ["F028"],
+      "depends_on": [
+        "F028"
+      ],
       "acceptance": [
         "On /shelves click 'Create shelf' with an empty name: 'Name is required' shows next to the field and no shelf is created",
         "Enter a 41-character name: an error next to the field says it must be at most 40 characters, and no shelf is created",
@@ -424,7 +485,9 @@
       "priority": 30,
       "complexity": "S",
       "title": "Rename a shelf on /shelves",
-      "depends_on": ["F029"],
+      "depends_on": [
+        "F029"
+      ],
       "acceptance": [
         "With shelves 'Travel' and 'Book club', click 'Rename' next to 'Travel': a Name field shows prefilled with 'Travel', with Save and Cancel buttons",
         "Change it to 'Trips' and save: the list shows 'Trips' and 'Book club', also after reload",
@@ -439,7 +502,10 @@
       "priority": 31,
       "complexity": "S",
       "title": "Put a book on my shelves from its page, which lists its shelves",
-      "depends_on": ["F028", "F009"],
+      "depends_on": [
+        "F028",
+        "F009"
+      ],
       "acceptance": [
         "With shelves 'Travel' and 'Book club' and a book 'Middlemarch', open /books/<id>: a Shelves section says the book is on no shelves, with a shelf picker and an 'Add to shelf' button",
         "Choose 'Travel' and click 'Add to shelf': the section lists 'Travel', also after reload",
@@ -453,7 +519,9 @@
       "priority": 32,
       "complexity": "S",
       "title": "Take a book off a shelf",
-      "depends_on": ["F031"],
+      "depends_on": [
+        "F031"
+      ],
       "acceptance": [
         "With 'Middlemarch' on 'Travel' and 'Book club', on its page click the remove button next to 'Travel' (named 'Remove from Travel'): only 'Book club' is listed, also after reload",
         "The book is still on /books, and 'Travel' is still listed on /shelves and offered again in the picker"
@@ -465,7 +533,9 @@
       "priority": 33,
       "complexity": "S",
       "title": "Delete a shelf after confirming, keeping its books",
-      "depends_on": ["F031"],
+      "depends_on": [
+        "F031"
+      ],
       "acceptance": [
         "With 'Middlemarch' on 'Travel', on /shelves click 'Delete' next to 'Travel': a confirm dialog names the shelf and says its books are kept",
         "Click Cancel: 'Travel' is still listed",
@@ -479,7 +549,12 @@
       "priority": 34,
       "complexity": "M",
       "title": "Filter the list by shelf, kept in the URL with tab, search and sort",
-      "depends_on": ["F031", "F013", "F020", "F022"],
+      "depends_on": [
+        "F031",
+        "F013",
+        "F020",
+        "F022"
+      ],
       "acceptance": [
         "Sign up a new account, add 'Alpha' (Reading), 'Bravo' (Finished), 'Charlie' (Reading), make a 'Travel' shelf and put Alpha and Bravo on it",
         "On /books choose 'Travel' in the shelf filter: the URL has shelf=<the shelf's id> and only Alpha and Bravo show",
@@ -495,7 +570,9 @@
       "priority": 35,
       "complexity": "M",
       "title": "Record reading progress on a book I am reading",
-      "depends_on": ["F010"],
+      "depends_on": [
+        "F010"
+      ],
       "acceptance": [
         "Add a book with status Reading and open its page: a Progress section shows 'Total pages' and 'Current page' fields and a 'Save progress' button",
         "Enter 250 and 100 and save: the page shows 'Page 100 of 250 (40%)', also after reload",
@@ -509,7 +586,9 @@
       "priority": 36,
       "complexity": "S",
       "title": "Progress validation errors next to the field",
-      "depends_on": ["F035"],
+      "depends_on": [
+        "F035"
+      ],
       "acceptance": [
         "On a Reading book's page, save progress with Total pages empty, 0, 10001 and 2.5: an error next to Total pages says it must be a whole number from 1 to 10,000, and nothing is saved",
         "Enter total 250 and current page 251, then -1: an error next to Current page says it must be a whole number from 0 to 250, and nothing is saved",
@@ -523,7 +602,10 @@
       "priority": 37,
       "complexity": "S",
       "title": "The list shows reading progress with a small progress bar",
-      "depends_on": ["F035", "F007"],
+      "depends_on": [
+        "F035",
+        "F007"
+      ],
       "acceptance": [
         "With a Reading book at page 100 of 250, open /books: its row shows '40%' and a progress bar filled to 40%",
         "A Reading book without progress, and books that are Want to read, show no percentage or bar",
@@ -537,7 +619,9 @@
       "priority": 38,
       "complexity": "S",
       "title": "Finishing a book sets its page to the total",
-      "depends_on": ["F035"],
+      "depends_on": [
+        "F035"
+      ],
       "acceptance": [
         "With a Reading book at page 100 of 250, change its status to Finished: the page shows Finished and no Progress section",
         "Change the status back to Reading: the Progress section shows 'Page 250 of 250 (100%)', also after reload",
@@ -550,7 +634,10 @@
       "priority": 39,
       "complexity": "S",
       "title": "Status tabs show how many books each has",
-      "depends_on": ["F013", "F020"],
+      "depends_on": [
+        "F013",
+        "F020"
+      ],
       "acceptance": [
         "With 2 Want to read, 1 Reading and 3 Finished books, /books shows the tabs 'All (6)', 'Want to read (2)', 'Reading (1)' and 'Finished (3)'",
         "Change a book from Reading to Finished: the tabs then read 'Reading (0)' and 'Finished (4)', also after reload",
@@ -563,7 +650,9 @@
       "priority": 40,
       "complexity": "M",
       "title": "Write notes on a book from its page, newest first with their date",
-      "depends_on": ["F009"],
+      "depends_on": [
+        "F009"
+      ],
       "acceptance": [
         "Signed in, add 'Middlemarch' and open its page /books/<id>: a Notes section says the book has no notes yet, with a Note text field and an 'Add note' button",
         "Type 'Dorothea reminds me of my aunt' and click 'Add note': the note shows in the Notes section with today's date, also after reload, and the field is empty again",
@@ -578,7 +667,9 @@
       "priority": 41,
       "complexity": "S",
       "title": "Note validation: required, at most 2,000 characters",
-      "depends_on": ["F040"],
+      "depends_on": [
+        "F040"
+      ],
       "acceptance": [
         "On a book's page click 'Add note' with the field empty, then with only spaces: 'Note is required' shows next to the field and no note is added",
         "Enter 2,001 characters: an error next to the field says the note must be at most 2,000 characters, the text stays in the field, and no note is added",
@@ -591,7 +682,9 @@
       "priority": 42,
       "complexity": "S",
       "title": "Edit a note on a book's page",
-      "depends_on": ["F041"],
+      "depends_on": [
+        "F041"
+      ],
       "acceptance": [
         "With a note 'Chapter 20 is the turing point', click its 'Edit' button: a field shows prefilled with the note, with Save and Cancel buttons",
         "Change it to 'Chapter 20 is the turning point' and save: the note shows the new text and keeps its original date, also after reload",
@@ -605,7 +698,9 @@
       "priority": 43,
       "complexity": "S",
       "title": "Delete a note after confirming",
-      "depends_on": ["F040"],
+      "depends_on": [
+        "F040"
+      ],
       "acceptance": [
         "With two notes on a book, click 'Delete' next to one: a confirm dialog asks whether to delete the note",
         "Click Cancel: both notes are still shown",
@@ -618,7 +713,9 @@
       "priority": 44,
       "complexity": "M",
       "title": "Save quotes from a book on its page, with an optional page number",
-      "depends_on": ["F009"],
+      "depends_on": [
+        "F009"
+      ],
       "acceptance": [
         "Signed in, add 'Middlemarch' and open its page: a Quotes section says the book has no quotes yet, with a Quote text field, an optional Page field and a 'Save quote' button",
         "Enter 'It is a narrow mind which cannot look at a subject from various points of view.' with page 42 and click 'Save quote': the quote shows with 'Page 42', also after reload, and the fields are empty again",
@@ -633,7 +730,10 @@
       "priority": 45,
       "complexity": "S",
       "title": "Quote validation: text required up to 1,000 characters, page within the book",
-      "depends_on": ["F044", "F035"],
+      "depends_on": [
+        "F044",
+        "F035"
+      ],
       "acceptance": [
         "On a book's page click 'Save quote' with the text empty or only spaces: 'Quote is required' shows next to the Quote field and nothing is saved",
         "Enter 1,001 characters: an error next to the Quote field says it must be at most 1,000 characters, and nothing is saved",
@@ -647,8 +747,16 @@
       "priority": 46,
       "complexity": "S",
       "title": "Edit a quote on a book's page",
-      "depends_on": ["F045"],
-      "touches": ["app/books/[id]/page.tsx", "app/books/[id]/actions.ts", "lib/quotes*", "components/*quote*", "e2e/*quote*"],
+      "depends_on": [
+        "F045"
+      ],
+      "touches": [
+        "app/books/[id]/page.tsx",
+        "app/books/[id]/actions.ts",
+        "lib/quotes*",
+        "components/*quote*",
+        "e2e/*quote*"
+      ],
       "acceptance": [
         "With a quote on page 42, click its 'Edit' button: the Quote and Page fields show prefilled, with Save and Cancel buttons",
         "Change the text and the page to 43 and save: the quote shows the new text and 'Page 43', also after reload",
@@ -663,7 +771,9 @@
       "priority": 47,
       "complexity": "S",
       "title": "Delete a quote after confirming",
-      "depends_on": ["F044"],
+      "depends_on": [
+        "F044"
+      ],
       "acceptance": [
         "With two quotes on a book, click 'Delete' next to one: a confirm dialog asks whether to delete the quote",
         "Click Cancel: both quotes are still shown",
@@ -676,8 +786,16 @@
       "priority": 48,
       "complexity": "M",
       "title": "Quotes page lists all my quotes newest first, linking to their books",
-      "depends_on": ["F044"],
-      "touches": ["app/quotes/**", "lib/quotes*", "components/site-header*", "components/*quote*", "e2e/*quote*"],
+      "depends_on": [
+        "F044"
+      ],
+      "touches": [
+        "app/quotes/**",
+        "lib/quotes*",
+        "components/site-header*",
+        "components/*quote*",
+        "e2e/*quote*"
+      ],
       "acceptance": [
         "Sign up a new account: the header has a 'Quotes' link; click it and land on /quotes, where one sentence says I have no quotes yet",
         "Add 'Middlemarch' and 'Persuasion', save a quote on page 42 of Middlemarch, then a quote with no page from Persuasion",
@@ -692,8 +810,15 @@
       "priority": 49,
       "complexity": "S",
       "title": "Search my quotes by text or book title, kept in the URL",
-      "depends_on": ["F048"],
-      "touches": ["app/quotes/**", "lib/quotes*", "components/*quote*", "e2e/*quote*"],
+      "depends_on": [
+        "F048"
+      ],
+      "touches": [
+        "app/quotes/**",
+        "lib/quotes*",
+        "components/*quote*",
+        "e2e/*quote*"
+      ],
       "acceptance": [
         "With a quote 'a narrow mind' from 'Middlemarch' and a quote 'half agony, half hope' from 'Persuasion', on /quotes search 'NARROW': the URL has q=NARROW and only the Middlemarch quote shows",
         "Search 'persua': only the Persuasion quote shows, matched by its book title; reload keeps the search box text and the result",
@@ -707,8 +832,17 @@
       "priority": 50,
       "complexity": "S",
       "title": "Deleting a book deletes its notes and quotes",
-      "depends_on": ["F014", "F040", "F048", "F049"],
-      "touches": ["app/books/[id]/actions.ts", "e2e/delete-book*", "e2e/*cascade*"],
+      "depends_on": [
+        "F014",
+        "F040",
+        "F048",
+        "F049"
+      ],
+      "touches": [
+        "app/books/[id]/actions.ts",
+        "e2e/delete-book*",
+        "e2e/*cascade*"
+      ],
       "acceptance": [
         "Add 'Middlemarch' and 'Persuasion', write a note on Middlemarch and save a quote on page 42 of each",
         "Delete Middlemarch from its page after confirming: /quotes shows only the Persuasion quote, also after reload",
@@ -722,8 +856,17 @@
       "priority": 51,
       "complexity": "S",
       "title": "No one else can see or change my notes and quotes",
-      "depends_on": ["F042", "F046", "F049", "F016"],
-      "touches": ["e2e/*isolation*", "supabase/migrations/*notes*", "supabase/migrations/*quotes*"],
+      "depends_on": [
+        "F042",
+        "F046",
+        "F049",
+        "F016"
+      ],
+      "touches": [
+        "e2e/*isolation*",
+        "supabase/migrations/*notes*",
+        "supabase/migrations/*quotes*"
+      ],
       "acceptance": [
         "Account A adds 'Middlemarch', writes a note and saves a quote with the word 'narrow' in it",
         "Sign out and sign up account B: /quotes says B has no quotes, and searching /quotes?q=narrow shows no quotes",
@@ -737,8 +880,16 @@
       "priority": 52,
       "complexity": "M",
       "title": "Moving a book to Reading records today's start date",
-      "depends_on": ["F010"],
-      "touches": ["supabase/migrations/*start*", "app/books/[id]/**", "components/book-status-form*", "lib/books*", "e2e/*reading-dates*"],
+      "depends_on": [
+        "F010"
+      ],
+      "touches": [
+        "supabase/migrations/*start*",
+        "app/books/[id]/**",
+        "components/book-status-form*",
+        "lib/books*",
+        "e2e/*reading-dates*"
+      ],
       "acceptance": [
         "Signed in, add 'Middlemarch' (Want to read) and open its page: no start date is shown",
         "Change its status to Reading: the page shows 'Started' with today's date, also after reload",
@@ -752,8 +903,15 @@
       "priority": 53,
       "complexity": "S",
       "title": "The book page shows when I started and finished it and how many days I read it",
-      "depends_on": ["F052"],
-      "touches": ["app/books/[id]/page.tsx", "components/*reading-dates*", "lib/books*", "e2e/*reading-dates*"],
+      "depends_on": [
+        "F052"
+      ],
+      "touches": [
+        "app/books/[id]/page.tsx",
+        "components/*reading-dates*",
+        "lib/books*",
+        "e2e/*reading-dates*"
+      ],
       "acceptance": [
         "Add 'Persuasion', move it to Reading, then to Finished: the page shows 'Started' and 'Finished' with today's date and 'Read in 1 day'",
         "A finished book with no start date shows only 'Finished' with its date and no 'Read in' text",
@@ -767,8 +925,16 @@
       "priority": 54,
       "complexity": "M",
       "title": "Edit a book's start and finish dates on its page",
-      "depends_on": ["F053"],
-      "touches": ["app/books/[id]/**", "components/*reading-dates*", "components/*dates-form*", "lib/books*", "e2e/*edit-dates*"],
+      "depends_on": [
+        "F053"
+      ],
+      "touches": [
+        "app/books/[id]/**",
+        "components/*reading-dates*",
+        "components/*dates-form*",
+        "lib/books*",
+        "e2e/*edit-dates*"
+      ],
       "acceptance": [
         "On a finished book's page click 'Edit dates': a Started field and a Finished field show with the current dates, with Save and Cancel",
         "Set Started to 2026-10-01 and Finished to 2026-10-12 and click Save: the page shows those dates and 'Read in 12 days', also after reload",
@@ -782,8 +948,16 @@
       "priority": 55,
       "complexity": "S",
       "title": "Date validation: no future dates, finish not before start",
-      "depends_on": ["F054"],
-      "touches": ["app/books/[id]/actions.ts", "components/*dates-form*", "lib/books*", "lib/forms*", "e2e/*dates-validation*"],
+      "depends_on": [
+        "F054"
+      ],
+      "touches": [
+        "app/books/[id]/actions.ts",
+        "components/*dates-form*",
+        "lib/books*",
+        "lib/forms*",
+        "e2e/*dates-validation*"
+      ],
       "acceptance": [
         "On a finished book, set Started to a date after Finished and click Save: an error next to Finished says the finish date cannot be before the start date, and nothing is saved",
         "Set Finished to tomorrow and click Save: an error next to Finished says the date cannot be in the future",
@@ -797,8 +971,19 @@
       "priority": 56,
       "complexity": "M",
       "title": "Read a finished book again, keeping the earlier read",
-      "depends_on": ["F053", "F011"],
-      "touches": ["supabase/migrations/*reads*", "app/books/[id]/**", "components/*read-again*", "components/*past-reads*", "lib/reads*", "lib/books*", "e2e/*read-again*"],
+      "depends_on": [
+        "F053",
+        "F011"
+      ],
+      "touches": [
+        "supabase/migrations/*reads*",
+        "app/books/[id]/**",
+        "components/*read-again*",
+        "components/*past-reads*",
+        "lib/reads*",
+        "lib/books*",
+        "e2e/*read-again*"
+      ],
       "acceptance": [
         "A finished book rated 4 stars shows a 'Read again' button; a book that is Reading or Want to read does not",
         "Click 'Read again': the book is Reading with today's start date, no finish date and no rating, also after reload",
@@ -813,8 +998,15 @@
       "priority": 57,
       "complexity": "S",
       "title": "Delete a past read after confirming",
-      "depends_on": ["F056"],
-      "touches": ["app/books/[id]/**", "components/*past-reads*", "lib/reads*", "e2e/*past-reads*"],
+      "depends_on": [
+        "F056"
+      ],
+      "touches": [
+        "app/books/[id]/**",
+        "components/*past-reads*",
+        "lib/reads*",
+        "e2e/*past-reads*"
+      ],
       "acceptance": [
         "With two past reads, click 'Delete' next to one: a confirm dialog asks whether to delete the read",
         "Click Cancel: both past reads are still listed",
@@ -828,8 +1020,18 @@
       "priority": 58,
       "complexity": "S",
       "title": "Stats count every read finished this year, past reads included",
-      "depends_on": ["F057", "F015", "F023"],
-      "touches": ["app/stats/**", "lib/goals*", "lib/stats*", "lib/reads*", "e2e/stats*"],
+      "depends_on": [
+        "F057",
+        "F015",
+        "F023"
+      ],
+      "touches": [
+        "app/stats/**",
+        "lib/goals*",
+        "lib/stats*",
+        "lib/reads*",
+        "e2e/stats*"
+      ],
       "acceptance": [
         "Finish 'Middlemarch' today and read it again, then finish it again: /stats says 2 books finished this year",
         "With a goal of 20, Stats shows '2 of 20 books finished this year'",
@@ -843,8 +1045,16 @@
       "priority": 59,
       "complexity": "M",
       "title": "Stats show how many books I finished in each month of this year",
-      "depends_on": ["F058", "F054"],
-      "touches": ["app/stats/**", "components/*monthly*", "lib/stats*", "e2e/*monthly*"],
+      "depends_on": [
+        "F058",
+        "F054"
+      ],
+      "touches": [
+        "app/stats/**",
+        "components/*monthly*",
+        "lib/stats*",
+        "e2e/*monthly*"
+      ],
       "acceptance": [
         "/stats shows a 'Finished by month' chart with the 12 months of this year, each with its count, readable as text by a screen reader",
         "Finish two books and set their finish dates to the 3rd and the 20th of March this year: March shows 2 and the other months 0",
@@ -858,8 +1068,15 @@
       "priority": 60,
       "complexity": "S",
       "title": "Stats show how many pages I read this year",
-      "depends_on": ["F058", "F035"],
-      "touches": ["app/stats/**", "lib/stats*", "e2e/*pages-read*"],
+      "depends_on": [
+        "F058",
+        "F035"
+      ],
+      "touches": [
+        "app/stats/**",
+        "lib/stats*",
+        "e2e/*pages-read*"
+      ],
       "acceptance": [
         "Finish a 250-page book and a 120-page book this year: /stats shows '370 pages read this year'",
         "A book finished this year with no total pages is not counted, and Stats still shows the pages of the others",
@@ -873,8 +1090,17 @@
       "priority": 61,
       "complexity": "M",
       "title": "Year in review at /stats/<year>: the books I finished that year",
-      "depends_on": ["F058", "F054"],
-      "touches": ["app/stats/[year]/**", "app/stats/page.tsx", "lib/stats*", "components/*year-review*", "e2e/*year-review*"],
+      "depends_on": [
+        "F058",
+        "F054"
+      ],
+      "touches": [
+        "app/stats/[year]/**",
+        "app/stats/page.tsx",
+        "lib/stats*",
+        "components/*year-review*",
+        "e2e/*year-review*"
+      ],
       "acceptance": [
         "/stats has a 'Year in review' link to /stats/<this year>",
         "/stats/<this year> says how many books I finished that year and lists them newest finished first, each with its title linking to the book, its finish date and its rating",
@@ -889,8 +1115,15 @@
       "priority": 62,
       "complexity": "S",
       "title": "Year in review shows my average and highest rated books, with links to other years",
-      "depends_on": ["F061"],
-      "touches": ["app/stats/[year]/**", "lib/stats*", "components/*year-review*", "e2e/*year-review*"],
+      "depends_on": [
+        "F061"
+      ],
+      "touches": [
+        "app/stats/[year]/**",
+        "lib/stats*",
+        "components/*year-review*",
+        "e2e/*year-review*"
+      ],
       "acceptance": [
         "With books rated 5, 5 and 3 finished this year, /stats/<this year> shows an average rating of 4.3 and a 'Highest rated' list with the two 5-star books",
         "A year with no rated books shows no average and no Highest rated list",
@@ -904,13 +1137,297 @@
       "priority": 63,
       "complexity": "S",
       "title": "No one else can see my reading history",
-      "depends_on": ["F057", "F062", "F016"],
-      "touches": ["e2e/*history-isolation*", "supabase/migrations/*reads*"],
+      "depends_on": [
+        "F057",
+        "F062",
+        "F016"
+      ],
+      "touches": [
+        "e2e/*history-isolation*",
+        "supabase/migrations/*reads*"
+      ],
       "acceptance": [
         "Account A finishes 'Middlemarch', reads it again and finishes it again",
         "Sign out and sign up account B: /stats says B finished 0 books this year and /stats/<this year> lists none of A's books",
         "As B, open A's book URL /books/<id>: the book not found page shows, with none of A's dates or past reads",
         "With B's session against the local Supabase, reading, updating or deleting A's past read by id returns or changes no rows (an integration test the verifier runs); signed in again as A, both reads are unchanged"
+      ]
+    },
+    {
+      "id": "F064",
+      "milestone": "M7",
+      "priority": 64,
+      "complexity": "M",
+      "title": "Tag a book from its page",
+      "depends_on": [
+        "F010"
+      ],
+      "touches": [
+        "supabase/migrations/*tags*",
+        "app/books/[id]/**",
+        "components/*tag*",
+        "lib/tags*",
+        "app/books/page.tsx",
+        "e2e/*tags-book*"
+      ],
+      "acceptance": [
+        "On a book's page, type 'classic' in an 'Add tag' field and press 'Add': a 'classic' chip shows on the page, also after reload",
+        "Add a second tag 'travel': both chips show, sorted A to Z",
+        "Each chip has a 'Remove tag <name>' button; removing 'travel' leaves only 'classic', also after reload",
+        "The book list shows each book's tags under its title"
+      ],
+      "owner_check": true
+    },
+    {
+      "id": "F065",
+      "milestone": "M7",
+      "priority": 65,
+      "complexity": "S",
+      "title": "Tag validation: required, at most 24 characters, no duplicate on a book, at most 10 per book",
+      "depends_on": [
+        "F064"
+      ],
+      "touches": [
+        "app/books/[id]/actions.ts",
+        "lib/tags*",
+        "components/*tag*",
+        "e2e/*tag-validation*"
+      ],
+      "acceptance": [
+        "Adding an empty tag shows 'Enter a tag' next to the field and adds nothing",
+        "A tag longer than 24 characters shows 'Tags are at most 24 characters'",
+        "Adding 'Classic' to a book that has 'classic' shows 'This book already has that tag' (case does not matter)",
+        "On a book with 10 tags, adding an 11th shows 'A book has at most 10 tags'"
+      ]
+    },
+    {
+      "id": "F066",
+      "milestone": "M7",
+      "priority": 66,
+      "complexity": "M",
+      "title": "Filter the list by tag, kept in the URL with tab, search, sort and shelf",
+      "depends_on": [
+        "F064",
+        "F034"
+      ],
+      "touches": [
+        "app/books/page.tsx",
+        "components/*filter*",
+        "lib/books*",
+        "lib/tags*",
+        "e2e/*tag-filter*"
+      ],
+      "acceptance": [
+        "The list has a 'Tag' select with 'All tags' and each of my tags A to Z",
+        "Choosing 'classic' shows only books tagged 'classic' and puts ?tag=classic in the URL; reload keeps it",
+        "The tag filter combines with the status tab, search, sort and shelf filter, all kept in the URL",
+        "A tag with no books in the current tab shows the empty message with a 'Show all tags' link that clears only the tag"
+      ]
+    },
+    {
+      "id": "F067",
+      "milestone": "M7",
+      "priority": 67,
+      "complexity": "S",
+      "title": "Tags page lists my tags with their book counts, and renames a tag",
+      "depends_on": [
+        "F064"
+      ],
+      "touches": [
+        "app/tags/**",
+        "lib/tags*",
+        "components/site-header*",
+        "e2e/*tags-page*"
+      ],
+      "acceptance": [
+        "The header has a 'Tags' link to /tags",
+        "/tags lists my tags A to Z, each with how many books have it ('1 book', '3 books'), linking to /books?tag=<name>",
+        "Renaming 'classic' to 'classics' changes it on every book; a name another of my tags has shows 'You already have that tag'",
+        "With no tags, /tags says 'No tags yet' and that tags are added from a book's page"
+      ]
+    },
+    {
+      "id": "F068",
+      "milestone": "M7",
+      "priority": 68,
+      "complexity": "M",
+      "title": "Export my library as a CSV file",
+      "depends_on": [
+        "F010"
+      ],
+      "touches": [
+        "app/library/**",
+        "app/api/export*",
+        "lib/csv*",
+        "components/site-header*",
+        "e2e/*export*"
+      ],
+      "acceptance": [
+        "The header has an 'Import / export' link to /library",
+        "On /library, 'Download CSV' downloads bookshelf.csv whose first row is title,author,status,rating,total_pages,started_on,finished_on",
+        "Each of my books is one row with its values; an empty value is an empty cell; a title with a comma or a double quote is quoted correctly",
+        "Another account's books never appear in my file"
+      ]
+    },
+    {
+      "id": "F069",
+      "milestone": "M7",
+      "priority": 69,
+      "complexity": "L",
+      "title": "Import books from a CSV file, with a preview before adding",
+      "depends_on": [
+        "F068"
+      ],
+      "touches": [
+        "app/library/**",
+        "lib/csv*",
+        "lib/import*",
+        "components/*import*",
+        "e2e/*import*"
+      ],
+      "acceptance": [
+        "/library has an 'Import CSV' file field; choosing a file in the export format shows a preview table of the rows to add, with 'Add N books' and 'Cancel'",
+        "'Add N books' adds them with their status, rating, pages and dates, and the list shows them; 'Cancel' adds nothing",
+        "Exporting from one account and importing that file into a new account gives a list with the same titles, statuses and ratings",
+        "A file over 1 MB or with more than 1,000 rows is refused with 'The file is too large' before any preview"
+      ],
+      "owner_check": true
+    },
+    {
+      "id": "F070",
+      "milestone": "M7",
+      "priority": 70,
+      "complexity": "S",
+      "title": "Import report: which rows are skipped and why",
+      "depends_on": [
+        "F069"
+      ],
+      "touches": [
+        "lib/import*",
+        "components/*import*",
+        "app/library/**",
+        "e2e/*import-report*"
+      ],
+      "acceptance": [
+        "Rows without a title, with an unknown status or a rating outside 1 to 5 are not in the preview; a note says 'N rows will be skipped' and lists each row number with why",
+        "A row with the same title and author as a book I have is skipped as 'Already on your shelf'",
+        "After 'Add N books', a message says 'Added N books, skipped M'"
+      ]
+    },
+    {
+      "id": "F071",
+      "milestone": "M7",
+      "priority": 71,
+      "complexity": "M",
+      "title": "Up next: a queue of books I want to read, in my order",
+      "depends_on": [
+        "F010"
+      ],
+      "touches": [
+        "supabase/migrations/*queue*",
+        "app/up-next/**",
+        "app/books/[id]/**",
+        "components/*queue*",
+        "lib/queue*",
+        "components/site-header*",
+        "e2e/*up-next*"
+      ],
+      "acceptance": [
+        "A Want to read book's page has 'Add to Up next'; a Reading or Finished book's page does not",
+        "The header has an 'Up next' link to /up-next, which lists my queued books in order, each with 'Move up', 'Move down' and 'Remove'; the order is kept after reload",
+        "A newly queued book goes to the end; the first book has no 'Move up' and the last has no 'Move down'",
+        "A book that leaves Want to read leaves the queue"
+      ]
+    },
+    {
+      "id": "F072",
+      "milestone": "M7",
+      "priority": 72,
+      "complexity": "S",
+      "title": "Start reading the first book in Up next",
+      "depends_on": [
+        "F071"
+      ],
+      "touches": [
+        "app/up-next/**",
+        "lib/queue*",
+        "e2e/*up-next-start*"
+      ],
+      "acceptance": [
+        "/up-next shows 'Start reading <title>' for the first book",
+        "Clicking it moves that book to Reading with today's start date and takes it off the queue; the next book is now first",
+        "With an empty queue, /up-next says 'Nothing up next' and links to the Want to read tab"
+      ]
+    },
+    {
+      "id": "F073",
+      "milestone": "M7",
+      "priority": 73,
+      "complexity": "S",
+      "title": "Settings: a display name shown in the header",
+      "depends_on": [
+        "F010"
+      ],
+      "touches": [
+        "supabase/migrations/*profile*",
+        "app/settings/**",
+        "components/site-header*",
+        "lib/profile*",
+        "e2e/*settings*"
+      ],
+      "acceptance": [
+        "The header has a 'Settings' link to /settings",
+        "Saving the display name 'Huy' shows 'Huy' in the header before 'Sign out', also after reload",
+        "An empty name shows 'Enter a name'; a name over 40 characters shows 'Names are at most 40 characters'",
+        "Without a display name the header shows no name"
+      ]
+    },
+    {
+      "id": "F074",
+      "milestone": "M7",
+      "priority": 74,
+      "complexity": "M",
+      "title": "Delete my account after typing DELETE, with all my data",
+      "depends_on": [
+        "F073"
+      ],
+      "touches": [
+        "app/settings/**",
+        "lib/profile*",
+        "supabase/migrations/*account*",
+        "e2e/*delete-account*"
+      ],
+      "acceptance": [
+        "/settings has 'Delete account'; it opens a dialog where 'Delete my account' stays disabled until DELETE is typed",
+        "Confirming deletes the account with all its books, shelves, notes, quotes, reads, tags and queue, signs out and shows the sign in page with 'Your account was deleted'",
+        "Signing in again with the same email and password fails",
+        "Another account's books and data are unchanged"
+      ],
+      "owner_check": true
+    },
+    {
+      "id": "F075",
+      "milestone": "M7",
+      "priority": 75,
+      "complexity": "S",
+      "title": "No one else can see or change my tags, queue, display name or imported books",
+      "depends_on": [
+        "F064",
+        "F069",
+        "F071",
+        "F073",
+        "F016"
+      ],
+      "touches": [
+        "e2e/*m7-isolation*",
+        "supabase/migrations/*tags*",
+        "supabase/migrations/*queue*",
+        "supabase/migrations/*profile*"
+      ],
+      "acceptance": [
+        "Account A tags a book 'classic', queues two books, sets a display name and imports a CSV; account B sees 'No tags yet' on /tags, 'Nothing up next' on /up-next, none of A's books on /books or /books?tag=classic, and no name in the header",
+        "With B's session against the local Supabase, reading, updating or deleting A's tags, queue rows or profile by id returns or changes no rows (an integration test the verifier runs)",
+        "Signed in again as A, A's tags, queue, name and books are unchanged"
       ]
     }
   ]

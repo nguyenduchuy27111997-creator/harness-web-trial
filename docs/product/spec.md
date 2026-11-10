@@ -48,8 +48,14 @@ One person per account, on desktop or phone. They add a book in a few seconds, m
 - `/stats` counts every read I finished this year, past reads included, and shows how many books I finished in each month of this year and how many pages I read this year.
 - `/stats/<year>` is my year in review: the books I finished that year with their ratings, my average rating and highest rated books that year, and links to the previous and next year. No one else can see my reading history.
 
+### M7: tags, import and export, up next, account
+- Tag a book from its page: tags are 1 to 24 characters, at most 10 per book, no duplicate on a book (case does not matter); the list shows each book's tags. Filter the list by tag, kept in the URL with the tab, search, sort and shelf (`?tag=`). `/tags` lists my tags with their book counts and renames a tag on every book.
+- `/library` exports my library as a CSV file (title, author, status, rating, total pages, start and finish dates) and imports such a file: a preview of the rows to add, rows skipped with the reason (no title, unknown status, rating outside 1 to 5, already on my shelf), then a summary. Files over 1 MB or 1,000 rows are refused.
+- `/up-next` is a queue of my Want to read books in the order I choose (move up, move down, remove); "Start reading" moves the first one to Reading. A book that leaves Want to read leaves the queue.
+- `/settings`: a display name (1 to 40 characters) shown in the header, and deleting my account after typing DELETE, with all my data. No one else can see or change my tags, queue, name or imported books.
+
 ## Out of scope
-- Book search APIs, covers, ISBN lookup, sharing, social features, import/export.
+- Book search APIs, covers, ISBN lookup, sharing, social features. (CSV import and export came into scope in M7.)
 - Password reset, social login, email confirmation.
 
 ## Look and feel
@@ -65,3 +71,4 @@ Next.js + Supabase (the nextjs-supabase preset).
 - M4: I can make a "Travel" shelf, put two books on it, filter my list to that shelf together with the Reading tab, and see that I am 40% through a 250-page book.
 - M5: I can write a note on a book, save a quote from page 42 of it, find that quote on `/quotes` by a word in it, and after deleting the book its quote is gone.
 - M6: I can see that I read a book in 12 days after fixing its start date, read it again and still see the first read, and see on `/stats/<year>` the books I finished that year.
+- M7: I can tag two books "classic" and filter my list to them, export my library and import it into a second account with the same books, put three books in Up next and start the top one, and after deleting the second account its books are gone.

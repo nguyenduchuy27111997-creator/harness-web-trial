@@ -27,3 +27,9 @@
 - Removed, re-opened, re-ordered: none. M1 and M2 scope is unchanged, so their designs stay as they are; M3 has no design doc yet and gets one from the loop.
 - Decisions: `docs/decisions/0005-m3-replan.md`.
 - The human approved the re-plan and its commit in advance (replan arguments), so no stop for confirmation.
+
+## 2026-11-10
+- Why: the human approved M7 "tags, import and export, up next, account" in chat.
+- Added: F064-F075. Owner checks on F064, F069 and F074.
+- Removed, re-opened, re-ordered: none. CSV import and export left the spec's out of scope.
+- Decisions: `docs/decisions/0016-m7-replan.md`.
