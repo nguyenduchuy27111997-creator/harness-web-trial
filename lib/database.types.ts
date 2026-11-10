@@ -30,6 +30,31 @@ isOneToOne: false
       referencedColumns: ["id","user_id"]
     }
                   ]
+                },"book_tags": {
+                  Row: {
+                    "book_id": string,"created_at": string,"tag_id": string,"user_id": string
+                  }
+                  Insert: {
+                    "book_id": string,"created_at"?: string,"tag_id": string,"user_id"?: string
+                  }
+                  Update: {
+                    "book_id"?: string,"created_at"?: string,"tag_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "book_tags_book_id_user_id_fkey"
+      columns: ["book_id","user_id"]
+isOneToOne: false
+      referencedRelation: "books"
+      referencedColumns: ["id","user_id"]
+    },{
+      foreignKeyName: "book_tags_tag_id_user_id_fkey"
+      columns: ["tag_id","user_id"]
+isOneToOne: false
+      referencedRelation: "tags"
+      referencedColumns: ["id","user_id"]
+    }
+                  ]
                 },"books": {
                   Row: {
                     "author": string,"created_at": string,"current_page": number | null,"finished_on": string | null,"id": string,"rating": number | null,"review": string | null,"started_on": string | null,"status": string,"title": string,"total_pages": number | null,"user_id": string
@@ -61,6 +86,19 @@ isOneToOne: false
       referencedRelation: "books"
       referencedColumns: ["id","user_id"]
     }
+                  ]
+                },"profiles": {
+                  Row: {
+                    "display_name": string,"user_id": string
+                  }
+                  Insert: {
+                    "display_name": string,"user_id"?: string
+                  }
+                  Update: {
+                    "display_name"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    
                   ]
                 },"quotes": {
                   Row: {
@@ -126,13 +164,51 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"tags": {
+                  Row: {
+                    "created_at": string,"id": string,"name": string,"user_id": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"name": string,"user_id"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"name"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"up_next": {
+                  Row: {
+                    "book_id": string,"created_at": string,"position": number,"user_id": string
+                  }
+                  Insert: {
+                    "book_id": string,"created_at"?: string,"position": number,"user_id"?: string
+                  }
+                  Update: {
+                    "book_id"?: string,"created_at"?: string,"position"?: number,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "up_next_book_id_user_id_fkey"
+      columns: ["book_id","user_id"]
+isOneToOne: false
+      referencedRelation: "books"
+      referencedColumns: ["id","user_id"]
+    }
+                  ]
                 }
           }
           Views: {
             [_ in never]: never
           }
           Functions: {
-            "read_again":
+            "import_books":
+{ Args: { "p_rows": Json }; Returns: number
+                           },
+"move_up_next":
+{ Args: { "p_book_id": string,"p_up": boolean }; Returns: boolean
+                           },
+"read_again":
 { Args: { "p_book_id": string }; Returns: boolean
                            }
           }
