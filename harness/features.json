@@ -1429,6 +1429,26 @@
         "With B's session against the local Supabase, reading, updating or deleting A's tags, queue rows or profile by id returns or changes no rows (an integration test the verifier runs)",
         "Signed in again as A, A's tags, queue, name and books are unchanged"
       ]
+    },
+    {
+      "id": "F076",
+      "type": "bug",
+      "milestone": "M7",
+      "priority": 76,
+      "complexity": "S",
+      "title": "Fix: the tagged book list's screenshot (F064's spec) changes from run to run on CI",
+      "depends_on": [
+        "F064"
+      ],
+      "touches": [
+        "e2e/F064-tags-book.spec.ts",
+        "e2e/__screenshots__/F064-tags-book.spec.ts/**"
+      ],
+      "acceptance": [
+        "e2e/F064-tags-book.spec.ts masks each book's whole row or card in its list screenshot, a block whose size does not change from run to run, instead of the title link text whose width follows its Date.now() suffix",
+        "Every assertion and the full-page screenshot of the spec stay as they are; only the masks and the regenerated baseline F064-list-tags.png change",
+        "The spec passes 5 runs in a row in Playwright's Docker browser (scripts/e2e.sh e2e/F064-tags-book.spec.ts --repeat-each=5) with no pixel difference"
+      ]
     }
   ]
 }
