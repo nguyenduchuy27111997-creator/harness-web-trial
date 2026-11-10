@@ -1,2 +1,3 @@
 - [Malformed id edge case](project_malformed-id-edge-case.md) — probe /books/not-a-uuid when the book page gets new queries; expect 404, not 500
 - [MCP browser has no downloads](project_mcp-no-downloads.md) — verify downloads with in-page fetch + e2e spec, not MCP click
+- [MCP upload roots](project_mcp-upload-roots.md) — upload fixtures must live in worktree .playwright-mcp/; no `timeout` on macOS
