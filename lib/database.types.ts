@@ -202,7 +202,10 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "import_books":
+            "delete_account":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"import_books":
 { Args: { "p_rows": Json }; Returns: number
                            },
 "move_up_next":

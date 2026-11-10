@@ -13,10 +13,11 @@ type AuthFormProps = {
   pendingLabel: string;
   passwordAutoComplete: "current-password" | "new-password";
   footer: ReactNode;
+  notice?: string;
 };
 
 // The email and password card shared by sign-in and sign-up.
-export function AuthForm({ action, title, description, pendingLabel, passwordAutoComplete, footer }: AuthFormProps) {
+export function AuthForm({ action, title, description, pendingLabel, passwordAutoComplete, footer, notice }: AuthFormProps) {
   const [state, formAction, pending] = useActionState(action, {} as AuthFormState);
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 py-8 sm:p-8">
@@ -29,6 +30,11 @@ export function AuthForm({ action, title, description, pendingLabel, passwordAut
         </CardHeader>
         <CardContent>
           <form action={formAction} noValidate className="flex flex-col gap-4">
+            {notice && (
+              <p role="status" className="text-sm text-muted-foreground">
+                {notice}
+              </p>
+            )}
             {state.formError && (
               <p role="alert" className="text-sm text-destructive">
                 {state.formError}
