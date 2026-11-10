@@ -3,6 +3,7 @@ import Link from "next/link";
 import { BookList } from "@/components/book-list";
 import { Button } from "@/components/ui/button";
 import { SearchForm } from "@/components/search-form";
+import { listTagsForBooks } from "@/lib/tags";
 import { ShelfSelect } from "@/components/shelf-select";
 import { SortSelect } from "@/components/sort-select";
 import { StatusTabs } from "@/components/status-tabs";
@@ -19,7 +20,7 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
   const q = parseSearch(params.q);
   const sort = parseSort(params.sort);
   const supabase = await createClient();
-  const [rows, shelves] = await Promise.all([listBooks(supabase), listShelves(supabase)]);
+  const [rows, shelves, tagsByBook] = await Promise.all([listBooks(supabase), listShelves(supabase), listTagsForBooks(supabase)]);
   const shelf = parseShelfFilter(params.shelf, shelves);
   const visible = filterBooks(filterByShelf(rows, shelf ? await listShelfBookIds(supabase, shelf) : undefined), q);
   const counts = countByStatus(visible);
@@ -36,7 +37,7 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
           <Link href="/books/new">Add book</Link>
         </Button>
       )}
-      {books.length > 0 && <BookList books={books} />}
+      {books.length > 0 && <BookList books={books} tagsByBook={tagsByBook} />}
       {books.length === 0 && q && (
         <div className="flex flex-col items-start gap-2">
           <p className="text-muted-foreground">No books match &ldquo;{q}&rdquo;.</p>
