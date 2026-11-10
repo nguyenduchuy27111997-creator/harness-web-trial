@@ -1,0 +1,1 @@
+- [Malformed id edge case](project_malformed-id-edge-case.md) — probe /books/not-a-uuid when the book page gets new queries; expect 404, not 500

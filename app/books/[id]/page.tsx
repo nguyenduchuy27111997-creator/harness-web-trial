@@ -9,6 +9,7 @@ import { DeleteBookButton } from "@/components/delete-book-button";
 import { EditBookForm } from "@/components/edit-book-form";
 import { EditDatesForm } from "@/components/edit-dates-form";
 import { PastReads } from "@/components/past-reads";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { ProgressForm } from "@/components/progress-form";
 import { ReadAgainButton } from "@/components/read-again-button";
 import { RatingForm } from "@/components/rating-form";
@@ -17,6 +18,7 @@ import { ReviewForm } from "@/components/review-form";
 import { StatusBadge } from "@/components/status-badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getBook } from "@/lib/books";
+import { isQueued } from "@/lib/queue";
 import { listPastReads } from "@/lib/reads";
 import { listNotes } from "@/lib/notes";
 import { listBookQuotes } from "@/lib/quotes";
@@ -30,6 +32,7 @@ import {
   editNote,
   deleteNote,
   addToShelf,
+  addToUpNext,
   deleteBook,
   editBook,
   editDates,
@@ -48,13 +51,14 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   await requireUser();
   const supabase = await createClient();
-  const [book, shelves, shelfIds, notes, quotes, pastReads] = await Promise.all([
+  const [book, shelves, shelfIds, notes, quotes, pastReads, queued] = await Promise.all([
     getBook(supabase, id),
     listShelves(supabase),
     listBookShelfIds(supabase, id),
     listNotes(supabase, id),
     listBookQuotes(supabase, id),
     listPastReads(supabase, id),
+    isQueued(supabase, id),
   ]);
   if (!book) notFound();
   return (
@@ -80,6 +84,22 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
         />
       )}
       <BookStatusForm status={book.status} action={updateStatus.bind(null, book.id)} />
+      {book.status === "want_to_read" &&
+        (queued ? (
+          // The link text avoids "Up next": the header's "Up next" link must stay the only link with that name.
+          <p className="text-sm text-muted-foreground">
+            In Up next.{" "}
+            <Link href="/up-next" className="text-primary underline">
+              See your queue
+            </Link>
+          </p>
+        ) : (
+          <form action={addToUpNext.bind(null, book.id)}>
+            <PendingSubmitButton variant="outline" pendingLabel="Adding…">
+              Add to Up next
+            </PendingSubmitButton>
+          </form>
+        ))}
       <BookShelves
         shelves={shelves}
         onShelfIds={shelfIds}
