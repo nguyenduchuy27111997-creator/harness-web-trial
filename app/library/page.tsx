@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { ImportForm } from "@/components/import-form";
 import { Button } from "@/components/ui/button";
+import { confirmImport, previewImport } from "./actions";
 import { requireUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Import / export · Bookshelf" };
@@ -16,6 +18,7 @@ export default async function LibraryPage() {
           </a>
         </Button>
       </div>
+      <ImportForm preview={previewImport} confirm={confirmImport} />
     </main>
   );
 }

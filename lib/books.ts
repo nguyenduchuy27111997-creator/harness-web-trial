@@ -131,7 +131,7 @@ export function parseNewBook(formData: FormData): Parsed<NewBook, "title" | "aut
   return { ok: true, value: { ...fields.value, status } };
 }
 
-function isBookStatus(value: string): value is BookStatus {
+export function isBookStatus(value: string): value is BookStatus {
   return (BOOK_STATUSES as readonly string[]).includes(value);
 }
 
@@ -270,7 +270,7 @@ export function formatProgress(current: number, total: number): string {
 
 export type DatesFormState = FormState<"started_on" | "finished_on"> & { saved?: true };
 
-function isValidDate(value: string): boolean {
+export function isValidDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(`${value}T00:00:00Z`);
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
