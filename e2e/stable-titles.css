@@ -1,2 +1,3 @@
-/* Titles carry the lane name and a timestamp, so their width differs between a lane and CI: a fixed box keeps the masked area the same. */
-li a { display: inline-block; width: 24rem; white-space: nowrap; overflow: hidden; }
+/* Titles carry $HARNESS_LANE and a timestamp, so their width differs per lane and run (F066 locally, "local"
+   on CI). A fixed box keeps the masked title the same size everywhere. */
+li a { font-variant-numeric: tabular-nums; display: inline-block; width: 24rem; overflow: hidden; white-space: nowrap; }
