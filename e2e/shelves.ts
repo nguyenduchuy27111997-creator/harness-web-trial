@@ -21,3 +21,11 @@ export async function addBookOnShelf(page: Page, title: string, author: string, 
   await page.getByRole("option", { name: shelf }).click();
   await page.getByRole("button", { name: "Add to shelf" }).click();
 }
+
+// Puts the book page that is open on `shelf`; callers check the heading first.
+export async function shelveOpenBook(page: Page, shelf: string) {
+  await page.getByRole("combobox", { name: "Shelf" }).click();
+  await page.getByRole("option", { name: shelf }).click();
+  await page.getByRole("button", { name: "Add to shelf" }).click();
+  await expect(page.getByRole("list", { name: "Shelves this book is on" })).toContainText(shelf);
+}
