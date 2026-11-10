@@ -12,7 +12,7 @@ export type TagFormState = FormState<"name"> & { saved?: true };
 export function parseTagName(formData: FormData): Parsed<string, "name"> {
   const name = String(formData.get("name") ?? "").trim();
   if (name.length === 0) return { ok: false, fieldErrors: { name: "Enter a tag" } };
-  if (name.length > TAG_MAX) return { ok: false, fieldErrors: { name: "Tags are at most 24 characters" } };
+  if ([...name].length > TAG_MAX) return { ok: false, fieldErrors: { name: "Tags are at most 24 characters" } };
   return { ok: true, value: name };
 }
 
