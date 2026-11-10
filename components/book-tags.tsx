@@ -5,6 +5,7 @@ import { useActionState, useId } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TagChip } from "@/components/tag-chip";
 import type { Tag, TagFormState } from "@/lib/tags";
 
 type Props = {
@@ -24,13 +25,14 @@ export function BookTags({ tags, action, removeAction }: Props) {
       ) : (
         <ul aria-label="Tags on this book" className="flex flex-wrap gap-2">
           {tags.map((tag) => (
-            <li key={tag.id} className="flex items-center gap-1 rounded-full bg-muted py-0.5 pl-3 pr-1 text-sm">
-              <span className="break-words">{tag.name}</span>
-              <form action={removeAction.bind(null, tag.id)}>
-                <Button type="submit" variant="ghost" size="icon-sm" aria-label={`Remove tag ${tag.name}`}>
-                  <XIcon aria-hidden />
-                </Button>
-              </form>
+            <li key={tag.id} className="max-w-full">
+              <TagChip name={tag.name}>
+                <form action={removeAction.bind(null, tag.id)}>
+                  <Button type="submit" variant="ghost" size="icon-xs" aria-label={`Remove tag ${tag.name}`}>
+                    <XIcon aria-hidden />
+                  </Button>
+                </form>
+              </TagChip>
             </li>
           ))}
         </ul>

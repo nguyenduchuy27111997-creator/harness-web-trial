@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { StatusBadge } from "@/components/status-badge";
+import { TagChip } from "@/components/tag-chip";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { progressPercent, type ShelfBook } from "@/lib/books";
@@ -24,8 +25,8 @@ export function BookList({ books, tagsByBook }: { books: ShelfBook[]; tagsByBook
                   {(tagsByBook?.get(book.id)?.length ?? 0) > 0 && (
                     <ul aria-label={`Tags for ${book.title}`} className="flex flex-wrap gap-1">
                       {tagsByBook?.get(book.id)?.map((name) => (
-                        <li key={name} className="rounded-full bg-muted px-2 py-0.5 text-xs">
-                          {name}
+                        <li key={name} className="max-w-full">
+                          <TagChip name={name} />
                         </li>
                       ))}
                     </ul>

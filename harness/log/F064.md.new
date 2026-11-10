@@ -1,5 +1,0 @@
-## 2026-11-10 12:00 · passing
-- Did: lib/tags.ts (parse, list, addTag, removeTag), addBookTag/removeBookTag actions, BookTags component on /books/[id], tags under titles in BookList.
-- Verified by: verifier PASS (4 criteria); check.sh green incl. test-writer spec and new baselines.
-- Next session should know: addTag already enforces duplicate and 10-tag limits; first e2e run may flake until the local DB has the tags migration.
-

@@ -73,7 +73,7 @@ test("book list: tags show under each title", async ({ page }) => {
   await page.mouse.move(0, 0);
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F064-list-tags.png", {
-    stylePath: "e2e/hide-dev-overlay.css",
+    stylePath: ["e2e/hide-dev-overlay.css", "e2e/stable-titles.css"],
     fullPage: true,
     mask: [page.getByRole("link", { name: tagged }), page.getByRole("link", { name: plain }), page.locator("time")],
   });
