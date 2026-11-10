@@ -1,0 +1,1 @@
+{"status": "passing", "notes": "RLS from earlier M7 migrations already isolates tags, queue and profiles. Added the /tags list and its 'No tags yet' empty state, which the acceptance needs."}
