@@ -14,9 +14,13 @@ export async function previewImport(_prev: ImportState, formData: FormData): Pro
   if (!(file instanceof File) || file.size === 0) return { error: "Choose a CSV file" };
   if (file.size > IMPORT_MAX_BYTES) return { error: "The file is too large" };
   const csv = await file.text();
-  const parsed = parseImport(csv, await listAllBookKeys(await createClient()), today());
-  if ("error" in parsed) return parsed;
-  return { csv, ...parsed };
+  try {
+    const parsed = parseImport(csv, await listAllBookKeys(await createClient()), today());
+    if ("error" in parsed) return parsed;
+    return { csv, ...parsed };
+  } catch {
+    return { error: "Could not save. Try again." };
+  }
 }
 
 export async function confirmImport(_prev: ImportState, formData: FormData): Promise<ImportState> {

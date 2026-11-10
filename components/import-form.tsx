@@ -66,33 +66,39 @@ export function ImportForm({ preview, confirm }: { preview: Action; confirm: Act
       {rows && state.csv !== undefined && (
         <form action={confirmAction} className="flex flex-col gap-3">
           <Input type="hidden" name="csv" value={state.csv} />
-          <Table>
-            <TableCaption className="sr-only">Books to add</TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead scope="col">Title</TableHead>
-                <TableHead scope="col">Author</TableHead>
-                <TableHead scope="col">Status</TableHead>
-                <TableHead scope="col">Rating</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((row, i) => (
-                <TableRow key={i}>
-                  <TableCell>{row.title}</TableCell>
-                  <TableCell>{row.author}</TableCell>
-                  <TableCell>
-                    <StatusBadge status={row.status} />
-                  </TableCell>
-                  <TableCell>{row.rating ?? ""}</TableCell>
+          {rows.length === 0 ? (
+            <p role="status">Nothing new to add</p>
+          ) : (
+            <Table>
+              <TableCaption className="sr-only">Books to add</TableCaption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead scope="col">Title</TableHead>
+                  <TableHead scope="col">Author</TableHead>
+                  <TableHead scope="col">Status</TableHead>
+                  <TableHead scope="col">Rating</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {rows.map((row, i) => (
+                  <TableRow key={i}>
+                    <TableCell>{row.title}</TableCell>
+                    <TableCell>{row.author}</TableCell>
+                    <TableCell>
+                      <StatusBadge status={row.status} />
+                    </TableCell>
+                    <TableCell>{row.rating ?? ""}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
           <div className="flex gap-2">
-            <Button type="submit" disabled={adding || rows.length === 0}>
-              {adding ? "Adding…" : `Add ${rows.length} ${rows.length === 1 ? "book" : "books"}`}
-            </Button>
+            {rows.length > 0 && (
+              <Button type="submit" disabled={adding}>
+                {adding ? "Adding…" : `Add ${rows.length} ${rows.length === 1 ? "book" : "books"}`}
+              </Button>
+            )}
             <Button type="button" variant="outline" onClick={reset} disabled={adding}>
               Cancel
             </Button>
