@@ -26,3 +26,15 @@ export async function saveDisplayName(supabase: SupabaseClient<Database>, name: 
   const { error } = await supabase.from("profiles").upsert({ display_name: name }, { onConflict: "user_id" });
   if (error) throw new Error(error.message);
 }
+
+export const DELETE_CONFIRM_WORD = "DELETE";
+export const DELETE_CONFIRM_MESSAGE = "Type DELETE to confirm";
+
+export type DeleteAccountState = { formError?: string };
+
+// The database function deletes only auth.uid()'s user; every user table cascades from it.
+export async function deleteAccount(supabase: SupabaseClient<Database>): Promise<void> {
+  const { error } = await supabase.rpc("delete_account");
+  if (error) throw new Error(error.message);
+  await supabase.auth.signOut();
+}
