@@ -90,6 +90,9 @@ export async function removeTag(supabase: SupabaseClient<Database>, bookId: stri
     .select("tag_id", { count: "exact", head: true })
     .eq("tag_id", tagId);
   if (countError) throw new Error(countError.message);
-  if (count === 0) await supabase.from("tags").delete().eq("id", tagId);
+  if (count === 0) {
+    const { error: deleteError } = await supabase.from("tags").delete().eq("id", tagId);
+    if (deleteError) throw new Error(deleteError.message);
+  }
   return true;
 }

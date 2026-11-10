@@ -201,4 +201,12 @@ describe("removeTag", () => {
       ),
     ).rejects.toThrow("c");
   });
+  it("throws when deleting the unused tag fails", async () => {
+    const { client } = fakeClient([
+      { data: [{ tag_id: "t" }] },
+      { count: 0 },
+      { error: { message: "d" } },
+    ]);
+    await expect(removeTag(client, "b", "t")).rejects.toThrow("d");
+  });
 });
