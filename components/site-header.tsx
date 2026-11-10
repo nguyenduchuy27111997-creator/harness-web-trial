@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-type SiteHeaderProps = { signedIn: boolean; signOut: () => Promise<void> };
+type SiteHeaderProps = { signedIn: boolean; displayName?: string | null; signOut: () => Promise<void> };
 
-export function SiteHeader({ signedIn, signOut }: SiteHeaderProps) {
+export function SiteHeader({ signedIn, displayName, signOut }: SiteHeaderProps) {
   return (
     <header className="border-b">
       <div className="mx-auto flex w-full max-w-3xl flex-wrap items-center justify-between gap-2 px-4 py-4 sm:px-8">
@@ -36,6 +36,7 @@ export function SiteHeader({ signedIn, signOut }: SiteHeaderProps) {
             <Button asChild variant="ghost">
               <Link href="/settings">Settings</Link>
             </Button>
+            {displayName && <span className="break-all text-muted-foreground">{displayName}</span>}
             <form action={signOut}>
               <Button type="submit" variant="secondary">
                 Sign out

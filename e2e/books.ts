@@ -20,3 +20,10 @@ export async function saveStatus(page: Page, name: string) {
   await pick(page, "Status", name);
   await page.getByRole("button", { name: "Save status" }).click();
 }
+
+// Adds a Want to read book and puts it last in the Up next queue.
+export async function addQueuedBook(page: Page, title: string) {
+  await addAndOpenBook(page, title, "Want to read");
+  await page.getByRole("button", { name: "Add to Up next" }).click();
+  await page.getByText("In Up next").waitFor();
+}
