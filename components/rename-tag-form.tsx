@@ -20,7 +20,7 @@ export function RenameTagList({ tags }: { tags: Row[] }) {
             <OpenForm {...tag} onClose={() => setOpenId(null)} />
           ) : (
             <div className="flex items-center gap-3">
-              <Link href={`/books?tag=${encodeURIComponent(tag.name)}`} className="underline">
+              <Link href={`/books?tag=${encodeURIComponent(tag.name)}`} className="text-primary hover:underline">
                 {tag.name}
               </Link>
               <span className="text-sm text-muted-foreground">{tag.count === 1 ? "1 book" : `${tag.count} books`}</span>
