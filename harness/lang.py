@@ -19,6 +19,7 @@ VI = {
     "Loop paused": "Loop tạm dừng", "{why}; resumes {resumes}.": "{why}; chạy lại {resumes}.",
     "{ms} budget used": "Hết ngân sách {ms}", "{ms} spent ${spent} of ${cap}; its features wait for more.": "{ms} đã tiêu ${spent} trên ${cap}; các feature của nó chờ thêm ngân sách.",
     "Daily cap reached": "Đã chạm trần ngày",
+    "Dispatcher decided": "Dispatcher đã quyết",
     "${spent} of ${cap} spent today; new sessions wait for tomorrow.": "Hôm nay đã tiêu ${spent} trên ${cap}; phiên mới chờ sang ngày mai.",
     "Budget used": "Hết ngân sách",
     "Spent ${spent} of ${budget}; work in flight finishes, nothing new starts.": "Đã tiêu ${spent} trên ${budget}; việc đang làm sẽ xong, không nhận việc mới.",

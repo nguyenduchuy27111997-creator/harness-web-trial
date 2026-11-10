@@ -75,6 +75,7 @@ class Scheduler:
         if sha != self.state.get("main_sha") or not hasattr(self, "main"):
             self.state["main_sha"] = sha
             self.main = {f["id"]: f for f in backlog.read(self.root, "origin/main")}
+            self.overlay_touches()  # the dispatcher's, in decide mode
             docs = git("ls-tree", "--name-only", "origin/main", "docs/design/", cwd=self.root).stdout.split()
             self.designed = {Path(d).stem for d in docs if d.endswith(".md")}
         return sha

@@ -127,6 +127,12 @@ MAX_ERRORS = int(os.environ.get("LOOP_MAX_ERRORS", "30"))  # ticks in a row that
 
 # --- small helpers ----------------------------------------------------------------
 
+def write_answer(home, fid, text, drop=False):
+    """An answer for a waiting job, picked up on the loop's next tick (Loop.apply_answers)."""
+    (home / f"answer-{fid}-{int(time.time() * 1000)}.json").write_text(
+        json.dumps({"id": fid, "text": text, **({"drop": True} if drop else {})}))
+
+
 def now():
     return datetime.datetime.now().isoformat(timespec="seconds")
 

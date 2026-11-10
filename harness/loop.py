@@ -968,11 +968,6 @@ def cmd_drop(root, a):
     return 0
 
 
-def write_answer(home, fid, text, drop=False):
-    (home / f"answer-{fid}-{int(time.time() * 1000)}.json").write_text(
-        json.dumps({"id": fid, "text": text, **({"drop": True} if drop else {})}))
-
-
 def cmd_answer(root, a):
     home = home_of(root)
     write_answer(home, a.feature, a.text)

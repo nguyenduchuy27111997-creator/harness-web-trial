@@ -1,7 +1,8 @@
-"""The dispatcher (DESIGN.md 15.4, P31): the loop asks an opus agent for its judgement when a feature fails, a PR
-is held, main goes red or a milestone starts. Suggest mode only: its advice goes to <home>/decisions.jsonl beside
-what really happened next, and `loop.py decisions` shows them side by side, so the owner can judge it over a
-milestone before it may decide anything. A mixin of loop.Loop."""
+"""The dispatcher (DESIGN.md 15.4, P31; decide mode 16.3, P35): the loop asks an opus agent for its judgement when a
+feature fails, a PR is held, main goes red or a milestone starts. Its advice goes to <home>/decisions.jsonl beside
+what really happened next, and `loop.py decisions` shows them side by side. LOOP_DISPATCHER=suggest only writes it
+down; LOOP_DISPATCHER=decide also acts on it, within the limits below, and tells the owner each time. A mixin of
+loop.Loop."""
 
 import json
 import os
@@ -10,9 +11,15 @@ import threading
 import time
 from pathlib import Path
 
-from common import backlog, now, WAITING_HUMAN
+from common import backlog, lang, now, write_answer, WAITING_HUMAN
 
-MODE = os.environ.get("LOOP_DISPATCHER", "")  # "suggest" turns it on
+MODE = os.environ.get("LOOP_DISPATCHER", "")  # "suggest" turns it on; "decide" lets it act (v9, P35)
+# What it may do alone in decide mode: never drop a feature, change the backlog or its acceptance, and only when it is
+# sure enough and has not already decided twice for this job; anything else stays with the owner. The owner's own
+# answer still wins at any time.
+ACTS = {"retry", "retry_large", "answer", "rebuild", "split"}
+SURE = float(os.environ.get("LOOP_DISPATCHER_SURE", "0.7"))
+MAX_DECISIONS = 2
 CAP = float(os.environ.get("LOOP_DISPATCHER_CAP", "0.5"))  # dollars at most per question
 EVENTS = {"held": "held", "failed": "failed", "reverted": "main red", "needs_human": "needs human"}
 
@@ -20,10 +27,12 @@ EVENTS = {"held": "held", "failed": "failed", "reverted": "main red", "needs_hum
 class Dispatcher:
     def consult(self, job, stage):
         """Ask the dispatcher about this job's new stage, in the background, once per situation."""
-        event = "milestone" if stage == "building" and job.get("kind") == "design" else EVENTS.get(stage)
+        # A milestone is asked about once its design PR is up (architect PASS): the doc and its shared scaffold are
+        # there to read, so the touches it gives leave out what the scaffold already built.
+        event = "milestone" if job.get("kind") == "design" and stage == "ci" else EVENTS.get(stage)
         # Not held back by a busy machine: it is one read-only call, and a busy machine is when PRs get held. Seen on
         # the web trial: at load 70-90 on 12 CPUs, F040 and F044 were held and the dispatcher was never asked.
-        if (MODE != "suggest" or not event or job.get("kind") == "rule" or self.free_budget() < CAP
+        if (MODE not in ("suggest", "decide") or not event or job.get("kind") == "rule" or self.free_budget() < CAP
                 or self.day_full()):
             return
         # A new hold after the owner answered is a new situation: seen on the web trial, F047's second hold had the key
@@ -58,8 +67,8 @@ class Dispatcher:
             ms = job.get("milestone")
             feats = [{k: x.get(k) for k in ("id", "title", "complexity", "depends_on", "acceptance", "touches") if x.get(k)}
                      for x in backlog.read(self.root, "origin/main") if x.get("milestone") == ms and x.get("status") != "passing"]
-            return (f"Event: milestone {ms} starts; its design is being written (docs/design/{ms}.md on branch "
-                    f"{job.get('branch')}, if it is there yet). Its features still to build:\n"
+            return (f"Event: milestone {ms} starts; its design (docs/design/{ms}.md) and shared scaffold are on branch "
+                    f"{job.get('branch')}, approved by the architect. Its features still to build:\n"
                     f"```json\n{json.dumps(feats, indent=1)[:12000]}\n```")
         facts = {"id": job["id"], "title": job.get("title") or f.get("title"), "complexity": f.get("complexity"),
                  "acceptance": f.get("acceptance"), "stage": job.get("stage"), "note": job.get("note"),
@@ -99,7 +108,7 @@ class Dispatcher:
             if failed and tries.get(key, 0) < 2 and job is not None:  # it was not asked at all: ask again
                 tries[key] = tries.get(key, 0) + 1
                 self.state["consulted"] = [k for k in self.state.get("consulted", []) if k != key]
-                self.consult(job, "building" if event == "milestone" else job["stage"])
+                self.consult(job, "ci" if event == "milestone" else job["stage"])
                 continue
             tries.pop(key, None)
             if failed:  # asked three times, never answered: the reply is an error, not advice. Seen on the web trial:
@@ -113,7 +122,74 @@ class Dispatcher:
                 self.event(fid, f"dispatcher could not answer: {error[:160]}")
                 continue
             what = advice.get("action") or ("touches for " + ", ".join(advice["touches"]) if advice.get("touches") else "no advice")
+            if job is not None and self.act(job, event, advice, key):
+                continue
             self.event(fid, f"dispatcher would: {what}" + (f" ({advice['why'][:160]})" if advice.get("why") else ""))
+
+    def act(self, job, event, advice, key):
+        """Decide mode: answer the job with the dispatcher's advice, as the owner would with `loop.py answer`, when it
+        is one it may take alone (ACTS), it is sure enough, the job still waits as it did when asked, and it has not
+        already decided twice for this job. True when it acted."""
+        if MODE == "decide" and event == "milestone":
+            return self.plan_milestone(job, advice, key)
+        action = advice.get("action")
+        try:
+            sure = float(advice.get("confidence") or 0)
+        except (TypeError, ValueError):
+            sure = 0.0
+        if (MODE != "decide" or event == "milestone" or action not in ACTS or sure < SURE
+                or job["stage"] not in WAITING_HUMAN or job["stage"] == "reverted"
+                or job.get("decided", 0) >= MAX_DECISIONS
+                or job.get("budget_held")  # past three times its budget: only the owner gives more
+                or (action == "rebuild" and job.get("pr"))):  # an open PR's answer fixes the branch, never rebuilds it
+            return False
+        detail, why = (advice.get("detail") or "").strip(), (advice.get("why") or "").strip()
+        text = {"retry": "Retry it as it is.", "retry_large": f"Retry it on the large model. {detail}",
+                "answer": detail, "rebuild": f"Rebuild it from main: {detail}",
+                "split": "Build it in these parts, one after another in this branch, keeping every acceptance "
+                         f"criterion as it is:\n{detail}"}[action].strip()
+        if not text:
+            return False
+        job["decided"] = job.get("decided", 0) + 1
+        if action == "retry_large":
+            job["large"] = True
+        write_answer(self.home, job["id"], f"The dispatcher answered, not the owner (confidence {sure:.2f}; {why}): {text}")
+        self.decide_log({"key": key, "at": now(), "job": job["id"], "applied": action})
+        said = f"{action}" + (f" ({why[:160]})" if why else "")
+        self.event(job["id"], f"dispatcher decided: {said}")
+        self.push(f"decided:{key}", lang.say("Dispatcher decided"), f"{job['id']}: {said}")
+        return True
+
+    def plan_milestone(self, job, advice, key):
+        """Decide mode, a milestone's start: take the dispatcher's `touches` for its features not started yet, in place
+        of the backlog's, so features that share only what the design's scaffold already built can build side by
+        side instead of stacked (v9, P35: waiting on a base PR was 23% of the web trial's lead time). The backlog
+        itself is never changed."""
+        touches = advice.get("touches")
+        if not isinstance(touches, dict):
+            return False
+        ms, took = job.get("milestone"), {}
+        for fid, globs in touches.items():
+            f = self.main.get(fid, {}) if hasattr(self, "main") else {}
+            started = (self.job(fid) or {}).get("stage", "queued") != "queued"
+            if (f.get("milestone") == ms and f.get("status") != "passing" and not started and isinstance(globs, list)
+                    and 0 < len(globs) <= 20 and all(isinstance(g, str) and g and not g.startswith("/") for g in globs)):
+                took[fid] = globs
+        if not took:
+            return False
+        self.state.setdefault("touches", {}).update(took)
+        self.overlay_touches()
+        self.decide_log({"key": key, "at": now(), "job": job["id"], "applied": "touches"})
+        said = f"touches for {', '.join(sorted(took))}" + (f" ({advice['why'][:160]})" if advice.get("why") else "")
+        self.event(job["id"], f"dispatcher decided: {said}")
+        self.push(f"decided:{key}", lang.say("Dispatcher decided"), f"{ms}: {said}")
+        return True
+
+    def overlay_touches(self):
+        """The dispatcher's touches over the backlog's, for features not passing yet."""
+        for fid, globs in self.state.get("touches", {}).items():
+            if fid in getattr(self, "main", {}) and self.main[fid].get("status") != "passing":
+                self.main[fid] = {**self.main[fid], "touches": globs}
 
     def outcome(self, job, stage, note):
         """What really happened to a job the dispatcher was asked about: its next stage out of waiting, and the
@@ -177,8 +253,9 @@ def report(home):
         said = f"(no answer: {r['error'][:60]})" if r.get("error") else said
         did = r.get("actual")
         did = (f"{did['stage']}" + (f", owner said: {did['answer'][:80]}" if did.get("answer") else "")) if did else "still waiting"
-        out.append(f"{r.get('at', '')[:16]}  {r['job']:<8} {r.get('event', ''):<10} would: {said}"
+        verb = "decided" if r.get("applied") else "would"
+        out.append(f"{r.get('at', '')[:16]}  {r['job']:<8} {r.get('event', ''):<10} {verb}: {said}"
                    + (f" ({a.get('confidence')})" if a.get("confidence") is not None else "") + f"  |  then: {did}")
     cost = sum(r.get("cost", 0) for r in rows)
-    out.append(f"{len(rows)} questions, ${cost:.2f}" if rows else "No dispatcher questions yet (LOOP_DISPATCHER=suggest turns it on).")
+    out.append(f"{len(rows)} questions, ${cost:.2f}" if rows else "No dispatcher questions yet (LOOP_DISPATCHER=suggest or decide turns it on).")
     return "\n".join(out)

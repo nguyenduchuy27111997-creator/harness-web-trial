@@ -9,6 +9,8 @@ import subprocess
 import threading
 import time
 
+import dispatcher
+
 from common import (  # noqa: F401
     api_reachable, final_result, free_port, git, health, kill_group, lang, limit_resume, metrics, now, online,
     preview, run, stop_processes_in, stream, API_DOWN, AUTH, AUTH_PAUSE, CLAUDE, ENV_KEEP, FEATURE_FLOOR, FEATURE_ID, FIX_SONNET,
@@ -130,6 +132,14 @@ class Agents:
     def over_feature_budget(self, job):
         """A feature that spent more than its share stops and asks before it spends more (real trial: $15 on one)."""
         if not FEATURE_ID.match(job["id"]) or job.get("cost", 0) < self.feature_budget(job):
+            return False
+        base = self.feature_budget(job) - job.get("budget_extra", 0)
+        if dispatcher.MODE == "decide" and job.get("budget_extra", 0) + base <= 2 * base + 0.005:
+            # The owner chose to let it grant more, up to three times the feature's budget, and be told (v9, P35).
+            job["budget_extra"] = round(job.get("budget_extra", 0) + base, 2)
+            grant = f"budget +${base:.2f} (now ${self.feature_budget(job):.2f}, at most ${3 * base:.2f})"
+            self.event(job["id"], f"dispatcher decided: {grant}; spent ${job['cost']:.2f}")
+            self.push(f"grant:{job['id']}:{job['budget_extra']}", lang.say("Dispatcher decided"), f"{job['id']}: {grant}")
             return False
         job["budget_held"] = job["stage"]
         self.set_stage(job, "held", note=f"spent ${job['cost']:.2f}, over its budget of ${self.feature_budget(job):.2f}",
@@ -354,7 +364,7 @@ class Agents:
         goes one up, and the last try is on 3; a design, a rule or an L feature starts there. Then a human decides."""
         f = self.main.get(job["id"], {})
         n = job.get("attempts", 0)
-        if job.get("kind") or f.get("complexity") == "L":
+        if job.get("kind") or f.get("complexity") == "L" or job.get("large"):  # large: the dispatcher's retry_large
             r = 3
         else:  # the last try --retries allows is always on the large model, whatever rungs that skips
             r = 3 if n and n >= self.opts.retries else min(n, 2)
