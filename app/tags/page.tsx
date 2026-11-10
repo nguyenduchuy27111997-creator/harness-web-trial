@@ -15,7 +15,7 @@ export default async function TagsPage() {
       {tags.length === 0 ? (
         <p className="text-muted-foreground">No tags yet. Add one from a book&apos;s page.</p>
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-3">
           {tags.map((t) => (
             <li key={t.id} className="flex items-baseline gap-2">
               <Link href={booksHref({ tag: t.name })} className="text-primary underline">
