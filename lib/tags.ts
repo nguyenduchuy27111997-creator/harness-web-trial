@@ -96,3 +96,24 @@ export async function removeTag(supabase: SupabaseClient<Database>, bookId: stri
   }
   return true;
 }
+
+export type TagWithCount = Tag & { count: number };
+
+// Tags with no book left are hidden (see removeTag and deleting a book).
+export async function listTags(supabase: SupabaseClient<Database>): Promise<TagWithCount[]> {
+  const { data, error } = await supabase.from("tags").select("id, name, book_tags(count)");
+  if (error) throw new Error(error.message);
+  const tags = data.map((row) => ({ id: row.id, name: row.name, count: row.book_tags[0]?.count ?? 0 }));
+  return sortTags(tags.filter((tag) => tag.count > 0));
+}
+
+export async function renameTag(
+  supabase: SupabaseClient<Database>,
+  id: string,
+  name: string,
+): Promise<"renamed" | "taken" | "missing"> {
+  const { data, error } = await supabase.from("tags").update({ name }).eq("id", id).select("id");
+  if (error?.code === "23505") return "taken";
+  if (error) throw new Error(error.message);
+  return data.length === 0 ? "missing" : "renamed";
+}
