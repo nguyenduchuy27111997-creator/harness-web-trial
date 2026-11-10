@@ -618,6 +618,10 @@ def serve_dashboard(home, root):
                 wt = (jobs.get(job.group(1)) or {}).get("worktree") if job else None
                 where = Path(wt) if wt and Path(wt).is_dir() else root
                 body, kind = json.dumps(history.tree(where)).encode(), "application/json"
+            elif path == "/milestone.json":  # the milestone in progress: its clock and why each feature waits (P38)
+                f = home / "state.json"
+                body = json.dumps(history.milestone(root, home, json.loads(f.read_text()) if f.exists() else {})).encode()
+                kind = "application/json"
             elif path == "/roadmap.json":  # the backlog, milestones and what starts next (history.py)
                 f = home / "state.json"
                 body = json.dumps(history.roadmap(root, home, json.loads(f.read_text()) if f.exists() else {})).encode()
@@ -749,16 +753,19 @@ def serve_dashboard(home, root):
             self.wfile.write(body)
 
         def do_POST(self):
-            """POST /ask {q, job?}: a question to the office (ask.py), from the dashboard's own page only."""
+            """POST /ask {q, job?}: a question to the office (ask.py); POST /answer {job, text}: the owner's answer to a
+            job that waits on them, as `loop.py answer` gives it (P38). From the dashboard's own page only."""
             host = self.headers.get("Host") or ""
             origin = self.headers.get("Origin") or ""
-            if self.path != "/ask":
+            if self.path not in ("/ask", "/answer"):
                 self.send_error(404)
                 return
             if host.rsplit(":", 1)[0] not in ("localhost", "127.0.0.1") or origin != f"http://{host}" \
                     or not secrets.compare_digest(self.headers.get("X-Office-Token") or "", ask.token(home)):
                 self.send_error(403)
                 return
+            if self.path == "/answer":
+                return self.answer()
             try:
                 d = json.loads(self.rfile.read(min(int(self.headers.get("Content-Length") or 0), 4000)))
                 q, job = str(d["q"]).strip(), d.get("job")
@@ -770,6 +777,27 @@ def serve_dashboard(home, root):
                 return
             f = home / "state.json"
             body = json.dumps(ask.answer(home, json.loads(f.read_text()) if f.exists() else {}, q, job, claude=CLAUDE)).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(body)
+
+        def answer(self):
+            try:
+                d = json.loads(self.rfile.read(min(int(self.headers.get("Content-Length") or 0), 4000)))
+                job, text = str(d["job"]), str(d["text"]).strip()
+            except (ValueError, KeyError, TypeError):
+                self.send_error(400)
+                return
+            f = home / "state.json"
+            st = json.loads(f.read_text()) if f.exists() else {}
+            if not re.fullmatch(r"[A-Za-z0-9_-]+", job) or not text \
+                    or (st.get("jobs", {}).get(job) or {}).get("stage") not in WAITING_HUMAN:
+                self.send_error(400)  # only a job that waits on the owner takes an answer
+                return
+            write_answer(home, job, text)
+            body = json.dumps({"ok": True, "running": bool(st.get("running"))}).encode()
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Cache-Control", "no-store")

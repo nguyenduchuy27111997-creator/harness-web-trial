@@ -131,6 +131,79 @@ def stats(home, state):
             "median_minutes": statistics.median(minutes) if minutes else None}
 
 
+# Why a feature of the milestone in progress is not moving, as the office's wait map colours it (v9, P38).
+WAIT_KIND = {"waiting_base": "base", "ci": "ci", "merging": "ci", "held": "you", "needs_human": "you", "failed": "you",
+             "reverted": "you", "building": "work", "review": "work", "fixing": "work", "merged": "done",
+             "dropped": "done"}
+
+
+def _epoch(stamp):
+    return datetime.datetime.fromisoformat(stamp).timestamp()
+
+
+def milestone(root, home, state, now=None):
+    """The milestone in progress for the office (v9, P38): how long it has run beside the milestones before it, a
+    guess at when it is done, and why each of its features waits (the design, the dispatcher's plan, files another
+    feature holds, a base PR, CI, the owner). Its first build is its design job's or a feature's, whichever came first."""
+    import backlog
+    now = now or __import__("time").time()
+    feats = backlog.read(root)
+    jobs = state.get("jobs", {})
+    by_ms = {}
+    for f in feats:
+        if f.get("milestone"):
+            by_ms.setdefault(f["milestone"], []).append(f)
+
+    def span(ms):
+        mine = [jobs[i] for i in [f["id"] for f in by_ms[ms]] + [f"D-{ms}"] if i in jobs]
+        starts = [j["first_started"] for j in mine if j.get("first_started")]
+        ends = [_epoch(j["merged_at"]) for j in mine if j.get("merged_at")]
+        done = all(f.get("status") == "passing" for f in by_ms[ms])
+        return (min(starts) if starts else None), (max(ends) if done and ends else None)
+
+    past = []
+    for ms in by_ms:
+        start, end = span(ms)
+        if start and end:
+            past.append({"id": ms, "hours": round((end - start) / 3600, 1)})
+    current = next((ms for ms in by_ms if any(f.get("status") != "passing" for f in by_ms[ms])), None)
+    if not current:
+        return {"current": None, "past": past[-4:]}
+    passing = {f["id"] for f in feats if f.get("status") == "passing"}
+    dj = jobs.get(f"D-{current}") or {}
+    designed = (Path(root) / f"docs/design/{current}.md").exists() or dj.get("stage") in ("ci", "waiting_base", "merging")
+    planning = (state.get("planning") or {}).get(current)
+    rows = []
+    for f in by_ms[current]:
+        j = jobs.get(f["id"]) or {}
+        stage = "merged" if f["id"] in passing else j.get("stage") or "queued"
+        kind, why = WAIT_KIND.get(stage, "work"), j.get("note") or ""
+        if stage in ("held", "needs_human", "failed"):
+            why = j.get("question") or why
+        if stage == "queued":
+            deps = [d for d in f.get("depends_on", []) if d not in passing]
+            if not designed:
+                kind, why = "design", f"waits for its design (D-{current}, {dj.get('stage') or 'not started'})"
+            elif planning:
+                kind, why = "plan", "waits for the dispatcher's plan of the milestone"
+            elif f["id"] in (state.get("lease_waits") or {}):
+                kind, why = "files", state["lease_waits"][f["id"]]
+            elif deps:
+                kind, why = "deps", "needs " + ", ".join(deps)
+            else:
+                kind, why = "lane", "waits for a free lane"
+        rows.append({"id": f["id"], "title": f.get("title", ""), "complexity": f.get("complexity"), "stage": stage,
+                     "wait": kind, "why": why[:300], "pr": j.get("pr"), "pr_url": j.get("pr_url")})
+    start, _ = span(current)
+    done = sum(1 for r in rows if r["wait"] == "done")
+    elapsed = now - start if start else 0
+    left = round(elapsed / done * (len(rows) - done)) if done and start else None
+    return {"current": {"id": current, "started": start, "elapsed_seconds": round(elapsed), "done": done,
+                        "total": len(rows), "left_seconds": left, "planning": bool(planning),
+                        "design": dj.get("stage"), "features": rows},
+            "past": past[-4:]}
+
+
 def roadmap(root, home, state):
     """The backlog as the office's Roadmap shows it (DESIGN.md 14.14): each feature with its stage, dependencies and
     acceptance; each milestone's progress, cost and a guess at when it is done; and the next features to start, why."""
