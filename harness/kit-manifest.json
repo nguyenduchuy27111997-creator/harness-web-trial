@@ -1,5 +1,5 @@
 {
-  "version": "5.36.1",
+  "version": "5.36.2",
   "preset": "nextjs-supabase",
   "files": {
     ".claude/agents/advisor.md": "e7a83e9817e031dfa49a2671940111ea252614b123ef8c48dc15cd3aac0b2c52",
@@ -15,7 +15,7 @@
     ".claude/agents/security-reviewer.md": "ef10f4f0570c9d82ed817281254d156171ef62684fa558db493b0ff2b83fe1f1",
     ".claude/agents/skeptic.md": "ff49a02f0746e6c6206232ef0deab6076c81130a261b763e939276eec35a30ed",
     ".claude/agents/summarizer.md": "cf1a9b010f5f7b867d4edc295476b79d37821862f1017f5af331ae382ffbd3ec",
-    ".claude/agents/test-writer.md": "564f5184d9413015d84f459a1a26cced6bfe45de7ded33a294639922fd8517df",
+    ".claude/agents/test-writer.md": "848a5b39987fa5cdc706379dd87670f777bcf267d7925dded419fb0be51dcd26",
     ".claude/agents/verifier.md": "75cf991105e19c5c886a60e54b50914562c9ae97c2e4f18101e3ac300d1f402b",
     ".claude/settings.json": "9247f25cf94dc2c3f10bdcbd953cd7f9ae415f67e4e41b472d7fdd4bbbda9fd8",
     ".claude/skills/adopt/SKILL.md": "f8eeb0fdad00f583847ed082736f95782141d1b59bb9b62874d968d2dbc6b872",
@@ -217,7 +217,7 @@
     "harness/runner.py": "4cd3ef03596e6c584c389408de022e721bc0131d441f6484b2adcbfbc14b8b97",
     "harness/scheduler.py": "423d7c98ee0830fc5e2414ce2704440525658d3683e9df81963289989104882e",
     "harness/stack.json": "3bb54c8a7c4dc853aa0ace49bf7ab8709465ad8566d4af5a4898b811f47e9b2f",
-    "harness/stages.py": "27ebb51995e46548c50dd6073f4169ef1e53be83c5976f12cc17e6ee2a23e057",
+    "harness/stages.py": "3c935c54ff1ca9e5fe52ced39f7cb9300626359c2ef4877deaa36b98aa23745b",
     "harness/stream.py": "88be57920690890dab97128b97cbbaaa96e0e10dcc2a82dc63e1953d94117de5",
     "harness/sync_issues.py": "5ec139bacc3babff584d052f4b4fdd0706cc7fcb34d897c9d49349de0f7615c9",
     "harness/validate_backlog.py": "c74463e1f2526854845a3fbc3ff80f6d3f917e192482832b6532a3ca97741d38",
