@@ -4,8 +4,9 @@ import { useActionState, useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { STATUS_LABELS } from "@/lib/books";
-import type { ImportState } from "@/lib/import";
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { StatusBadge } from "@/components/status-badge";
+import { IMPORT_MAX_BYTES, type ImportState } from "@/lib/import";
 
 type Action = (prev: ImportState, formData: FormData) => Promise<ImportState>;
 
@@ -42,7 +43,14 @@ export function ImportForm({ preview, confirm }: { preview: Action; confirm: Act
           disabled={previewing}
           aria-invalid={state.error ? true : undefined}
           aria-describedby={state.error ? `${id}-error` : undefined}
-          onChange={(e) => e.currentTarget.form?.requestSubmit()}
+          onChange={(e) => {
+            const file = e.currentTarget.files?.[0];
+            if (file && file.size > IMPORT_MAX_BYTES) {
+              setState({ error: "The file is too large" });
+              return;
+            }
+            e.currentTarget.form?.requestSubmit();
+          }}
         />
         {state.error && (
           <p id={`${id}-error`} role="alert" className="text-sm text-destructive">
@@ -58,29 +66,29 @@ export function ImportForm({ preview, confirm }: { preview: Action; confirm: Act
       {rows && state.csv !== undefined && (
         <form action={confirmAction} className="flex flex-col gap-3">
           <Input type="hidden" name="csv" value={state.csv} />
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <caption className="sr-only">Books to add</caption>
-              <thead className="text-muted-foreground">
-                <tr>
-                  <th scope="col" className="py-2 pr-4 font-medium">Title</th>
-                  <th scope="col" className="py-2 pr-4 font-medium">Author</th>
-                  <th scope="col" className="py-2 pr-4 font-medium">Status</th>
-                  <th scope="col" className="py-2 font-medium">Rating</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row, i) => (
-                  <tr key={i} className="border-t">
-                    <td className="py-2 pr-4">{row.title}</td>
-                    <td className="py-2 pr-4">{row.author}</td>
-                    <td className="py-2 pr-4">{STATUS_LABELS[row.status]}</td>
-                    <td className="py-2">{row.rating ?? ""}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table>
+            <TableCaption className="sr-only">Books to add</TableCaption>
+            <TableHeader>
+              <TableRow>
+                <TableHead scope="col">Title</TableHead>
+                <TableHead scope="col">Author</TableHead>
+                <TableHead scope="col">Status</TableHead>
+                <TableHead scope="col">Rating</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((row, i) => (
+                <TableRow key={i}>
+                  <TableCell>{row.title}</TableCell>
+                  <TableCell>{row.author}</TableCell>
+                  <TableCell>
+                    <StatusBadge status={row.status} />
+                  </TableCell>
+                  <TableCell>{row.rating ?? ""}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
           <div className="flex gap-2">
             <Button type="submit" disabled={adding || rows.length === 0}>
               {adding ? "Adding…" : `Add ${rows.length} ${rows.length === 1 ? "book" : "books"}`}
