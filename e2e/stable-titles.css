@@ -1,1 +1,2 @@
-li a { font-variant-numeric: tabular-nums; }
+/* Titles carry the lane name and a timestamp, so their width differs between a lane and CI: a fixed box keeps the masked area the same. */
+li a { display: inline-block; width: 24rem; white-space: nowrap; overflow: hidden; }
