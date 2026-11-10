@@ -30,6 +30,7 @@ import { insertNote, parseNote, removeNote, updateNote, type NoteFormState } fro
 import { insertQuote, parseQuote, removeQuote, updateQuote, type QuoteFormState } from "@/lib/quotes";
 import { addBookToShelf, parseShelfChoice, removeBookFromShelf, type AddToShelfFormState } from "@/lib/shelves";
 import { addTag, parseTagName, removeTag, type TagFormState } from "@/lib/tags";
+import { queueBook } from "@/lib/queue";
 import { createClient, requireUser } from "@/lib/supabase/server";
 
 export async function updateStatus(
@@ -357,4 +358,12 @@ export async function removeBookTag(bookId: string, tagId: string, _formData: Fo
   revalidatePath("/books");
   revalidatePath("/tags");
   revalidatePath(`/books/${bookId}`);
+}
+
+export async function addToUpNext(bookId: string, _formData: FormData): Promise<void> {
+  await requireUser();
+  if (!isUuid(bookId)) return;
+  await queueBook(await createClient(), bookId);
+  revalidatePath(`/books/${bookId}`);
+  revalidatePath("/up-next");
 }

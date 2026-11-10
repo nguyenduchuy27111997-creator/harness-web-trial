@@ -156,6 +156,10 @@ export async function updateBookStatus(
 ): Promise<boolean> {
   const { data, error } = await supabase.from("books").update({ status }).eq("id", id).select("id");
   if (error) throw new Error(error.message);
+  if (data.length > 0 && status !== "want_to_read") {
+    const { error: queueError } = await supabase.from("up_next").delete().eq("book_id", id);
+    if (queueError) throw new Error(queueError.message);
+  }
   return data.length > 0;
 }
 

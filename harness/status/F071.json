@@ -1,0 +1,1 @@
+{"status": "passing", "notes": "Up next queue: lib/queue.ts, /up-next page + actions, Add to Up next on book page, updateBookStatus unqueues. Migrations 1-3 had to be applied to the shared local DB with `npx supabase migration up`."}
