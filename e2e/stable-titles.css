@@ -1,1 +1,1 @@
-li a { font-variant-numeric: tabular-nums; }
+li a { font-variant-numeric: tabular-nums; display: block; width: 24rem; overflow: hidden; white-space: nowrap; }
