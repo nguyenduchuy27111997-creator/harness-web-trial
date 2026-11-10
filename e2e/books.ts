@@ -20,3 +20,12 @@ export async function saveStatus(page: Page, name: string) {
   await pick(page, "Status", name);
   await page.getByRole("button", { name: "Save status" }).click();
 }
+
+// Adds tags to the book page that is open; callers check the heading first.
+export async function tagOpenBook(page: Page, names: string[]) {
+  for (const name of names) {
+    await page.getByLabel("Add tag").fill(name);
+    await page.getByRole("button", { name: "Add", exact: true }).click();
+    await page.getByRole("button", { name: `Remove tag ${name}` }).waitFor();
+  }
+}

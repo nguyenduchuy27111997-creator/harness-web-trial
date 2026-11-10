@@ -96,3 +96,15 @@ export async function removeTag(supabase: SupabaseClient<Database>, bookId: stri
   }
   return true;
 }
+
+// The tag name when it matches one of my tags (ignoring case), else undefined, so a stray value never reaches a query.
+export function parseTagFilter(value: string | string[] | undefined, tags: Tag[]): string | undefined {
+  if (typeof value !== "string") return undefined;
+  return tags.find((tag) => tag.name.toLowerCase() === value.toLowerCase())?.name;
+}
+
+export async function listTaggedBookIds(supabase: SupabaseClient<Database>, tagName: string): Promise<Set<string>> {
+  const { data, error } = await supabase.from("book_tags").select("book_id, tag:tags!inner(name)").ilike("tag.name", escapeLike(tagName));
+  if (error) throw new Error(error.message);
+  return new Set(data.map((row) => row.book_id));
+}

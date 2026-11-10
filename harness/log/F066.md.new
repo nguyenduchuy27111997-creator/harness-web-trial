@@ -1,0 +1,5 @@
+## 2026-11-10 12:00 · passing
+- Did: parseTagFilter, listTaggedBookIds, booksHref tag, TagSelect, tag threaded through controls; F064 list baseline regenerated.
+- Verified by: verifier PASS, check.sh green (F066 e2e).
+- Next session should know: spec shelf check changed to expect.poll (wait only).
+

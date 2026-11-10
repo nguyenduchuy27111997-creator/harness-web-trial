@@ -5,12 +5,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SORT_LABELS, booksHref, parseSort, type BookSort, type BookStatus } from "@/lib/books";
 
-export function SortSelect({ status, q, sort, shelf }: { status?: BookStatus; q?: string; sort: BookSort; shelf?: string }) {
+export function SortSelect({ status, q, sort, shelf, tag }: { status?: BookStatus; q?: string; sort: BookSort; shelf?: string; tag?: string }) {
   const router = useRouter();
   return (
     <div className="flex flex-col gap-2">
       <Label htmlFor="sort">Sort</Label>
-      <Select value={sort} onValueChange={(value) => router.push(booksHref({ status, q, sort: parseSort(value), shelf }))}>
+      <Select value={sort} onValueChange={(value) => router.push(booksHref({ status, q, sort: parseSort(value), shelf, tag }))}>
         <SelectTrigger id="sort" className="w-full sm:w-48">
           <SelectValue />
         </SelectTrigger>

@@ -1,0 +1,1 @@
+{"status":"passing","notes":"Tag select on /books, ?tag= kept with status/q/sort/shelf, Show all tags link. Updated F064 list baseline (taller page). One wait-only fix in the test-writer spec: poll for shelf param."}
