@@ -74,7 +74,7 @@ export function ImportForm({ preview, confirm }: { preview: Action; confirm: Act
               <TableHeader>
                 <TableRow>
                   <TableHead scope="col">Title</TableHead>
-                  <TableHead scope="col">Author</TableHead>
+                  <TableHead scope="col" className="hidden sm:table-cell">Author</TableHead>
                   <TableHead scope="col">Status</TableHead>
                   <TableHead scope="col">Rating</TableHead>
                 </TableRow>
@@ -82,8 +82,13 @@ export function ImportForm({ preview, confirm }: { preview: Action; confirm: Act
               <TableBody>
                 {rows.map((row, i) => (
                   <TableRow key={i}>
-                    <TableCell>{row.title}</TableCell>
-                    <TableCell>{row.author}</TableCell>
+                    <TableCell className="whitespace-normal">
+                      <span className="font-heading">{row.title}</span>
+                      {row.author && (
+                        <span className="block text-sm text-muted-foreground sm:hidden">{row.author}</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">{row.author}</TableCell>
                     <TableCell>
                       <StatusBadge status={row.status} />
                     </TableCell>
