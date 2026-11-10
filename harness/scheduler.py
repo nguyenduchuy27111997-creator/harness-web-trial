@@ -113,6 +113,8 @@ class Scheduler:
                 continue
             if f.get("type") != "bug" and self.over_budget(f.get("milestone")):
                 continue  # bugs still run; the rest of the milestone waits for a new budget
+            if self.planning(f.get("milestone")):
+                continue  # decide mode: the dispatcher's touches for the milestone come first
             base, ok = "main", True
             if self.needs_design(f):  # build on the milestone's design PR, never before it exists
                 dj = self.job(f"D-{f.get('milestone')}")

@@ -20,6 +20,7 @@ MODE = os.environ.get("LOOP_DISPATCHER", "")  # "suggest" turns it on; "decide" 
 ACTS = {"retry", "retry_large", "answer", "rebuild", "split"}
 SURE = float(os.environ.get("LOOP_DISPATCHER_SURE", "0.7"))
 MAX_DECISIONS = 2
+PLAN_WAIT = 15 * 60  # seconds a milestone's features wait for its plan
 CAP = float(os.environ.get("LOOP_DISPATCHER_CAP", "0.5"))  # dollars at most per question
 EVENTS = {"held": "held", "failed": "failed", "reverted": "main red", "needs_human": "needs human"}
 
@@ -57,7 +58,16 @@ class Dispatcher:
                 box["error"] = repr(e)
         t = threading.Thread(target=ask, daemon=True)
         self.__dict__.setdefault("advice", {})[key] = (t, box, job["id"], event, probe)
+        if MODE == "decide" and event == "milestone":
+            self.state.setdefault("planning", {}).setdefault(job.get("milestone"), time.time())
         t.start()
+
+    def planning(self, ms):
+        """Decide mode: the milestone's plan is being made, so its features wait for it, for at most PLAN_WAIT.
+        Seen in CI: features stack on the design PR as soon as it is up, so the dispatcher's touches came a few
+        minutes after the first wave had started and changed nothing."""
+        began = self.state.get("planning", {}).get(ms)
+        return bool(began) and time.time() - began < PLAN_WAIT
 
     def brief(self, job, event):
         f = self.main.get(job["id"], {}) if hasattr(self, "main") else {}
@@ -111,6 +121,8 @@ class Dispatcher:
                 self.consult(job, "ci" if event == "milestone" else job["stage"])
                 continue
             tries.pop(key, None)
+            if event == "milestone":
+                self.state.get("planning", {}).pop((job or {}).get("milestone"), None)  # answered or not, the wait is over
             if failed:  # asked three times, never answered: the reply is an error, not advice. Seen on the web trial:
                 # "Failed to authenticate" was logged as F048's advice.
                 error, advice = box.get("error") or (text or "no reply").strip()[:200], {}
