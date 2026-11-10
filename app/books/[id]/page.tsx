@@ -17,6 +17,8 @@ import { ReviewForm } from "@/components/review-form";
 import { StatusBadge } from "@/components/status-badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getBook } from "@/lib/books";
+import { isQueued } from "@/lib/queue";
+import { Button } from "@/components/ui/button";
 import { listPastReads } from "@/lib/reads";
 import { listNotes } from "@/lib/notes";
 import { listBookQuotes } from "@/lib/quotes";
@@ -30,6 +32,7 @@ import {
   editNote,
   deleteNote,
   addToShelf,
+  addToUpNext,
   deleteBook,
   editBook,
   editDates,
@@ -48,13 +51,14 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   await requireUser();
   const supabase = await createClient();
-  const [book, shelves, shelfIds, notes, quotes, pastReads] = await Promise.all([
+  const [book, shelves, shelfIds, notes, quotes, pastReads, queued] = await Promise.all([
     getBook(supabase, id),
     listShelves(supabase),
     listBookShelfIds(supabase, id),
     listNotes(supabase, id),
     listBookQuotes(supabase, id),
     listPastReads(supabase, id),
+    isQueued(supabase, id),
   ]);
   if (!book) notFound();
   return (
@@ -80,6 +84,16 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
         />
       )}
       <BookStatusForm status={book.status} action={updateStatus.bind(null, book.id)} />
+      {book.status === "want_to_read" &&
+        (queued ? (
+          <p className="text-sm text-muted-foreground">In Up next</p>
+        ) : (
+          <form action={addToUpNext.bind(null, book.id)}>
+            <Button type="submit" variant="outline">
+              Add to Up next
+            </Button>
+          </form>
+        ))}
       <BookShelves
         shelves={shelves}
         onShelfIds={shelfIds}

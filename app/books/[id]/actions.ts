@@ -29,6 +29,7 @@ import { readAgain, removePastRead } from "@/lib/reads";
 import { insertNote, parseNote, removeNote, updateNote, type NoteFormState } from "@/lib/notes";
 import { insertQuote, parseQuote, removeQuote, updateQuote, type QuoteFormState } from "@/lib/quotes";
 import { addBookToShelf, parseShelfChoice, removeBookFromShelf, type AddToShelfFormState } from "@/lib/shelves";
+import { queueBook } from "@/lib/queue";
 import { createClient, requireUser } from "@/lib/supabase/server";
 
 export async function updateStatus(
@@ -325,4 +326,12 @@ export async function deletePastRead(bookId: string, readId: string, _formData: 
   revalidatePath("/books");
   revalidatePath(`/books/${bookId}`);
   revalidatePath("/stats");
+}
+
+export async function addToUpNext(bookId: string, _formData: FormData): Promise<void> {
+  await requireUser();
+  if (!isUuid(bookId)) return;
+  await queueBook(await createClient(), bookId);
+  revalidatePath(`/books/${bookId}`);
+  revalidatePath("/up-next");
 }
