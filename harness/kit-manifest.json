@@ -1,5 +1,5 @@
 {
-  "version": "5.36.0",
+  "version": "5.36.1",
   "preset": "nextjs-supabase",
   "files": {
     ".claude/agents/advisor.md": "e7a83e9817e031dfa49a2671940111ea252614b123ef8c48dc15cd3aac0b2c52",
@@ -32,7 +32,7 @@
     ".claude/skills/replan/SKILL.md": "4235831bab444034fab518dfb8ebc3e516edb0d9f07c33132ccbde18b50073be",
     ".dependency-cruiser.cjs": "5c14b0fd44c5946c5529bd637e27949a5ba1efa6ac6b7484286a1fa0a78be6f5",
     ".githooks/pre-commit": "290f557f7da27724de2535edad8380acd2721cb1bdab9d740b7086092e5b9a7a",
-    ".github/workflows/check.yml": "8701d73d9f6ba560325a32d64c0bc8c643ce35aeb3c5cf04f0c1cb7cbdf3109f",
+    ".github/workflows/check.yml": "2400dc556a635f7ffa616fb8b30a55fea2827ddf2d172000177c99b64fed7605",
     ".github/workflows/issues.yml": "75cb1667164f588056825b3fa650d453ff8ab533c0850dc822421c38a6b70e55",
     ".gitleaks.toml": "6c9d2af52babda2552fc99213154fc33eca05dd04e2bd6961af4ab96c01b0e81",
     ".jscpd.json": "4764cf2024cc946cd0f095bfba652746da9714b450bffff8e4b74e5d9882148b",
@@ -49,7 +49,7 @@
     "e2e/harness-health.spec.ts": "22e3a9b2b94bbe9e207bff5af2b1f9332b973fdafcf6ba46f87cd602dc1ea4b8",
     "e2e/screenshot.css": "4733579a4815ba825e08701d72f70e443b1498fb3f59654125ea59a3b44e71b6",
     "e2e/styleguide.spec.ts": "eac4c7a58e2f3472b96a7baaeefa49979100f85e18859e20c529d82a08982e97",
-    "harness/PRESET.md": "6df1ec469f67ee5e73eaae42ecddacb8e8b2e3e9248734e7b09539f8ef271d63",
+    "harness/PRESET.md": "03d7af527c39e17d929ba1ce09c94f13dbe9beb41d7a0dcacd82ebe000368c9e",
     "harness/agents.py": "3a061e445bb8bff3aa9c36a5d5e326eb0fd5df843ec7457852203b2916f4b40c",
     "harness/ask.py": "c87c29c6b7a9e3e84798315053e94f3e541005dfca46c67586e1fb82b2aa57e5",
     "harness/backlog.py": "51afa0f1c90ff902cacb492fa7313f3e30ac2717b23d3de8a0367e54279b5422",

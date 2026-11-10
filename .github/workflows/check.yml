@@ -132,5 +132,9 @@ jobs:
         if: failure()
         with:
           name: playwright-report-${{ matrix.shard }}
-          path: playwright-report/
+          # test-results/ holds each failure's expected, actual and diff images: Playwright writes no HTML report on CI,
+          # so with playwright-report/ alone nothing was kept (the web trial's F064 failed on 224 pixels no one could see).
+          path: |
+            test-results/
+            playwright-report/
           retention-days: 7
