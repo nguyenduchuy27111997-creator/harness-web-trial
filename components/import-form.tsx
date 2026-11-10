@@ -52,12 +52,26 @@ export function ImportForm({ preview, confirm }: { preview: Action; confirm: Act
       </form>
       {state.added !== undefined && (
         <p role="status">
-          Added {state.added} {state.added === 1 ? "book" : "books"}
+          Added {state.added} {state.added === 1 ? "book" : "books"}, skipped {state.skippedCount ?? 0}
         </p>
       )}
       {rows && state.csv !== undefined && (
         <form action={confirmAction} className="flex flex-col gap-3">
           <Input type="hidden" name="csv" value={state.csv} />
+          {state.skipped && state.skipped.length > 0 && (
+            <div className="text-sm">
+              <p role="status">
+                {state.skipped.length} {state.skipped.length === 1 ? "row" : "rows"} will be skipped
+              </p>
+              <ul className="list-disc pl-5 text-muted-foreground">
+                {state.skipped.map((s) => (
+                  <li key={s.line}>
+                    Row {s.line}: {s.reason}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <caption className="sr-only">Books to add</caption>
