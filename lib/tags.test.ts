@@ -25,6 +25,10 @@ describe("parseTagName", () => {
     expect(parseTagName(form("a".repeat(24))).ok).toBe(true);
     expect(parseTagName(form("a".repeat(25))).ok).toBe(false);
   });
+  it("counts characters, not UTF-16 units, as the database does", () => {
+    expect(parseTagName(form("📚".repeat(24))).ok).toBe(true);
+    expect(parseTagName(form("📚".repeat(25))).ok).toBe(false);
+  });
 });
 
 describe("sortTags", () => {
