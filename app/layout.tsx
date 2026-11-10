@@ -3,7 +3,8 @@ import { Lora } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { cn } from "@/lib/utils";
-import { getUser } from "@/lib/supabase/server";
+import { getDisplayName } from "@/lib/profile";
+import { createClient, getUser } from "@/lib/supabase/server";
 import { signOut } from "./(auth)/actions";
 
 // Headings and book titles; body text uses the system sans stack from globals.css.
@@ -17,7 +18,9 @@ export const metadata: Metadata = {
 // Reads the session cookie. Awaited without a Suspense fallback so a page's notFound() can still set 404.
 async function Header() {
   const user = await getUser();
-  return <SiteHeader signedIn={!!user} signOut={signOut} />;
+  // A failed profile read only drops the name from the header; it must not break every page.
+  const displayName = user ? await getDisplayName(await createClient()).catch(() => null) : null;
+  return <SiteHeader signedIn={!!user} displayName={displayName} signOut={signOut} />;
 }
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
