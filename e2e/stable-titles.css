@@ -1,1 +1,3 @@
 li a { font-variant-numeric: tabular-nums; }
+/* Masked titles hold the lane name (F0xx locally, "local" on CI), so give the mask a box that does not depend on the text. */
+li a[href^="/books/"] { display: inline-block; width: 24rem; }
