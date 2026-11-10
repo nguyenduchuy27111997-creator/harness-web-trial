@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
 import type { FormState, Parsed } from "@/lib/forms";
+import { isUuid } from "./books";
 
 export type Tag = { id: string; name: string };
 
@@ -22,6 +23,7 @@ export function sortTags<T extends { name: string }>(tags: T[]): T[] {
 
 // Row Level Security limits the rows to the signed-in user's own.
 export async function listBookTags(supabase: SupabaseClient<Database>, bookId: string): Promise<Tag[]> {
+  if (!isUuid(bookId)) return [];
   const { data, error } = await supabase.from("book_tags").select("tag:tags(id, name)").eq("book_id", bookId);
   if (error) throw new Error(error.message);
   const tags: Tag[] = [];
@@ -64,6 +66,7 @@ export async function addTag(
   bookId: string,
   name: string,
 ): Promise<"added" | "duplicate" | "full" | "missing"> {
+  if (!isUuid(bookId)) return "missing";
   const current = await listBookTags(supabase, bookId);
   if (current.some((tag) => tag.name.toLowerCase() === name.toLowerCase())) return "duplicate";
   if (current.length >= TAGS_PER_BOOK) return "full";
@@ -77,6 +80,7 @@ export async function addTag(
 
 // A tag is shown only while a book has it: the tag goes when its last book row does.
 export async function removeTag(supabase: SupabaseClient<Database>, bookId: string, tagId: string): Promise<boolean> {
+  if (!isUuid(bookId)) return false;
   const { data, error } = await supabase
     .from("book_tags")
     .delete()
