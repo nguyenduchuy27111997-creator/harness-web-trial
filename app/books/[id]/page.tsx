@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookQuotes } from "@/components/book-quotes";
+import { BookTags } from "@/components/book-tags";
 import { BookShelves } from "@/components/book-shelves";
 import { BookStatusForm } from "@/components/book-status-form";
 import { BookNotes } from "@/components/book-notes";
@@ -22,6 +23,7 @@ import { isQueued } from "@/lib/queue";
 import { listPastReads } from "@/lib/reads";
 import { listNotes } from "@/lib/notes";
 import { listBookQuotes } from "@/lib/quotes";
+import { listBookTags } from "@/lib/tags";
 import { listBookShelfIds, listShelves } from "@/lib/shelves";
 import { createClient, requireUser } from "@/lib/supabase/server";
 import {
@@ -31,6 +33,7 @@ import {
   editQuote,
   editNote,
   deleteNote,
+  addBookTag,
   addToShelf,
   addToUpNext,
   deleteBook,
@@ -38,6 +41,7 @@ import {
   editDates,
   readBookAgain,
   deletePastRead,
+  removeBookTag,
   removeFromShelf,
   saveProgress,
   saveRating,
@@ -51,10 +55,11 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   await requireUser();
   const supabase = await createClient();
-  const [book, shelves, shelfIds, notes, quotes, pastReads, queued] = await Promise.all([
+  const [book, shelves, shelfIds, tags, notes, quotes, pastReads, queued] = await Promise.all([
     getBook(supabase, id),
     listShelves(supabase),
     listBookShelfIds(supabase, id),
+    listBookTags(supabase, id),
     listNotes(supabase, id),
     listBookQuotes(supabase, id),
     listPastReads(supabase, id),
@@ -106,6 +111,7 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
         action={addToShelf.bind(null, book.id)}
         removeAction={removeFromShelf.bind(null, book.id)}
       />
+      <BookTags tags={tags} action={addBookTag.bind(null, book.id)} removeAction={removeBookTag.bind(null, book.id)} />
       {book.status === "reading" && (
         <ProgressForm
           totalPages={book.total_pages}

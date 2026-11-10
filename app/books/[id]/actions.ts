@@ -29,6 +29,7 @@ import { readAgain, removePastRead } from "@/lib/reads";
 import { insertNote, parseNote, removeNote, updateNote, type NoteFormState } from "@/lib/notes";
 import { insertQuote, parseQuote, removeQuote, updateQuote, type QuoteFormState } from "@/lib/quotes";
 import { addBookToShelf, parseShelfChoice, removeBookFromShelf, type AddToShelfFormState } from "@/lib/shelves";
+import { addTag, parseTagName, removeTag, type TagFormState } from "@/lib/tags";
 import { queueBook } from "@/lib/queue";
 import { createClient, requireUser } from "@/lib/supabase/server";
 
@@ -326,6 +327,37 @@ export async function deletePastRead(bookId: string, readId: string, _formData: 
   revalidatePath("/books");
   revalidatePath(`/books/${bookId}`);
   revalidatePath("/stats");
+}
+
+export async function addBookTag(bookId: string, _prev: TagFormState, formData: FormData): Promise<TagFormState> {
+  await requireUser();
+  const parsed = parseTagName(formData);
+  if (!parsed.ok) return { fieldErrors: parsed.fieldErrors, values: { name: String(formData.get("name") ?? "") } };
+  if (!isUuid(bookId)) return { formError: "Book not found" };
+  try {
+    const result = await addTag(await createClient(), bookId, parsed.value);
+    if (result === "missing") return { formError: "Book not found" };
+    if (result === "duplicate") {
+      return { fieldErrors: { name: "This book already has that tag" }, values: { name: parsed.value } };
+    }
+    if (result === "full") {
+      return { fieldErrors: { name: "A book has at most 10 tags" }, values: { name: parsed.value } };
+    }
+  } catch {
+    return { formError: "Could not save. Try again." };
+  }
+  revalidatePath("/books");
+  revalidatePath("/tags");
+  revalidatePath(`/books/${bookId}`);
+  return { saved: true };
+}
+
+export async function removeBookTag(bookId: string, tagId: string, _formData: FormData): Promise<void> {
+  await requireUser();
+  if (isUuid(bookId) && isUuid(tagId)) await removeTag(await createClient(), bookId, tagId);
+  revalidatePath("/books");
+  revalidatePath("/tags");
+  revalidatePath(`/books/${bookId}`);
 }
 
 export async function addToUpNext(bookId: string, _formData: FormData): Promise<void> {
