@@ -3,6 +3,7 @@ import type { Database } from "@/lib/database.types";
 import type { FormState, Parsed } from "@/lib/forms";
 
 export type Tag = { id: string; name: string };
+export type TagWithCount = Tag & { count: number };
 
 export const TAG_MAX = 24;
 export const TAGS_PER_BOOK = 10;
@@ -38,6 +39,14 @@ export async function listTagsForBooks(supabase: SupabaseClient<Database>): Prom
     byBook.set(row.book_id, [...(byBook.get(row.book_id) ?? []), row.tag]);
   }
   return new Map([...byBook].map(([id, tags]) => [id, sortTags(tags).map((tag) => tag.name)]));
+}
+
+// My tags with how many books have each; a tag no book has any more is left out.
+export async function listTags(supabase: SupabaseClient<Database>): Promise<TagWithCount[]> {
+  const { data, error } = await supabase.from("tags").select("id, name, book_tags(count)");
+  if (error) throw new Error(error.message);
+  const tags = data.map((t) => ({ id: t.id, name: t.name, count: t.book_tags[0]?.count ?? 0 }));
+  return sortTags(tags.filter((t) => t.count > 0));
 }
 
 const escapeLike = (value: string) => value.replace(/[\\%_]/g, "\\$&");
