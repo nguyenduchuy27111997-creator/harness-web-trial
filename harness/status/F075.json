@@ -1,0 +1,1 @@
+{"status": "passing", "notes": "RLS from earlier M7 migrations already isolates tags, queue and profiles. /tags lists my tags through listTags (design M7): counts ('1 book'/'N books'), tags no book has are hidden. The Rename form stays for F067."}

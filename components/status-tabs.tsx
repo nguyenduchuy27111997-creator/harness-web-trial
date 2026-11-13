@@ -8,7 +8,7 @@ const TABS: { label: string; status?: BookStatus }[] = [
   ...BOOK_STATUSES.map((status) => ({ label: STATUS_LABELS[status], status })),
 ];
 
-export function StatusTabs({ current, counts, q, sort, shelf }: { current?: BookStatus; counts: StatusCounts; q?: string; sort?: BookSort; shelf?: string }) {
+export function StatusTabs({ current, counts, q, sort, shelf, tag }: { current?: BookStatus; counts: StatusCounts; q?: string; sort?: BookSort; shelf?: string; tag?: string }) {
   return (
     <nav aria-label="Book filter" className="flex flex-wrap gap-2">
       {TABS.map(({ label, status }) => (
@@ -22,7 +22,7 @@ export function StatusTabs({ current, counts, q, sort, shelf }: { current?: Book
           )}
         >
           <Link
-            href={booksHref({ status, q, sort, shelf })}
+            href={booksHref({ status, q, sort, shelf, tag })}
             aria-current={status === current ? "page" : undefined}
           >
             {label} ({status ? counts[status] : counts.all})

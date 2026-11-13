@@ -1,0 +1,1 @@
+{"status": "passing", "notes": "CSV import with preview per docs/design/M7.md (lib/import.ts, app/library/actions.ts, components/import-form.tsx). A future finished_on imports as empty (decision 0018). Skipped-rows list and 'skipped M' text are F070's."}

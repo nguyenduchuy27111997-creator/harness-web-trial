@@ -1,0 +1,1 @@
+{"status": "passing", "notes": "Validation messages already existed from F064 (lib/tags.ts, actions.ts); this feature adds the e2e test and its baseline."}

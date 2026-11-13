@@ -1,0 +1,1 @@
+{"status": "passing", "notes": "Behavior already built in F071 (startFirst action, Start reading button, empty state). This feature adds only the test-writer's e2e spec, the addQueuedBook helper and the screenshot baseline."}

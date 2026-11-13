@@ -3,6 +3,7 @@ import type { Database } from "@/lib/database.types";
 import type { FormState, Parsed } from "@/lib/forms";
 
 export type Tag = { id: string; name: string };
+export type TagWithCount = Tag & { count: number };
 
 export const TAG_MAX = 24;
 export const TAGS_PER_BOOK = 10;
@@ -12,7 +13,7 @@ export type TagFormState = FormState<"name"> & { saved?: true };
 export function parseTagName(formData: FormData): Parsed<string, "name"> {
   const name = String(formData.get("name") ?? "").trim();
   if (name.length === 0) return { ok: false, fieldErrors: { name: "Enter a tag" } };
-  if (name.length > TAG_MAX) return { ok: false, fieldErrors: { name: "Tags are at most 24 characters" } };
+  if ([...name].length > TAG_MAX) return { ok: false, fieldErrors: { name: "Tags are at most 24 characters" } };
   return { ok: true, value: name };
 }
 
@@ -38,6 +39,14 @@ export async function listTagsForBooks(supabase: SupabaseClient<Database>): Prom
     byBook.set(row.book_id, [...(byBook.get(row.book_id) ?? []), row.tag]);
   }
   return new Map([...byBook].map(([id, tags]) => [id, sortTags(tags).map((tag) => tag.name)]));
+}
+
+// My tags with how many books have each; a tag no book has any more is left out.
+export async function listTags(supabase: SupabaseClient<Database>): Promise<TagWithCount[]> {
+  const { data, error } = await supabase.from("tags").select("id, name, book_tags(count)");
+  if (error) throw new Error(error.message);
+  const tags = data.map((t) => ({ id: t.id, name: t.name, count: t.book_tags[0]?.count ?? 0 }));
+  return sortTags(tags.filter((t) => t.count > 0));
 }
 
 const escapeLike = (value: string) => value.replace(/[\\%_]/g, "\\$&");
@@ -97,14 +106,16 @@ export async function removeTag(supabase: SupabaseClient<Database>, bookId: stri
   return true;
 }
 
-export type TagWithCount = Tag & { count: number };
+// The tag name when it matches one of my tags (ignoring case), else undefined, so a stray value never reaches a query.
+export function parseTagFilter(value: string | string[] | undefined, tags: Tag[]): string | undefined {
+  if (typeof value !== "string") return undefined;
+  return tags.find((tag) => tag.name.toLowerCase() === value.toLowerCase())?.name;
+}
 
-// Tags with no book left are hidden (see removeTag and deleting a book).
-export async function listTags(supabase: SupabaseClient<Database>): Promise<TagWithCount[]> {
-  const { data, error } = await supabase.from("tags").select("id, name, book_tags(count)");
+export async function listTaggedBookIds(supabase: SupabaseClient<Database>, tagName: string): Promise<Set<string>> {
+  const { data, error } = await supabase.from("book_tags").select("book_id, tag:tags!inner(name)").ilike("tag.name", escapeLike(tagName));
   if (error) throw new Error(error.message);
-  const tags = data.map((row) => ({ id: row.id, name: row.name, count: row.book_tags[0]?.count ?? 0 }));
-  return sortTags(tags.filter((tag) => tag.count > 0));
+  return new Set(data.map((row) => row.book_id));
 }
 
 export async function renameTag(

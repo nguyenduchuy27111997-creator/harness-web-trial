@@ -33,3 +33,7 @@
 - Added: F064-F075. Owner checks on F064, F069 and F074.
 - Removed, re-opened, re-ordered: none. CSV import and export left the spec's out of scope.
 - Decisions: `docs/decisions/0016-m7-replan.md`.
+
+## 2026-11-10 (bug)
+- Why: e2e/F064-tags-book.spec.ts masks the title links, whose width follows the Date.now() in each title, so CI saw 224 pixels move at the mask's edge and failed F064 and the features stacked on it, round after round. F064's feature reached main through F066, with the unsteady spec. The human approved adding this bug in chat.
+- Added: F076. Removed, re-opened, re-ordered: none.

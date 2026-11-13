@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   addTag,
   listBookTags,
+  listTags,
   listTagsForBooks,
   parseTagName,
   removeTag,
@@ -24,6 +25,10 @@ describe("parseTagName", () => {
   it("allows 24 characters, not 25", () => {
     expect(parseTagName(form("a".repeat(24))).ok).toBe(true);
     expect(parseTagName(form("a".repeat(25))).ok).toBe(false);
+  });
+  it("counts characters, not UTF-16 units, as the database does", () => {
+    expect(parseTagName(form("📚".repeat(24))).ok).toBe(true);
+    expect(parseTagName(form("📚".repeat(25))).ok).toBe(false);
   });
 });
 
@@ -208,5 +213,27 @@ describe("removeTag", () => {
       { error: { message: "d" } },
     ]);
     await expect(removeTag(client, "b", "t")).rejects.toThrow("d");
+  });
+});
+
+describe("listTags", () => {
+  it("returns tags with counts A to Z, leaving out tags no book has", async () => {
+    const { client } = fakeClient([
+      {
+        data: [
+          { id: "2", name: "travel", book_tags: [{ count: 2 }] },
+          { id: "3", name: "unused", book_tags: [{ count: 0 }] },
+          { id: "1", name: "Classic", book_tags: [{ count: 1 }] },
+        ],
+      },
+    ]);
+    expect(await listTags(client)).toEqual([
+      { id: "1", name: "Classic", count: 1 },
+      { id: "2", name: "travel", count: 2 },
+    ]);
+  });
+  it("throws on error", async () => {
+    const { client } = fakeClient([{ error: { message: "boom" } }]);
+    await expect(listTags(client)).rejects.toThrow("boom");
   });
 });

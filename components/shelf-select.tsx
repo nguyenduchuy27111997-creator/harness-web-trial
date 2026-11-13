@@ -7,12 +7,12 @@ import { booksHref, type BookSort, type BookStatus } from "@/lib/books";
 import type { Shelf } from "@/lib/shelves";
 
 // "all" is the item for no filter: Radix refuses an empty item value, and it cannot collide with a UUID.
-export function ShelfSelect({ status, q, sort, shelf, shelves }: { status?: BookStatus; q?: string; sort?: BookSort; shelf?: string; shelves: Shelf[] }) {
+export function ShelfSelect({ status, q, sort, shelf, tag, shelves }: { status?: BookStatus; q?: string; sort?: BookSort; shelf?: string; tag?: string; shelves: Shelf[] }) {
   const router = useRouter();
   return (
     <div className="flex flex-col gap-2">
       <Label htmlFor="shelf">Shelf</Label>
-      <Select value={shelf ?? "all"} onValueChange={(value) => router.push(booksHref({ status, q, sort, shelf: value === "all" ? undefined : value }))}>
+      <Select value={shelf ?? "all"} onValueChange={(value) => router.push(booksHref({ status, q, sort, tag, shelf: value === "all" ? undefined : value }))}>
         <SelectTrigger id="shelf" className="w-full sm:w-48">
           <SelectValue />
         </SelectTrigger>

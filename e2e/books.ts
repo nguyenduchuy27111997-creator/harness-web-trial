@@ -21,6 +21,22 @@ export async function saveStatus(page: Page, name: string) {
   await page.getByRole("button", { name: "Save status" }).click();
 }
 
+// Adds tags to the book page that is open; callers check the heading first.
+export async function tagOpenBook(page: Page, names: string[]) {
+  for (const name of names) {
+    await page.getByLabel("Add tag").fill(name);
+    await page.getByRole("button", { name: "Add", exact: true }).click();
+    await page.getByRole("button", { name: `Remove tag ${name}` }).waitFor();
+  }
+}
+
+// Adds a Want to read book and puts it last in the Up next queue.
+export async function addQueuedBook(page: Page, title: string) {
+  await addAndOpenBook(page, title, "Want to read");
+  await page.getByRole("button", { name: "Add to Up next" }).click();
+  await page.getByText("In Up next").waitFor();
+}
+
 // Adds tags to the book whose page is open; callers open the book first.
 export async function addTagsOnBookPage(page: Page, names: string[]) {
   for (const name of names) {

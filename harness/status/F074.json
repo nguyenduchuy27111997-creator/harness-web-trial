@@ -1,0 +1,1 @@
+{"status": "passing", "notes": "delete_account() security definer migration (decision 0017 accepted); Settings dialog; /sign-in?deleted=1 notice. Minor: the deleted notice stays above a later sign-in error."}

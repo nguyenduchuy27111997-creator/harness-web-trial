@@ -262,10 +262,12 @@ class Stages:
         return out
 
     def timing_only(self, job, changed):
-        """A change to the test-writer's test that only waits for the app (a dialog to close, a request to settle) is
-        let through when the skeptic finds no check removed or loosened; the new version is then the locked one. Seen
-        on the web trial: F057's test checked a count of 0 under an open dialog and failed 1 or 2 runs in 3, and the
-        coder and fixer had no way to fix it but to stop."""
+        """A change to the test-writer's test that only steadies it is let through when the skeptic finds no check
+        removed or loosened; the new version is then the locked one. That is a wait for the app (a dialog to close, a
+        request to settle), or a screenshot mask moved from per-run text to a block of fixed size. Seen on the web
+        trial: F057's test checked a count of 0 under an open dialog and failed 1 or 2 runs in 3. F064's mask covered a
+        title holding Date.now(), whose width changes, and CI failed on its edge (224 pixels) round after round; the
+        coder and fixer had no way to fix either but to stop."""
         wt = job["worktree"]
         blobs = job.get("locked_blobs") or {}
         if any(p not in blobs for p in changed):  # dropped, or locked before its version was kept: cannot be judged
@@ -275,10 +277,13 @@ class Stages:
             return False
         cost, subtype, text = self.claude(
             job, f"Feature {job['id']}: its code was written to the test-writer's e2e test, which it may not change. "
-                 f"This change to that test claims to only wait for the app longer:\n```diff\n{diff[:8000]}\n```\n"
+                 f"This change to that test claims only to make it steady: to wait for the app longer, or to steady "
+                 f"a screenshot (a mask over a block whose size does not change from run to run, in place of one over "
+                 f"text that does):\n```diff\n{diff[:8000]}\n```\n"
                  "Finding:\n1. [bug] The change removes, loosens or skips a check the test made (an assertion, an "
-                 "expected text or count, a step), rather than only waiting for the app.\n\nReply one line `1: KEEP` "
-                 "if that is so, or `1: DROP — <why>` if every change only waits. Nothing else.",
+                 "expected text or count, a step, or what a screenshot shows beyond data that changes per run), "
+                 "rather than only steadying it.\n\nReply one line `1: KEEP` "
+                 "if that is so, or `1: DROP — <why>` if every change only steadies the test. Nothing else.",
             SKEPTIC_MODEL, turns=20, lane_note=False, agent="skeptic", cap=round(min(0.3, max(self.free_budget(), 0.01)), 2))
         self.merge_telemetry(job)
         job["cost"] = round(job.get("cost", 0) + cost, 4)
