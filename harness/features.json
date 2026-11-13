@@ -1469,6 +1469,27 @@
         "listBookTags and every other tag query that takes a book id return nothing for an id that is not a UUID, with the isUuid guard lib/notes.ts, quotes.ts, reads.ts and queue.ts already use",
         "A new e2e spec checks the 404 for /books/not-a-uuid; no existing spec changes"
       ]
+    },
+    {
+      "id": "F078",
+      "type": "bug",
+      "milestone": "M7",
+      "priority": 78,
+      "complexity": "S",
+      "title": "Fix: e2e screenshots show today's date unmasked, so every run after the baseline's day fails",
+      "depends_on": [
+        "F064",
+        "F065"
+      ],
+      "touches": [
+        "e2e/*.spec.ts",
+        "e2e/__screenshots__/**"
+      ],
+      "acceptance": [
+        "Every e2e screenshot masks each date that comes from the day the test runs (for example 'Started on <date>', 'Finished on <date>', 'Read in N days'), with a mask over the block the date sits in, so the baselines pass on any later day; e2e/F064-tags-book.spec.ts ('book page: add and remove tags') and e2e/F065-tag-validation.spec.ts ('an 11th tag is rejected') first",
+        "Only masks and the baselines they change are touched: every assertion, step and screenshot stays",
+        "Each changed spec passes in Playwright's Docker browser (scripts/e2e.sh <spec>), and CI's e2e shards pass on the PR"
+      ]
     }
   ]
 }
