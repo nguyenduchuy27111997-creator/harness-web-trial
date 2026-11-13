@@ -1,5 +1,5 @@
 {
-  "version": "5.40.3",
+  "version": "5.41.0",
   "preset": "nextjs-supabase",
   "files": {
     ".claude/agents/advisor.md": "e7a83e9817e031dfa49a2671940111ea252614b123ef8c48dc15cd3aac0b2c52",
@@ -148,8 +148,8 @@
     "harness/office/assets/mermaid-parser.core.esm": "a2b73be29a651156bdd6fa92611a1bafec6967fc3b0d190585cbdff9eb18bd21",
     "harness/office/assets/mermaid.core.esm": "af6ced990d2cd04b7cb82bccbcc99ace0f86f19d64254864b37df06ee6fc0d60",
     "harness/office/assets/mindmap-definition-6OY57UG3.esm": "c662e98f93bbcfe040258601583d84ddb560dfba585a8782e76f0b52aebf82a0",
-    "harness/office/assets/office.css": "b7b5837b910ca8a2cb085b0a848ae4724aa1f641a1da04d29118dab31238b928",
-    "harness/office/assets/office.esm": "b455cb32e7cc62dbeb0fde4a49b5586a9ef994fd6769e3401d427695474b249e",
+    "harness/office/assets/office.css": "a0b1a771c43a991f9c28f2070a3e8ebf3023a4b99318cc96872dcfa5a6f29b32",
+    "harness/office/assets/office.esm": "02b5088393deb79c2bd2b214867bb1f9c011cbe20f1ba4630952f370500de490",
     "harness/office/assets/packet-JDAUHWVQ.esm": "9dfa3cc0d3c09282e3d32d864ccec085be42549e977cdef21c3cd7d3e88809b8",
     "harness/office/assets/pegDiagram-ECIUJNBX.esm": "92f25b94f9d491927bd253a9f1e3e88ece6a5bd04677f2203c96f11c879e9892",
     "harness/office/assets/pie-XZMESJXO.esm": "8c98eb3dc225dcd5786c12cfd73955b0e99b5207986ea56dd4f0652baba289a4",
