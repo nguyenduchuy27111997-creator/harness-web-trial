@@ -45,7 +45,7 @@ test("book page: add and remove tags", async ({ page }) => {
   await expect(page).toHaveScreenshot("F064-book-tagged.png", {
     stylePath: "e2e/hide-dev-overlay.css",
     fullPage: true,
-    mask: [page.getByText(title), page.locator("time")],
+    mask: [page.getByText(title), page.getByText(/^Started on /), page.locator("time")],
   });
 });
 
@@ -75,6 +75,6 @@ test("book list: tags show under each title", async ({ page }) => {
   await expect(page).toHaveScreenshot("F064-list-tags.png", {
     stylePath: ["e2e/hide-dev-overlay.css", "e2e/stable-titles.css"],
     fullPage: true,
-    mask: [page.getByRole("link", { name: tagged }), page.getByRole("link", { name: plain }), page.locator("time")],
+    mask: [row, other, page.locator("time")],
   });
 });

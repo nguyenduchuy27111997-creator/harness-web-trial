@@ -1,0 +1,1 @@
+{"status": "passing", "notes": "F064 list screenshot masks whole rows; F064 book-page and F065 tags-full screenshots also mask the date-dependent 'Started on' line; baselines regenerated in Docker."}
