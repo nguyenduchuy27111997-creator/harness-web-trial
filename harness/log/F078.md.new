@@ -1,5 +1,0 @@
-## 2026-11-13 20:00 · passing
-- Did: F064 and F065 book-page screenshots mask the whole book card; regenerated two baselines; dropped unused title var in F065.
-- Verified by: verifier PASS (Docker e2e of both specs, full suite 121/121, date edits leave card box unchanged).
-- Next session should know: CI shards unseen until the PR exists; mask uses .first() on the card.
-
