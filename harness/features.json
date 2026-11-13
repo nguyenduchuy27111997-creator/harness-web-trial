@@ -1449,6 +1449,26 @@
         "Every assertion and the full-page screenshot of the spec stay as they are; only the masks and the regenerated baseline F064-list-tags.png change",
         "The spec passes 5 runs in a row in Playwright's Docker browser (scripts/e2e.sh e2e/F064-tags-book.spec.ts --repeat-each=5) with no pixel difference"
       ]
+    },
+    {
+      "id": "F077",
+      "type": "bug",
+      "milestone": "M7",
+      "priority": 77,
+      "complexity": "S",
+      "title": "Fix: /books/<not a uuid> returns 500 instead of the book not found page since tags",
+      "depends_on": [
+        "F064"
+      ],
+      "touches": [
+        "lib/tags.ts",
+        "e2e/F077-*"
+      ],
+      "acceptance": [
+        "Signed in, opening /books/not-a-uuid shows the book not found page with HTTP 404, as before tags (decision 0002), not a 500",
+        "listBookTags and every other tag query that takes a book id return nothing for an id that is not a UUID, with the isUuid guard lib/notes.ts, quotes.ts, reads.ts and queue.ts already use",
+        "A new e2e spec checks the 404 for /books/not-a-uuid; no existing spec changes"
+      ]
     }
   ]
 }
