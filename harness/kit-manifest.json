@@ -1,5 +1,5 @@
 {
-  "version": "5.41.1",
+  "version": "5.41.2",
   "preset": "nextjs-supabase",
   "files": {
     ".claude/agents/advisor.md": "e7a83e9817e031dfa49a2671940111ea252614b123ef8c48dc15cd3aac0b2c52",
@@ -84,7 +84,7 @@
     "harness/office/assets/Map2D.esm": "8b99ca1279c57d643f6e4db5bf0c2d8ff9ba95b0b4d61f3d4006a9b236861890",
     "harness/office/assets/Products.esm": "a3fd362e6090467df92df15d1b07e89e92fbeff65bee2865360a94ac6859ea64",
     "harness/office/assets/Roadmap.esm": "05375fa70cb3e95de7bb5e4760c1fc8de8cf8c80cdde686a11ed4b3a4618469a",
-    "harness/office/assets/Stage.esm": "3cdf9d4e56aff4531928dc4f6bd8a0d73da744160582a031efcb7d9d2c1d6100",
+    "harness/office/assets/Stage.esm": "b4564bed8ff35a2caa7c3470832f01f48dbe16383addaccd77a664990a6a9199",
     "harness/office/assets/Team.esm": "063dc0a578f70e99b0d368b429122869b02e577368f41ef2a3d81b39942a8cc6",
     "harness/office/assets/abnfDiagram-WEYOIA3C.esm": "7f324876cb0e4c3fb4a0e11fc1813f0c2b563cc60e08250f42972ef9e8087205",
     "harness/office/assets/architecture-WOLXFQ4H.esm": "0202852e458752b2834d6945e582d27dec8ba1f97b666257c566c0a6189b298e",
