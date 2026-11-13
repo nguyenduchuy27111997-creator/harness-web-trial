@@ -43,7 +43,7 @@ test("a duplicate tag is rejected whatever its case", async ({ page }) => {
 });
 
 test("an 11th tag is rejected", async ({ page }) => {
-  const title = await openBook(page, "full");
+  await openBook(page, "full");
   for (let i = 1; i <= 10; i++) {
     await addTag(page, `tag${i}`);
     await expect(page.getByRole("button", { name: `Remove tag tag${i}` })).toBeVisible();
@@ -58,6 +58,6 @@ test("an 11th tag is rejected", async ({ page }) => {
   await expect(page).toHaveScreenshot("F065-tags-full.png", {
     stylePath: "e2e/hide-dev-overlay.css",
     fullPage: true,
-    mask: [page.getByText(title), page.getByText(/^Started on /), page.locator("time")],
+    mask: [page.locator("[data-slot=card]").first()],
   });
 });

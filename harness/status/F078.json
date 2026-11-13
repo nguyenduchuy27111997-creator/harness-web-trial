@@ -1,0 +1,1 @@
+{"status":"passing","notes":"Both specs mask the whole book card ([data-slot=card]) instead of title/Started on/time; two baselines regenerated. Local Docker e2e and full suite pass. CI e2e shards pending on the PR."}

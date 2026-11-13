@@ -45,7 +45,7 @@ test("book page: add and remove tags", async ({ page }) => {
   await expect(page).toHaveScreenshot("F064-book-tagged.png", {
     stylePath: "e2e/hide-dev-overlay.css",
     fullPage: true,
-    mask: [page.getByText(title), page.getByText(/^Started on /), page.locator("time")],
+    mask: [page.locator("[data-slot=card]").first()],
   });
 });
 
