@@ -21,7 +21,7 @@ export function PastReads({
             <Card>
               <CardContent className="flex flex-col gap-1 text-sm">
                 {read.started_on && (
-                  <p>Started on {formatFinishDate(read.started_on)}</p>
+                  <p>Started on <time dateTime={read.started_on}>{formatFinishDate(read.started_on)}</time></p>
                 )}
                 <p>Finished on {formatFinishDate(read.finished_on)}</p>
                 {read.rating && (
