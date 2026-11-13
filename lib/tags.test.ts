@@ -71,6 +71,8 @@ function fakeClient(
   };
 }
 
+const BOOK = "11111111-1111-4111-8111-111111111111";
+
 describe("listBookTags", () => {
   it("returns the book's tags A to Z, skipping missing ones", async () => {
     const { client } = fakeClient([
@@ -82,14 +84,14 @@ describe("listBookTags", () => {
         ],
       },
     ]);
-    expect(await listBookTags(client, "b")).toEqual([
+    expect(await listBookTags(client, BOOK)).toEqual([
       { id: "1", name: "Classic" },
       { id: "2", name: "travel" },
     ]);
   });
   it("throws on error", async () => {
     const { client } = fakeClient([{ error: { message: "boom" } }]);
-    await expect(listBookTags(client, "b")).rejects.toThrow("boom");
+    await expect(listBookTags(client, BOOK)).rejects.toThrow("boom");
   });
 });
 
@@ -117,14 +119,14 @@ describe("addTag", () => {
     const { client } = fakeClient([
       { data: [{ tag: { id: "1", name: "Classic" } }] },
     ]);
-    expect(await addTag(client, "b", "classic")).toBe("duplicate");
+    expect(await addTag(client, BOOK, "classic")).toBe("duplicate");
   });
   it("rejects an 11th tag", async () => {
     const data = Array.from({ length: 10 }, (_, i) => ({
       tag: { id: String(i), name: `t${i}` },
     }));
     const { client } = fakeClient([{ data }]);
-    expect(await addTag(client, "b", "new")).toBe("full");
+    expect(await addTag(client, BOOK, "new")).toBe("full");
   });
   it("reuses an existing tag", async () => {
     const { client, calls } = fakeClient([
@@ -132,7 +134,7 @@ describe("addTag", () => {
       { data: [{ id: "t" }] },
       {},
     ]);
-    expect(await addTag(client, "b", "classic")).toBe("added");
+    expect(await addTag(client, BOOK, "classic")).toBe("added");
     expect(calls).toEqual(["book_tags", "tags", "book_tags"]);
   });
   it("creates a new tag, and finds it again after a race", async () => {
@@ -142,7 +144,7 @@ describe("addTag", () => {
       { data: { id: "t" } },
       {},
     ]);
-    expect(await addTag(client, "b", "classic")).toBe("added");
+    expect(await addTag(client, BOOK, "classic")).toBe("added");
     const raced = fakeClient([
       { data: [] },
       { data: [] },
@@ -150,7 +152,7 @@ describe("addTag", () => {
       { data: [{ id: "t" }] },
       {},
     ]);
-    expect(await addTag(raced.client, "b", "classic")).toBe("added");
+    expect(await addTag(raced.client, BOOK, "classic")).toBe("added");
   });
   it("maps insert errors", async () => {
     const run = (code: string) =>
@@ -160,7 +162,7 @@ describe("addTag", () => {
           { data: [{ id: "t" }] },
           { error: { code, message: code } },
         ]).client,
-        "b",
+        BOOK,
         "x",
       );
     expect(await run("23505")).toBe("duplicate");
@@ -172,7 +174,7 @@ describe("addTag", () => {
 
 describe("removeTag", () => {
   it("returns false when the book did not have the tag", async () => {
-    expect(await removeTag(fakeClient([{ data: [] }]).client, "b", "t")).toBe(
+    expect(await removeTag(fakeClient([{ data: [] }]).client, BOOK, "t")).toBe(
       false,
     );
   });
@@ -182,7 +184,7 @@ describe("removeTag", () => {
       { count: 0 },
       {},
     ]);
-    expect(await removeTag(client, "b", "t")).toBe(true);
+    expect(await removeTag(client, BOOK, "t")).toBe(true);
     expect(calls).toEqual(["book_tags", "book_tags", "tags"]);
   });
   it("keeps a tag other books still have", async () => {
@@ -190,18 +192,18 @@ describe("removeTag", () => {
       { data: [{ tag_id: "t" }] },
       { count: 2 },
     ]);
-    expect(await removeTag(client, "b", "t")).toBe(true);
+    expect(await removeTag(client, BOOK, "t")).toBe(true);
     expect(calls).toEqual(["book_tags", "book_tags"]);
   });
   it("throws on errors", async () => {
     await expect(
-      removeTag(fakeClient([{ error: { message: "a" } }]).client, "b", "t"),
+      removeTag(fakeClient([{ error: { message: "a" } }]).client, BOOK, "t"),
     ).rejects.toThrow("a");
     await expect(
       removeTag(
         fakeClient([{ data: [{ tag_id: "t" }] }, { error: { message: "c" } }])
           .client,
-        "b",
+        BOOK,
         "t",
       ),
     ).rejects.toThrow("c");
@@ -212,7 +214,7 @@ describe("removeTag", () => {
       { count: 0 },
       { error: { message: "d" } },
     ]);
-    await expect(removeTag(client, "b", "t")).rejects.toThrow("d");
+    await expect(removeTag(client, BOOK, "t")).rejects.toThrow("d");
   });
 });
 
