@@ -36,3 +36,12 @@ export async function addQueuedBook(page: Page, title: string) {
   await page.getByRole("button", { name: "Add to Up next" }).click();
   await page.getByText("In Up next").waitFor();
 }
+
+// Adds tags to the book whose page is open; callers open the book first.
+export async function addTagsOnBookPage(page: Page, names: string[]) {
+  for (const name of names) {
+    await page.getByLabel("Add tag").fill(name);
+    await page.getByRole("button", { name: "Add", exact: true }).click();
+    await page.getByRole("button", { name: `Remove tag ${name}` }).waitFor();
+  }
+}
