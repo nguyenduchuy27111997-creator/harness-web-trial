@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "isUuid guard (lib/books) added to listBookTags, addTag and removeTag in lib/tags.ts. /books/not-a-uuid is a 404 again. lib/tags.test.ts fixtures switched from book id \"b\" to a valid UUID; assertions unchanged."
+}
