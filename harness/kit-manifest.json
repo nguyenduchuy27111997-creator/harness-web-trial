@@ -1,5 +1,5 @@
 {
-  "version": "5.36.2",
+  "version": "5.36.3",
   "preset": "nextjs-supabase",
   "files": {
     ".claude/agents/advisor.md": "e7a83e9817e031dfa49a2671940111ea252614b123ef8c48dc15cd3aac0b2c52",
@@ -215,7 +215,7 @@
     "harness/reporters/playwright.mjs": "fefbac79fe176235dc2b80a42b4f924d1c0492de810a441733e0d774fa659a1f",
     "harness/reporters/vitest.mjs": "d8aae5231bff873d7accaa61979fdbdb6cc3d4ed21870f78f5125a110a5d67d6",
     "harness/runner.py": "4cd3ef03596e6c584c389408de022e721bc0131d441f6484b2adcbfbc14b8b97",
-    "harness/scheduler.py": "423d7c98ee0830fc5e2414ce2704440525658d3683e9df81963289989104882e",
+    "harness/scheduler.py": "5ce3f7e6819951dbd0ea39fffc64cf615f9ae9ac947f1c78966527be79a2d4eb",
     "harness/stack.json": "3bb54c8a7c4dc853aa0ace49bf7ab8709465ad8566d4af5a4898b811f47e9b2f",
     "harness/stages.py": "3c935c54ff1ca9e5fe52ced39f7cb9300626359c2ef4877deaa36b98aa23745b",
     "harness/stream.py": "88be57920690890dab97128b97cbbaaa96e0e10dcc2a82dc63e1953d94117de5",

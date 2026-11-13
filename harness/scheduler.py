@@ -8,7 +8,7 @@ import time
 
 import integrity
 from common import (  # noqa: F401
-    backlog, git, health, lang, now, preview, DONE, GIT_LOCK, MIN_SESSION, Path, TRANSIENT, WAITING_HUMAN,
+    backlog, gh, git, health, lang, now, preview, DONE, GIT_LOCK, MIN_SESSION, Path, TRANSIENT, WAITING_HUMAN,
     WAIT_FOR_HUMAN,
 )
 
@@ -205,6 +205,24 @@ class Scheduler:
                 and f["milestone"] not in self.designed
                 and not (self.opts.milestone and f["milestone"] != self.opts.milestone))
 
+    def settle_on_main(self):
+        """A queued feature that main already has as passing: a PR stacked on its branch merged and brought its work
+        there. Its own job is merged, its PR closed, and what waited on its branch moves onto main. Seen on the web
+        trial: F066 merged F064's branch, F064's job sat queued for two days (ready() skips a passing feature), F067
+        waited for agent/F064 to merge, and F076 waited for F067."""
+        for job in list(self.state["jobs"].values()):
+            f = self.main.get(job["id"]) if hasattr(self, "main") else None
+            if (not f or job.get("kind") or job["stage"] != "queued" or f.get("status") != "passing"
+                    or job["id"] in self.threads):
+                continue
+            if job.get("pr"):
+                gh("pr", "close", str(job["pr"]), "--comment", "Already on main: a PR built on this branch merged it.",
+                   cwd=self.root, check=False)
+            job["question"] = None
+            # main's CI checked the merge that brought it; this job made none of its own to watch
+            job["merged_at"], job["merged_run"], job["main_checked"] = now(), self.state.get("started"), True
+            self.set_stage(job, "merged", note="already on main: a PR built on its branch merged it")
+
     # lanes ---------------------------------------------------------------------------
     def lanes_busy(self):
         # A lane is free only once its result is collected: a finished but uncollected
@@ -302,6 +320,7 @@ class Scheduler:
         self.collect()
         self.collect_advice()
         self.refresh_main()
+        self.settle_on_main()
         self.check_milestones()
         for job in list(self.state["jobs"].values()):
             try:
