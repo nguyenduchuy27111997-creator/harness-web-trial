@@ -117,14 +117,3 @@ export async function listTaggedBookIds(supabase: SupabaseClient<Database>, tagN
   if (error) throw new Error(error.message);
   return new Set(data.map((row) => row.book_id));
 }
-
-export async function renameTag(
-  supabase: SupabaseClient<Database>,
-  id: string,
-  name: string,
-): Promise<"renamed" | "taken" | "missing"> {
-  const { data, error } = await supabase.from("tags").update({ name }).eq("id", id).select("id");
-  if (error?.code === "23505") return "taken";
-  if (error) throw new Error(error.message);
-  return data.length === 0 ? "missing" : "renamed";
-}
