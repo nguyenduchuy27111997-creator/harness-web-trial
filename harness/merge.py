@@ -5,11 +5,20 @@ import re
 import time
 
 from common import (  # noqa: F401
-    ci_log, gh, git, lang, now, run, DONE, GIT_LOCK, MAIN_GRACE, Path,
+    ci_log, gh, git, lang, now, run, CI_INFRA_WAITS, DONE, GIT_LOCK, MAIN_GRACE, Path,
 )
 
 
 MEMORY = re.compile(r"^\.claude/agent-memory/")  # the agents' notes (memory: project): two lanes' notes are joined
+# A failed run whose failed-job log holds one of these failed on the machine, not the code. On the web trial
+# (run 43420628551) two e2e shards hit "error from registry: Rate exceeded" pulling Supabase's images, then
+# "driver failed programming external connectivity"; the quick rerun failed the same way and F067 was reverted.
+INFRA = [
+    ("registry rate limit", re.compile(r"Rate exceeded|toomanyrequests|reached your pull rate limit|429 Too Many Requests", re.I)),
+    ("container networking", re.compile(r"failed to set up container networking|driver failed programming external "
+                                        r"connectivity|port is already allocated", re.I)),
+    ("runner lost", re.compile(r"runner lost communication|runner has received a shutdown signal", re.I)),
+]
 
 
 class Merge:
@@ -44,6 +53,34 @@ class Merge:
                 return True
         return False
 
+    def infra_signature(self, run_ids):
+        """The infrastructure failure in these runs' failed-job logs ("registry rate limit: Rate exceeded"), or None."""
+        for rid in run_ids:
+            log = gh("run", "view", str(rid), "--log-failed", cwd=self.root, check=False).stdout or ""
+            for name, rx in INFRA:
+                m = rx.search(log)
+                if m:
+                    return f"{name}: {m.group(0)}"
+        return None
+
+    def infra_backoff(self, rec, sig, rerun):
+        """A run failed on infrastructure: wait, then rerun it, once after each of CI_INFRA_WAITS. rec keeps the
+        tries. Returns "new" (a wait starts), "wait", "rerun" (just rerun) or "out" (the tries are spent)."""
+        if rec.get("at") is None:
+            if rec.get("tries", 0) >= len(CI_INFRA_WAITS):
+                return "out"
+            rec["sig"], rec["at"] = sig, time.time() + CI_INFRA_WAITS[rec.get("tries", 0)]
+            return "new"
+        if time.time() < rec["at"]:
+            return "wait"
+        rec["tries"], rec["at"] = rec.get("tries", 0) + 1, None
+        rerun()
+        return "rerun"
+
+    def infra_note(self, rec):
+        return (f"CI failed on infrastructure ({rec['sig']}), not the code: rerun in "
+                f"{CI_INFRA_WAITS[rec.get('tries', 0)] / 60:g} min (try {rec.get('tries', 0) + 1} of {len(CI_INFRA_WAITS)})")
+
     def block_ci(self, url):
         if not self.state["ci_blocked"]:
             self.state["ci_blocked"] = True
@@ -70,6 +107,22 @@ class Merge:
             return
         if result == "fail" and self.not_started(job.get("ci_runs", [])):
             return self.block_ci(job.get("pr_url"))  # not the code: wait for CI to run at all
+        if result == "fail":
+            rec = job.get("infra") or {}
+            sig = None if rec.get("at") else self.infra_signature(job.get("ci_runs", []))
+            if rec.get("at") or sig:  # the machine, not the code: wait and rerun; no fix round is spent on it
+                job["infra"] = rec
+                step = self.infra_backoff(rec, sig, lambda: [gh("run", "rerun", rid, "--failed", cwd=self.root, check=False)
+                                                             for rid in job.get("ci_runs", [])])
+                if step == "new":
+                    return self.set_stage(job, "ci", note=self.infra_note(rec))
+                if step == "out":
+                    job.pop("infra")  # an answer starts the tries again
+                    return self.set_stage(job, "held", note=f"CI still fails on infrastructure ({rec['sig']})",
+                                          question=f"{job['id']}: CI failed on infrastructure ({rec['sig']}) "
+                                                   f"{len(CI_INFRA_WAITS) + 1} times on {job['pr_url']}, not on the code. "
+                                                   "Check GitHub Actions and the registry, then answer to try again.")
+                return
         if result == "fail":
             head = git("rev-parse", "HEAD", cwd=job["worktree"]).stdout.strip()
             if job.get("ci_rerun_of") != head and job.get("ci_runs"):
@@ -98,6 +151,7 @@ class Merge:
             return self.start_fix(job, f"CI failed on the PR ({job['pr_url']}). Run ./scripts/check.sh, find the failure "
                                        "and fix it." + (f"\n\nThe failed steps' log (last lines):\n```\n{excerpt}\n```"
                                                         if excerpt else ""))
+        job.pop("infra", None)
         job["ci_sha"] = head or git("rev-parse", "HEAD", cwd=job["worktree"]).stdout.strip()  # what CI passed
         if job["base"] != "main":
             return self.set_stage(job, "waiting_base", note=f"green; waits for {job['base']} to merge")
@@ -328,6 +382,21 @@ class Merge:
         failed = [r for r in runs if r["status"] == "completed" and r["conclusion"] not in ("success", "skipped", "neutral")]
         if failed and self.not_started([r["databaseId"] for r in failed if r.get("databaseId")]):
             return "blocked", failed[0].get("url", "")
+        if failed:  # infrastructure (a registry rate limit, container ports): wait and rerun, never a revert
+            infra = self.state.setdefault("infra_main", {})
+            rec = infra.get(sha) or {}
+            sig = None if rec.get("at") else self.infra_signature([r["databaseId"] for r in failed if r.get("databaseId")])
+            if rec.get("at") or sig:
+                infra[sha] = rec
+                for old in list(infra)[:-50]:
+                    infra.pop(old)
+                step = self.infra_backoff(rec, sig, lambda: [gh("run", "rerun", str(r["databaseId"]), "--failed", cwd=self.root,
+                                                                check=False) for r in failed if r.get("databaseId")])
+                if step == "new":
+                    self.event("loop", f"main {sha[:7]}: {self.infra_note(rec)}")
+                if step == "out":
+                    return "infra", f"{failed[0].get('url', '')} ({rec['sig']})"
+                return "pending", ""
         # A failed or cancelled run is run again, once, before it counts. A cancelled run or one the runner
         # lost says nothing about the code, and a one-off failure (a latency budget on a busy self-hosted
         # machine) got a docs-only feature reverted in a real run. Failing a second time, it is real.
@@ -359,6 +428,19 @@ class Merge:
                 continue
             if result == "blocked":
                 self.block_ci(url)
+                continue
+            if result == "infra" and job.get("revert_of"):  # main's state is unknown: a human decides, main stays red
+                job["main_checked"] = True
+                self.set_stage(job, "held", note=f"main CI fails on infrastructure after the revert: {url}",
+                               question=f"Main's CI after reverting {job['revert_of']} keeps failing on infrastructure "
+                                        f"({url}). Rerun it once GitHub Actions or the registry recovers.")
+                continue
+            if result == "infra":  # not the code: told, not reverted
+                job["main_checked"] = True
+                self.event(job["id"], f"main CI still fails on infrastructure after {len(CI_INFRA_WAITS)} reruns: {url}; "
+                                      "not reverting")
+                self.push(f"main_infra:{job['merge_sha']}", lang.say("Main's CI fails on infrastructure"),
+                          f"{job['id']}: {url}. Not reverted; rerun it once GitHub Actions or the registry recovers.", priority=4)
                 continue
             head = self.state.get("main_sha")
             if (result == "fail" and head and head != job["merge_sha"] and not job.get("revert_of")

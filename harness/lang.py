@@ -14,6 +14,7 @@ VI = {
     "{why}, after 3 restarts. Check the Mac and the runner.": "{why}, sau 3 lần khởi động lại. Kiểm tra máy Mac và runner.",
     "Milestone {ms} done": "Milestone {ms} xong", "Every feature of {ms} is merged. Next: /release {ms}.": "Mọi feature của {ms} đã merge. Tiếp theo: /release {ms}.",
     "CI is not starting": "CI không chạy",
+    "Main's CI fails on infrastructure": "CI của main lỗi hạ tầng",
     "GitHub Actions starts no jobs (billing or runner). Nothing merges until it does.":
         "GitHub Actions không chạy job nào (billing hoặc runner). Không gì merge được cho tới khi nó chạy.",
     "Loop paused": "Loop tạm dừng", "{why}; resumes {resumes}.": "{why}; chạy lại {resumes}.",

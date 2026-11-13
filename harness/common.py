@@ -48,6 +48,9 @@ DONE = {"merged", "dropped"}
 GIT_LOCK = threading.Lock()
 PORT_LOCK = threading.Lock()
 MAIN_GRACE = float(os.environ.get("LOOP_MAIN_GRACE", "300"))  # seconds for GitHub to start main's CI
+# A CI run that failed on infrastructure (registry rate limit, container ports, a lost runner) is run again after
+# each of these waits in turn (seconds); once they are spent a human is told. Never a revert or a fix round.
+CI_INFRA_WAITS = [float(x) for x in os.environ.get("LOOP_CI_INFRA_WAITS", "300,900,1800").split(",") if x.strip()]
 # Paths whose changes get the security-reviewer too: auth, data access, migrations, API routes.
 SENSITIVE = re.compile(r"(^|/)(auth|session|middleware|api|migrations|supabase|db|database|policies)(/|\.|$)|\.sql$", re.I)
 # ...but not tests, docs or the harness's own files, which change no access rule.
