@@ -58,6 +58,6 @@ test("an 11th tag is rejected", async ({ page }) => {
   await expect(page).toHaveScreenshot("F065-tags-full.png", {
     stylePath: "e2e/hide-dev-overlay.css",
     fullPage: true,
-    mask: [page.getByText(title), page.locator("time")],
+    mask: [page.getByText(title), page.getByText(/^Started on /), page.locator("time")],
   });
 });
