@@ -7,6 +7,7 @@ import re
 import time
 
 import integrity
+import monitor
 from common import (  # noqa: F401
     backlog, gh, git, health, lang, now, preview, DONE, GIT_LOCK, MIN_SESSION, Path, TRANSIENT, WAITING_HUMAN,
     WAIT_FOR_HUMAN,
@@ -281,6 +282,8 @@ class Scheduler:
                 continue
             del self.threads[fid]
             job, res = self.job(fid), holder.get("result", {})
+            if holder.get("crash"):  # an error in the kit's code, not in the feature: the monitor tells it once
+                monitor.note_error(self, holder["crash"], f"{stage} {fid}")
             self.count(job, holder, stage)
             q = self.quality_path(fid)
             if q.exists():  # the last green check of the session: coverage, tests, bundle (harness/quality.py)
@@ -338,6 +341,11 @@ class Scheduler:
         self.flush_questions()
         self.watch_runner()
         self.alerts()
+        try:
+            self.monitor.check(self)
+        except Exception as e:  # the monitor never stops the loop
+            with (self.home / "loop.log").open("a") as f:
+                f.write(f"{now()} monitor failed: {e!r}\n")
         self.keep_history()
         self.delete_merged_branches()
         for ms, cap in self.budgets().items():

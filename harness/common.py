@@ -256,6 +256,11 @@ def stop_processes_in(folder):
             pass
 
 
+# Claude names the zone as macOS does ("Asia/Saigon"). Ubuntu 24.04 keeps such old names only in tzdata-legacy, which
+# GitHub's runner image lacks: the zone was not found, and the reset was read as UTC (kit-tests red since 5.36.5).
+TZ_ALIASES = {"Asia/Saigon": "Asia/Ho_Chi_Minh"}
+
+
 def limit_resume(text, now_ts=None):
     """When a usage limit message ("... resets 11pm (Asia/Saigon)") lifts, as a timestamp; else in 30 minutes."""
     now_ts = time.time() if now_ts is None else now_ts
@@ -267,7 +272,7 @@ def limit_resume(text, now_ts=None):
     hour, minute, half, zone = int(m.group(1)), int(m.group(2) or 0), (m.group(3) or "").lower(), m.group(4)
     hour = hour % 12 + (12 if half == "pm" else 0) if half else hour
     try:
-        tz = zoneinfo.ZoneInfo(zone) if zone else None
+        tz = zoneinfo.ZoneInfo(TZ_ALIASES.get(zone, zone)) if zone else None
     except (zoneinfo.ZoneInfoNotFoundError, ValueError):
         tz = None
     here = datetime.datetime.fromtimestamp(now_ts, tz)

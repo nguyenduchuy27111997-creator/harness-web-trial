@@ -9,6 +9,7 @@ feature, and merges each PR itself once it is green. See DESIGN.md section 10.
   loop.py stop [--now]             stop taking work (finish what runs), or stop at once
   loop.py budget M1 20             set a milestone's budget (spent across runs); also start --milestone-budget M1=20
   loop.py events [--follow]        one line per event, for the /build skill's monitor
+  loop.py monitor [backtest LOG]   incidents open and recent (DESIGN.md 18), or the rules replayed over a log
 
 A feature goes queued -> building -> review -> (fixing) -> ci -> (waiting on its
 base PR) -> merging -> merged. Stages that run Claude (building, review, fixing)
@@ -44,6 +45,7 @@ import agents  # noqa: E402
 import common  # noqa: E402
 import dispatcher  # noqa: E402
 import merge  # noqa: E402
+import monitor  # noqa: E402
 import scheduler  # noqa: E402
 import stages  # noqa: E402
 
@@ -62,6 +64,7 @@ class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge, dispa
         self.stopping = False
         self.busy = None  # why the machine takes no new session right now (machine_busy), else None
         self.watch = watch.Watch()  # alerts: quiet, going in circles, red tests, context, budget (watch.py)
+        self.monitor = monitor.Monitor()  # incidents for the owner: main red, stuck, no merge, errors... (monitor.py)
         self.main_ci_since = {}
         # What the stack needs (harness/stack.json, from the preset): how features are verified, tools to probe.
         try:
@@ -147,15 +150,18 @@ class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge, dispa
                     f.write(f"{now()} {job['id']} question not posted on GitHub: {e!r}\n")
 
     # the owner: pushes, questions on GitHub, their comments ------------------------------
-    def push(self, key, title, message, priority=3, click=None, wait=False):
-        """One push per key, ever (state['notified']): a restart or a second tick never repeats it."""
+    def push(self, key, title, message, priority=3, click=None, wait=False, urgent=False, actions=None):
+        """One push per key, ever (state['notified']): a restart or a second tick never repeats it. In the quiet
+        hours (LOOP_QUIET, 23-7) only an urgent push rings; the rest arrive silent (ntfy priority 2)."""
         sent = self.state.setdefault("notified", {})
         if key in sent:
             return
         sent[key] = now()
         for old in list(sent)[:-300]:
             sent.pop(old)
-        notify.send(self.home, title, message, priority=priority, click=click, wait=wait)
+        if not urgent and monitor.quiet_now():
+            priority = min(priority, 2)
+        notify.send(self.home, title, message, priority=priority, click=click, wait=wait, actions=actions)
         notify.desktop(title, message)
 
     def flush_questions(self):
@@ -476,6 +482,7 @@ class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge, dispa
                         continue
                     errors += 1
                     self.event("loop", f"error ({errors} in a row), retrying: {str(e)[:160]}")
+                    monitor.note_error(self, e, "tick")
                     if errors >= MAX_ERRORS:
                         self.state["stop_reason"] = f"{errors} errors in a row, last: {str(e)[:200]}"
                         break
@@ -1174,6 +1181,31 @@ def cmd_events(root, a):
                 time.sleep(1)
 
 
+def cmd_monitor(root, a):
+    """Incidents open now and the last ones (incidents.jsonl), or a backtest of the rules over an events.log."""
+    if a.action == "backtest":
+        f = Path(a.log) if a.log else home_of(root) / "events.log"
+        hits = monitor.backtest(f.read_text().splitlines())
+        days = {}
+        for h in hits:
+            days.setdefault(h["at"].strftime("%Y-%m-%d"), []).append(h)
+            print(f"{h['at']:%Y-%m-%d %H:%M}  {h['rule']:<3} {h['id']:<6} {h['what']}")
+        print("\nper day: " + "; ".join(f"{d} " + ", ".join(f"{r} {sum(1 for h in hs if h['rule'] == r)}"
+                                                         for r in sorted({h['rule'] for h in hs}))
+                                      for d, hs in sorted(days.items())))
+        night = [h for h in hits if monitor.quiet_now(h["at"]) and h["rule"] in ("A2", "A3")]
+        print(f"urgent ones in the quiet hours ({monitor.QUIET}): {len(night)} over {len(days)} days")
+        return 0
+    state = json.loads((home_of(root) / "state.json").read_text()) if (home_of(root) / "state.json").exists() else {}
+    for inc in (state.get("monitor") or {}).get("open", {}).values():
+        print(f"open  {inc['id']:<9} {'urgent ' if inc['urgent'] else ''}{inc.get('title', '')}: {inc.get('text', '')}")
+    f = home_of(root) / "incidents.jsonl"
+    for line in (f.read_text().splitlines()[-20:] if f.exists() else []):
+        r = json.loads(line)
+        print(f"{r['at']}  {r['event']:<7} {r['id']:<9} {r.get('title') or r.get('after') or ''}")
+    return 0
+
+
 def main():
     p = argparse.ArgumentParser(prog="loop.py")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -1220,12 +1252,15 @@ def main():
     no.add_argument("action", choices=["set", "test", "off"])
     no.add_argument("--url", default=notify.DEFAULT_URL)
     no.add_argument("--detail", action="store_true", help="send the full question, not just a line")
+    mo = sub.add_parser("monitor")  # incidents (monitor.py, DESIGN.md 18)
+    mo.add_argument("action", nargs="?", choices=["show", "backtest"], default="show")
+    mo.add_argument("log", nargs="?", help="backtest: an events.log (default: this project's)")
     a = p.parse_args()
     root = Path(git("rev-parse", "--show-toplevel").stdout.strip())
     return {"start": cmd_start, "status": cmd_status, "answer": cmd_answer, "drop": cmd_drop, "stop": cmd_stop, "budget": cmd_budget,
             "events": cmd_events, "digest": cmd_digest, "notify": cmd_notify,
             "runner": cmd_runner, "service": cmd_service, "metrics": cmd_metrics,
-            "forecast": cmd_forecast, "decisions": cmd_decisions}[a.cmd](root, a)
+            "forecast": cmd_forecast, "decisions": cmd_decisions, "monitor": cmd_monitor}[a.cmd](root, a)
 
 
 if __name__ == "__main__":

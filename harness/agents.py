@@ -162,7 +162,7 @@ class Agents:
             try:
                 holder["result"] = work(job)
             except Exception as e:  # a crashed lane must not take the loop down
-                holder["result"] = {"error": str(e)}
+                holder["result"], holder["crash"] = {"error": str(e)}, e
             holder["seconds"] = round(time.time() - began)
         t = threading.Thread(target=target, daemon=True)
         self.threads[job["id"]] = (t, holder, job["stage"])  # the result is for this stage, whatever happens meanwhile

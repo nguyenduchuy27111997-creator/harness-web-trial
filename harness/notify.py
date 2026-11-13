@@ -34,12 +34,14 @@ def setup(home, url=DEFAULT_URL, detail=False):
     return cfg
 
 
-def post(cfg, title, message, priority=3, tags=(), click=None):
+def post(cfg, title, message, priority=3, tags=(), click=None, actions=None):
     """Publish as JSON to the server's root (no header encoding limits). True when the server took it."""
     body = {"topic": cfg["topic"], "title": title[:200], "message": message[:3500], "priority": priority,
             "tags": list(tags)}
     if click:
         body["click"] = click
+    if actions:  # buttons on the push (ntfy "http" actions), e.g. the monitor's "Got it"
+        body["actions"] = actions
     req = urllib.request.Request(cfg["url"] + "/", data=json.dumps(body).encode(),
                                  headers={"Content-Type": "application/json"}, method="POST")
     try:
@@ -66,12 +68,12 @@ def desktop(title, message):
         return False
 
 
-def send(home, title, message, priority=3, tags=(), click=None, wait=False):
+def send(home, title, message, priority=3, tags=(), click=None, wait=False, actions=None):
     """Send in the background (wait=True for the last push before the process exits). No config: nothing."""
     cfg = config(home)
     if not cfg:
         return False
     if wait:
-        return post(cfg, title, message, priority, tags, click)
-    threading.Thread(target=post, args=(cfg, title, message, priority, tags, click), daemon=True).start()
+        return post(cfg, title, message, priority, tags, click, actions)
+    threading.Thread(target=post, args=(cfg, title, message, priority, tags, click, actions), daemon=True).start()
     return True

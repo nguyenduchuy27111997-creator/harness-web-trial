@@ -4,6 +4,8 @@ import json
 import re
 import time
 
+import monitor
+
 from common import (  # noqa: F401
     ci_log, gh, git, lang, now, run, CI_INFRA_WAITS, DONE, GIT_LOCK, MAIN_GRACE, Path,
 )
@@ -146,6 +148,7 @@ class Merge:
             self.failure(job, "CI failed on the PR")
             log = "\n".join(gh("run", "view", rid, "--log-failed", cwd=self.root, check=False).stdout
                             for rid in job.get("ci_runs", []))
+            monitor.note_ci_failures(self.state, job["id"], log)  # a test failing on many PRs is shared (A7)
             excerpt = ci_log.trim(log) if log.strip() else ""
             job["ci_log"] = excerpt  # the CI doctor reads it before the fix session (stages.work_fix)
             return self.start_fix(job, f"CI failed on the PR ({job['pr_url']}). Run ./scripts/check.sh, find the failure "
