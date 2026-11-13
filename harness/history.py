@@ -166,17 +166,20 @@ def milestone(root, home, state, now=None):
         start, end = span(ms)
         if start and end:
             past.append({"id": ms, "hours": round((end - start) / 3600, 1)})
-    current = next((ms for ms in by_ms if any(f.get("status") != "passing" for f in by_ms[ms])), None)
+    passing = {f["id"] for f in feats if f.get("status") == "passing"}
+    # Merged: passing, and its job (if the loop still has one) merged. A feature passes its verifier before its PR
+    # merges, and can go back to fixing after: the web trial's F064 showed as merged with PR #172 open (5.40.1).
+    merged = {i for i in passing if (jobs.get(i) or {}).get("stage", "merged") == "merged"}
+    current = next((ms for ms in by_ms if any(f["id"] not in merged for f in by_ms[ms])), None)
     if not current:
         return {"current": None, "past": past[-4:]}
-    passing = {f["id"] for f in feats if f.get("status") == "passing"}
     dj = jobs.get(f"D-{current}") or {}
     designed = (Path(root) / f"docs/design/{current}.md").exists() or dj.get("stage") in ("ci", "waiting_base", "merging")
     planning = (state.get("planning") or {}).get(current)
     rows = []
     for f in by_ms[current]:
         j = jobs.get(f["id"]) or {}
-        stage = "merged" if f["id"] in passing else j.get("stage") or "queued"
+        stage = "merged" if f["id"] in merged else j.get("stage") or "queued"
         kind, why = WAIT_KIND.get(stage, "work"), j.get("note") or ""
         if stage in ("held", "needs_human", "failed"):
             why = j.get("question") or why

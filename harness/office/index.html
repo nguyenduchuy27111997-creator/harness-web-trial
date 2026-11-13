@@ -5,12 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Build loop office</title>
   <link rel="icon" href="data:,">
+  <script>/* light or dark before the first paint (theme.ts) */ try { var t = localStorage.getItem("office.theme"); document.documentElement.dataset.theme = t === "dark" || t === "light" ? t : matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; } catch (e) {}</script>
   <script type="module" crossorigin src="/office/assets/office.esm"></script>
   <link rel="modulepreload" crossorigin href="/office/assets/rolldown-runtime.esm">
   <link rel="stylesheet" crossorigin href="/office/assets/office.css">
 </head>
 <body>
   <!-- Shown until React mounts: the bundle takes a moment to parse on a busy machine. -->
-  <div id="root"><div style="position:fixed;inset:0;display:grid;place-items:center;background:#e8e6f2;color:#8a849c;font:13px -apple-system,BlinkMacSystemFont,sans-serif">Opening the office…</div></div>
+  <div id="root"><div style="position:fixed;inset:0;display:grid;place-items:center;background:var(--page,#e8e6f2);color:#8a849c;font:13px -apple-system,BlinkMacSystemFont,sans-serif">Opening the office…</div></div>
 </body>
 </html>
