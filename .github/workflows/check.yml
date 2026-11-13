@@ -127,6 +127,8 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      # The shards start a few seconds apart, so their Supabase image pulls do not all hit the registry at once.
+      - run: sleep $(( (${{ matrix.shard }} - 1) * 20 ))
       - run: scripts/e2e.sh
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: failure()

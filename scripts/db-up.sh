@@ -17,5 +17,13 @@ until mkdir "$lock" 2>/dev/null; do sleep 1; done
 trap 'rmdir "$lock"' EXIT
 
 if ! npx supabase status >/dev/null 2>&1; then
-  npx supabase start -x studio,imgproxy,vector,edge-runtime,analytics >/dev/null
+  # Up to 3 tries: on CI the image pulls of parallel e2e shards hit the registry's "Rate exceeded", and a half-started
+  # stack then failed on its ports (web trial, 13/11/2026: main CI went red and the loop reverted a good feature).
+  for wait in 30 90 0; do
+    npx supabase start -x studio,imgproxy,vector,edge-runtime,analytics >/dev/null && break
+    [ "$wait" = 0 ] && exit 1
+    echo "db-up: supabase start failed; trying again in ${wait}s" >&2
+    npx supabase stop >/dev/null 2>&1 || true  # this project's half-started containers only
+    sleep "$wait"
+  done
 fi

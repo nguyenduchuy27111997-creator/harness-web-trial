@@ -1,5 +1,5 @@
 {
-  "version": "5.36.4",
+  "version": "5.36.5",
   "preset": "nextjs-supabase",
   "files": {
     ".claude/agents/advisor.md": "e7a83e9817e031dfa49a2671940111ea252614b123ef8c48dc15cd3aac0b2c52",
@@ -32,7 +32,7 @@
     ".claude/skills/replan/SKILL.md": "4235831bab444034fab518dfb8ebc3e516edb0d9f07c33132ccbde18b50073be",
     ".dependency-cruiser.cjs": "5c14b0fd44c5946c5529bd637e27949a5ba1efa6ac6b7484286a1fa0a78be6f5",
     ".githooks/pre-commit": "290f557f7da27724de2535edad8380acd2721cb1bdab9d740b7086092e5b9a7a",
-    ".github/workflows/check.yml": "2400dc556a635f7ffa616fb8b30a55fea2827ddf2d172000177c99b64fed7605",
+    ".github/workflows/check.yml": "74dedafac5f084f76ee7746bebc5bbd0c554c0ed9e75de80cd4d33b8d145c857",
     ".github/workflows/issues.yml": "75cb1667164f588056825b3fa650d453ff8ab533c0850dc822421c38a6b70e55",
     ".gitleaks.toml": "6c9d2af52babda2552fc99213154fc33eca05dd04e2bd6961af4ab96c01b0e81",
     ".jscpd.json": "4764cf2024cc946cd0f095bfba652746da9714b450bffff8e4b74e5d9882148b",
@@ -229,7 +229,7 @@
     "scripts/check.sh": "02834f5289de7a799daf00cbc06f87125d16f24f31a1b1f74e0acc5efc4f76f9",
     "scripts/db-reset.sh": "1b63126d524a61e21e68e0c322bd7aa55c18c15d6b98b69f7594d18bf33afc00",
     "scripts/db-types.sh": "49e4b51cfdd784cc6d7b60c972dd7c4340ff82f140c8528d0ce4dd31ec7bfbed",
-    "scripts/db-up.sh": "32f0a337e6009ea1c36789354550d560007f90cf280454c9847068d970b298ce",
+    "scripts/db-up.sh": "8d44bffb51a01e8301a0fd7abe35abf9a1d8c714723815db8d62715cca771c50",
     "scripts/deploy-staging.sh": "2692454965d09cfe6e3e6ffb7659ba1c8a3812e85cd555f95ea2a77ad7dc8969",
     "scripts/e2e-size.py": "f82f8442f750098e524a7d17a4c1e50db1de4d1280aa567e2f21c5e048c0ecd9",
     "scripts/e2e.sh": "2d118e1adae2e1e0005552e8e243611ed97c809512ff0fc92c3f3b0434836977",
