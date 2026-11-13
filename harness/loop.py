@@ -77,7 +77,7 @@ class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge, dispa
             raise SystemExit(f"{path} was written by a newer kit (schema {state['schema']}); upgrade harness/loop.py")
         state["schema"] = STATE_SCHEMA  # 1 -> 2 adds fields only, each defaulted where it is read
         state.setdefault("jobs", {})
-        for job in state["jobs"].values():  # resumed after a crash: lane work restarts
+        for job in list(state["jobs"].values()):  # resumed after a crash: lane work restarts
             if job["stage"] in ("building", "fixing", "review") and job.get("worktree") and Path(job["worktree"]).exists():
                 stop_processes_in(job["worktree"])  # sessions orphaned by the crash
             if job["stage"] == "building":
@@ -261,7 +261,7 @@ class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge, dispa
             del mine[:-300]
 
     def is_pr(self, number):
-        return any(j.get("pr") == number for j in self.state["jobs"].values())
+        return any(j.get("pr") == number for j in list(self.state["jobs"].values()))
 
     def ask_on_github(self, job, key):
         """The question goes on the job's PR (or its mirrored issue) once, so the owner can answer from the phone."""
@@ -289,10 +289,10 @@ class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge, dispa
         if time.time() - self.state.get("comments_polled", 0) < COMMENT_POLL:
             return
         self.state["comments_polled"] = time.time()
-        targets = [(j["id"], j["ask_on"], j.get("asked_at")) for j in self.state["jobs"].values()
+        targets = [(j["id"], j["ask_on"], j.get("asked_at")) for j in list(self.state["jobs"].values())
                    if j.get("ask_on") and j["stage"] in WAITING_HUMAN]
         week_ago = (datetime.datetime.now() - datetime.timedelta(days=7)).isoformat(timespec="seconds")
-        targets += [(fid, sm["pr"], sm.get("since")) for fid, sm in self.state.get("samples", {}).items()
+        targets += [(fid, sm["pr"], sm.get("since")) for fid, sm in list(self.state.get("samples", {}).items())
                     if sm.get("status") == "pending" and sm.get("at", "") >= week_ago]
         if not targets:
             return
@@ -364,7 +364,7 @@ class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge, dispa
         """While CI is awaited, look at the self-hosted runner every few minutes; restart it if it is stuck
         and the owner allowed that (loop.py runner on), at most 3 times a run, 10 minutes apart."""
         waiting = any(j["stage"] in ("ci", "merging") or (j["stage"] == "merged" and not j.get("main_checked"))
-                      for j in self.state["jobs"].values())
+                      for j in list(self.state["jobs"].values()))
         if not waiting or time.time() - self.state.get("runner_checked", 0) < RUNNER_EVERY or not self.self_hosted():
             return
         self.state["runner_checked"] = time.time()
@@ -505,7 +505,7 @@ class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge, dispa
 
     def write_history(self):
         """One line per run in history.jsonl, for the dashboard's History."""
-        mine = [j for j in self.state["jobs"].values() if j.get("updated", "") >= self.state["started"]]
+        mine = [j for j in list(self.state["jobs"].values()) if j.get("updated", "") >= self.state["started"]]
         merged = [j for j in mine if j["stage"] == "merged" and j.get("merged_run") == self.state["started"]]
         run = {"started": self.state["started"], "ended": now(), "spent": self.state["spent"],
                "budget": self.state["budget"], "stop_reason": self.state["stop_reason"],
@@ -1036,7 +1036,7 @@ def cmd_forecast(root, a):
         kind = json.loads((Path(root) / "harness/stack.json").read_text()).get("kind")
     except (OSError, ValueError):
         kind = None
-    costs = [j.get("cost", 0) for j in state["jobs"].values() if FEATURE_ID.match(j["id"]) and j.get("stage") == "merged"]
+    costs = [j.get("cost", 0) for j in list(state["jobs"].values()) if FEATURE_ID.match(j["id"]) and j.get("stage") == "merged"]
     prior = len(costs) < 5
     p50 = PRIOR_COST.get(kind, 2.5) if prior else metrics.quantile(costs, 0.5)
     p80 = 1.8 * p50 if prior else metrics.quantile(costs, 0.8)

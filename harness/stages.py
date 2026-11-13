@@ -117,7 +117,7 @@ class Stages:
         f = self.main.get(job["id"], {}) if hasattr(self, "main") else {}
         mine = f.get("touches")
         lines = []
-        for j in self.state["jobs"].values():
+        for j in list(self.state["jobs"].values()):
             if j["id"] == job["id"] or j.get("kind") or j["stage"] not in ("building", "review", "fixing", "ci", "waiting_base", "merging"):
                 continue
             files = sorted(self.footprint(j))

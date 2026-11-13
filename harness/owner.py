@@ -33,7 +33,7 @@ def digest(history, state, feedback, days=7, today=None):
     waiting = [f"{j['id']} ({j['stage']})" for j in state.get("jobs", {}).values() if j.get("question")]
     if waiting:
         lines.append("Waiting on you: " + ", ".join(waiting[:8]) + ".")
-    samples = [f"{fid} (#{s['pr']})" for fid, s in state.get("samples", {}).items() if s.get("status") == "pending"]
+    samples = [f"{fid} (#{s['pr']})" for fid, s in list(state.get("samples", {}).items()) if s.get("status") == "pending"]
     if samples:
         lines.append("Check against what you meant (/ok or /bug on the PR): " + ", ".join(samples[:6]) + ".")
     open_feedback = [f for f in feedback if not f.get("handled")]

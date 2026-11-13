@@ -120,7 +120,7 @@ class Merge:
             # merges. Seen for real: F025 rebased 4 times on one runner, 2 hours from green to merged.
             # The turn is held while that CI runs: green and behind again, two PRs waited on each other for 2 hours.
             if any(j.get("requeued") and j["stage"] == "ci" and j["id"] != job["id"]
-                   for j in self.state["jobs"].values()):
+                   for j in list(self.state["jobs"].values())):
                 return
             if not self.rebase(job, "origin/main"):
                 return
@@ -164,7 +164,7 @@ class Merge:
             with (self.home / "loop.log").open("a") as f:
                 f.write(f"{now()} {job['id']} owner check not posted: {e!r}\n")
         self.state["last_merge"] = job["id"]
-        for dep_job in self.state["jobs"].values():  # idle PRs stacked on this one move to main now;
+        for dep_job in list(self.state["jobs"].values()):  # idle PRs stacked on this one move to main now;
             if (dep_job.get("base") == job["branch"] and dep_job["id"] not in self.threads
                     and dep_job["stage"] in ("review", "ci", "waiting_base", "merging")):
                 self.restack(dep_job)        # ones with a session running move when it ends
@@ -181,7 +181,7 @@ class Merge:
 
     def base_merged(self, job):
         return job["base"] != "main" and any(j.get("branch") == job["base"] and j["stage"] == "merged"
-                                             for j in self.state["jobs"].values())
+                                             for j in list(self.state["jobs"].values()))
 
     def ensure_base(self, job):
         """A job stacked on a PR that has merged since: rebase it onto main. False if that failed."""
@@ -207,10 +207,10 @@ class Merge:
 
     def delete_merged_branches(self):
         """Delete a merged feature's branch once no open work is stacked on it."""
-        for job in self.state["jobs"].values():
+        for job in list(self.state["jobs"].values()):
             if job["stage"] != "merged" or job.get("branch_deleted"):
                 continue
-            if any(j.get("base") == job["branch"] and j["stage"] not in DONE for j in self.state["jobs"].values()):
+            if any(j.get("base") == job["branch"] and j["stage"] not in DONE for j in list(self.state["jobs"].values())):
                 continue
             with GIT_LOCK:
                 git("push", "-q", "origin", "--delete", job["branch"], cwd=self.root, check=False)

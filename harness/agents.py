@@ -31,7 +31,7 @@ class Agents:
     def spent_today(self):
         """Dollars spent today, by every run (each session's cost, by the day it ended), and held by running sessions."""
         today = now()[:10]
-        done = sum(s.get("cost", 0) for j in self.state["jobs"].values() for s in j.get("sessions", [])
+        done = sum(s.get("cost", 0) for j in list(self.state["jobs"].values()) for s in j.get("sessions", [])
                    if str(s.get("ended", "")).startswith(today))
         return done + sum(self.caps.values())
 
@@ -116,7 +116,7 @@ class Agents:
                 and job.get("last_cap", 0) < self.full_cap(job.get("cap_stage", "building")) - 0.005)
 
     def recent_costs(self):
-        done = sorted((j for j in self.state["jobs"].values() if FEATURE_ID.match(j["id"]) and j["stage"] == "merged"),
+        done = sorted((j for j in list(self.state["jobs"].values()) if FEATURE_ID.match(j["id"]) and j["stage"] == "merged"),
                       key=lambda j: j.get("merged_at", ""))[-30:]
         return [j.get("cost", 0) for j in done]
 
@@ -176,7 +176,7 @@ class Agents:
         cap = cap or self.caps[job["id"]]
         with PORT_LOCK:
             held = self.__dict__.setdefault("held_ports", set())  # sessions that are no job's own (a best-of-2 twin)
-            port = free_port(self.opts.port_base + 1, taken={j.get("port") for j in self.state["jobs"].values()} | held)
+            port = free_port(self.opts.port_base + 1, taken={j.get("port") for j in list(self.state["jobs"].values())} | held)
             held.add(port)
             if not lens:  # a lens beside the job's own session (a test-writer beside the coder) leaves it the port
                 job["port"] = port

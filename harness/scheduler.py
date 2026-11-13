@@ -94,7 +94,7 @@ class Scheduler:
         # Each repeated failure kind gets one rule job, one at a time: they all edit the same two files,
         # so a second one built beside the first conflicts when the first merges.
         rule_busy = any(j.get("kind") == "rule" and j["stage"] not in DONE | WAITING_HUMAN | {"queued"}
-                        for j in self.state["jobs"].values())
+                        for j in list(self.state["jobs"].values()))
         for kind in self.state["repeated"]:
             rid = "L-" + hashlib.sha1(kind.encode()).hexdigest()[:6]
             job = self.job(rid)
@@ -164,7 +164,7 @@ class Scheduler:
         # A feature that depends on this one waits for it: building on it would stack each on the other.
         # Seen in the web trial: F048 was rebuilt on F049's PR, and F049's PR waited for F048 to merge.
         after = self.dependents(f["id"])
-        holders = [j for j in self.state["jobs"].values() if j["id"] != f["id"] and j["id"] not in after
+        holders = [j for j in list(self.state["jobs"].values()) if j["id"] != f["id"] and j["id"] not in after
                    and not j.get("kind") and j["stage"] in ("building", "review", "fixing", "ci", "waiting_base", "merging")
                    and overlap(f["touches"], self.footprint(j))]
         if not holders:
@@ -357,7 +357,7 @@ class Scheduler:
         # budget is used or held by running sessions: a session capped at nothing ends without a result.
         # Waiting reviews resume next run.
         paused = self.paused()  # Claude's usage limit: CI and merges go on, Claude work waits for the reset
-        for job in self.state["jobs"].values():
+        for job in list(self.state["jobs"].values()):
             if self.lanes_busy() >= self.lane_limit() or not self.can_start() or paused:
                 break
             if job["stage"] == "review" and job["id"] not in self.threads:
@@ -392,7 +392,7 @@ class Scheduler:
         spent budget cannot start, or it waits in turn on a base like that."""
         stuck = WAITING_HUMAN | ({"queued"} if self.stopping or self.low_budget() else set())
         broke = self.low_budget()
-        for j in self.state["jobs"].values():
+        for j in list(self.state["jobs"].values()):
             if j.get("branch") != job["base"] or j["id"] in seen:
                 continue
             if (j["stage"] in stuck
@@ -408,7 +408,7 @@ class Scheduler:
         revert = self.job(self.state.get("main_red_by") or "")
         parked = self.state["main_red"] and revert and revert["stage"] in WAITING_HUMAN
         broke = self.low_budget()
-        active = [j for j in self.state["jobs"].values() if j["stage"] not in DONE | WAITING_HUMAN | {"queued"}
+        active = [j for j in list(self.state["jobs"].values()) if j["stage"] not in DONE | WAITING_HUMAN | {"queued"}
                   and not (parked and j["stage"] == "merging")  # cannot merge until a human fixes main
                   and not (broke and j["stage"] == "review" and j["id"] not in self.threads)  # next run reviews it
                   and not (broke and j["stage"] == "ci" and j.get("fix_waits"))  # next run fixes it
@@ -432,11 +432,11 @@ class Scheduler:
         if self.stopping or broke:
             return True
         self.refresh_main()  # a merge this tick is not in the backlog read before it: its dependents are ready now
-        if self.ready() or (self.state.get("paused_until") and any(j["stage"] == "review" for j in self.state["jobs"].values())):
+        if self.ready() or (self.state.get("paused_until") and any(j["stage"] == "review" for j in list(self.state["jobs"].values()))):
             return False  # work waits for the usage limit to reset
         if any(self.home.glob("answer-*.json")):
             return False  # an answer waits for a lane, budget or a quiet machine; seen for real: the loop stopped at load 28
-        asked = [j["id"] for j in self.state["jobs"].values() if j["stage"] in WAITING_HUMAN]
+        asked = [j["id"] for j in list(self.state["jobs"].values()) if j["stage"] in WAITING_HUMAN]
         if asked and WAIT_FOR_HUMAN and not self.state["stop_reason"]:
             since = self.state.setdefault("idle_since", time.time())
             if time.time() - since < WAIT_FOR_HUMAN:
@@ -447,7 +447,7 @@ class Scheduler:
                 return False
         self.state.pop("idle_said", None)
         if not self.state["stop_reason"]:
-            waiting = [j["id"] for j in self.state["jobs"].values() if j["stage"] in WAITING_HUMAN]
+            waiting = [j["id"] for j in list(self.state["jobs"].values()) if j["stage"] in WAITING_HUMAN]
             waiting += [f"{ms} budget" for ms in self.state["milestone_over"]]
             self.state["stop_reason"] = ("no ready features left" + (f"; waiting on you: {', '.join(waiting)}" if waiting else ""))
         return True
