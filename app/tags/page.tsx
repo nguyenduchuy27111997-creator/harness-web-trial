@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { booksHref } from "@/lib/books";
-import { createClient, requireUser } from "@/lib/supabase/server";
+import { renameTagAction } from "@/app/tags/actions";
+import { RenameTagList } from "@/components/rename-tag-form";
 import { listTags } from "@/lib/tags";
+import { createClient, requireUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Tags · Bookshelf" };
 
@@ -13,20 +13,9 @@ export default async function TagsPage() {
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:p-8">
       <h1 className="font-heading text-4xl font-semibold tracking-tight">Tags</h1>
       {tags.length === 0 ? (
-        <p className="text-muted-foreground">No tags yet. Add one from a book&apos;s page.</p>
+        <p className="text-muted-foreground">No tags yet. Add tags from a book&apos;s page.</p>
       ) : (
-        <ul className="flex flex-col gap-3">
-          {tags.map((t) => (
-            <li key={t.id} className="flex items-baseline gap-2">
-              <Link href={booksHref({ tag: t.name })} className="text-primary underline">
-                {t.name}
-              </Link>
-              <span className="text-sm text-muted-foreground">
-                {t.count === 1 ? "1 book" : `${t.count} books`}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <RenameTagList tags={tags.map((tag) => ({ ...tag, action: renameTagAction.bind(null, tag.id) }))} />
       )}
     </main>
   );

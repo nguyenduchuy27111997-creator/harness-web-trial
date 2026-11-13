@@ -41,3 +41,7 @@
 ## 2026-11-13 (bug)
 - Why: since tags, /books/not-a-uuid returns 500: listBookTags in lib/tags.ts queries book_tags without the isUuid guard. F064's verifier found it, but F064's fix was lost when its PR closed (its feature had reached main through F066). The human approved adding this bug in chat.
 - Added: F077. Removed, re-opened, re-ordered: none.
+
+## 2026-11-13 (bug)
+- Why: e2e/F064-tags-book.spec.ts and e2e/F065-tag-validation.spec.ts screenshot a book page showing 'Started on <today>' unmasked, so CI fails on every day after the one their baselines were made (seen on F067's PR on 13/11, baselines of 10/11). The human approved adding this bug in chat.
+- Added: F078 (runs before the other bugs). Removed, re-opened, re-ordered: none.
