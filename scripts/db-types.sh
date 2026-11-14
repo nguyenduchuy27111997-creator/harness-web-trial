@@ -21,6 +21,9 @@ sql -U supabase_admin -d postgres -c "create database $scratch owner postgres" >
 trap 'sql -U supabase_admin -d postgres -c "drop database if exists $scratch with (force)" >/dev/null' EXIT
 docker exec "$container" sh -c "pg_dump -U supabase_admin --schema-only --exclude-schema=public -d postgres \
   | psql -qX -U supabase_admin -d $scratch" >/dev/null
+# Policies on storage tables come from this project's migrations: drop the ones copied from the shared database
+# (another branch may have applied newer migrations there), so the migrations below create them themselves.
+sql -U supabase_admin -d "$scratch" -c "do \$\$ declare p record; begin for p in select policyname, tablename from pg_policies where schemaname = 'storage' loop execute format('drop policy %I on storage.%I', p.policyname, p.tablename); end loop; end \$\$" >/dev/null
 for f in supabase/migrations/*.sql; do
   sql -U postgres -d "$scratch" <"$f" >/dev/null
 done
