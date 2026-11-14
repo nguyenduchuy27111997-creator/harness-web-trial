@@ -1,4 +1,4 @@
 {
   "status": "passing",
-  "notes": "Share / Copy link / Stop sharing on /shelves; /s/[token] reads through shared_shelf with a cookieless anon client; stopped or unknown tokens render app/s/[token]/not-found.tsx (Shelf not found). Link still shown in a span: the read-only Input swap needs a human to approve changing the locked e2e/F083-share-shelf.spec.ts locator linkText (getByText + textContent) to read the input's value (e.g. getByRole('textbox', { name: 'Share link' }).inputValue())."
+  "notes": "Share / Copy link / Stop sharing on /shelves; /s/[token] reads through shared_shelf with a cookieless anon client; stopped or unknown tokens render app/s/[token]/not-found.tsx (Shelf not found). Copy link and Stop sharing are grouped so they stay on one row. Link still shown in a span: the read-only Input swap needs a human to approve changing the locked e2e/F083-share-shelf.spec.ts locator linkText (getByText + textContent) to read the input's value (e.g. getByRole('textbox', { name: 'Share link' }).inputValue())."
 }

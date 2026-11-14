@@ -25,22 +25,24 @@ export function ShareShelf({ link, shareAction, stopAction }: Props) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <span className="min-w-0 break-all rounded-md border px-2 py-1 text-sm">{link}</span>
-      <Button
-        type="button"
-        size="sm"
-        variant="outline"
-        onClick={async () => {
-          await navigator.clipboard.writeText(link);
-          setCopiedLink(link);
-        }}
-      >
-        {copiedLink === link ? "Copied" : "Copy link"}
-      </Button>
-      <form action={stopAction}>
-        <PendingSubmitButton variant="outline" size="sm" pendingLabel="Stopping…">
-          Stop sharing
-        </PendingSubmitButton>
-      </form>
+      <div className="flex gap-2">
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={async () => {
+            await navigator.clipboard.writeText(link);
+            setCopiedLink(link);
+          }}
+        >
+          {copiedLink === link ? "Copied" : "Copy link"}
+        </Button>
+        <form action={stopAction}>
+          <PendingSubmitButton variant="outline" size="sm" pendingLabel="Stopping…">
+            Stop sharing
+          </PendingSubmitButton>
+        </form>
+      </div>
     </div>
   );
 }
