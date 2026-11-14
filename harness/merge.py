@@ -254,6 +254,20 @@ class Merge:
                 # Finished, verified work: a session merges main in instead of building it again (a rule job
                 # proposed this after F015 was rebuilt from scratch twice).
                 return self.resolve(job, "origin/main", files)
+            if not job.get("conflict_rounds") and (self.busy or self.paused()):
+                # Only the machine says not now: keep the finished work on its PR and move it onto main on a later
+                # tick (advance_waiting), as rebase() does. A rule job proposed this after F053 and F059 were
+                # closed and built again from scratch on a busy machine.
+                if not job.get("pr"):
+                    self.open_pr(job)
+                else:
+                    with GIT_LOCK:
+                        git("push", "-q", "-f", "origin", job["branch"], cwd=job["worktree"])
+                job["resolve_waits"], job["after_restack"] = True, "review"
+                self.event(job["id"], f"conflict with main in {', '.join(files[:5]) or 'some files'}; "
+                                      "the session that resolves it waits for a less busy machine")
+                self.set_stage(job, "waiting_base", note="conflicts with main; waits for a less busy machine")
+                return False
             if job.get("pr"):
                 gh("pr", "close", str(job["pr"]), cwd=self.root, check=False)
             self.retry(job, "conflict while moving onto main after its base merged")
@@ -347,6 +361,7 @@ class Merge:
         """Hand a conflict with main to a session: it merges main into the branch and resolves it, once per job."""
         job["conflict_rounds"] = 1
         job.pop("resolve_waits", None)
+        job.pop("after_restack", None)
         job["fix_guard_base"] = git("rev-parse", onto, cwd=job["worktree"]).stdout.strip()
         self.event(job["id"], f"conflict with main in {', '.join(files[:5]) or 'some files'}; a session resolves it")
         self.start_fix(job, f"Main moved on and this branch now conflicts with it (in: {', '.join(files) or 'unknown files'}). "
@@ -371,7 +386,8 @@ class Merge:
         if self.rebase(job, "origin/main", job["base_sha"]):
             job["base"] = "main"
             job["base_sha"] = git("rev-parse", "origin/main", cwd=job["worktree"]).stdout.strip()
-            self.set_stage(job, "review" if job["stage"] == "review" else "ci", note="base merged; rebased onto main")
+            self.set_stage(job, job.pop("after_restack", None) or ("review" if job["stage"] == "review" else "ci"),
+                           note="base merged; rebased onto main")
 
     # main after a merge -----------------------------------------------------------------
     def main_ci(self, sha):
