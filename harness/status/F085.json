@@ -1,0 +1,1 @@
+{"status": "passing", "notes": "Paging via ?limit (parseLimit, pageBooks, booksHref limit, LoadMore link). Known: saving a new book redirects to /books and resets paging; e2e does not cover shelf/tag filters while paging."}
