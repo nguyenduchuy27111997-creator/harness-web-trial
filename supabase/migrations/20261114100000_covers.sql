@@ -9,6 +9,7 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
 values ('covers', 'covers', false, 2097152, array['image/jpeg', 'image/png', 'image/webp'])
 on conflict (id) do nothing;
 
+-- Idempotent (drop policy if exists): the shared local stack may already hold these policies, and the types check dumps them into its scratch database.
 -- The owner reads, writes and deletes only objects under their own folder; an upload must name one of their books.
 drop policy if exists covers_owner_select on storage.objects;
 create policy covers_owner_select on storage.objects for select to authenticated

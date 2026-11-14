@@ -6,6 +6,7 @@ import { BookTags } from "@/components/book-tags";
 import { BookShelves } from "@/components/book-shelves";
 import { BookStatusForm } from "@/components/book-status-form";
 import { BookNotes } from "@/components/book-notes";
+import { CoverForm } from "@/components/cover-form";
 import { DeleteBookButton } from "@/components/delete-book-button";
 import { EditBookForm } from "@/components/edit-book-form";
 import { EditDatesForm } from "@/components/edit-dates-form";
@@ -19,6 +20,7 @@ import { ReviewForm } from "@/components/review-form";
 import { StatusBadge } from "@/components/status-badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getBook } from "@/lib/books";
+import { getCoverPath, signCover } from "@/lib/covers";
 import { isQueued } from "@/lib/queue";
 import { listPastReads } from "@/lib/reads";
 import { listNotes } from "@/lib/notes";
@@ -40,6 +42,8 @@ import {
   editBook,
   editDates,
   readBookAgain,
+  removeCoverAction,
+  uploadCoverAction,
   deletePastRead,
   removeBookTag,
   removeFromShelf,
@@ -55,7 +59,8 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   await requireUser();
   const supabase = await createClient();
-  const [book, shelves, shelfIds, tags, notes, quotes, pastReads, queued] = await Promise.all([
+  const [coverPath, book, shelves, shelfIds, tags, notes, quotes, pastReads, queued] = await Promise.all([
+    getCoverPath(supabase, id).catch(() => null),
     getBook(supabase, id),
     listShelves(supabase),
     listBookShelfIds(supabase, id),
@@ -66,6 +71,7 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
     isQueued(supabase, id),
   ]);
   if (!book) notFound();
+  const coverUrl = await signCover(supabase, coverPath);
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:p-8">
       <Link href="/books" className="self-start text-sm text-primary hover:underline">
@@ -79,6 +85,12 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
           <ReadingDates startedOn={book.started_on} finishedOn={book.finished_on} />
         </CardContent>
       </Card>
+      <CoverForm
+        title={book.title}
+        url={coverUrl}
+        uploadAction={uploadCoverAction.bind(null, book.id)}
+        removeAction={removeCoverAction.bind(null, book.id)}
+      />
       <EditBookForm key={`${book.title}\n${book.author}`} title={book.title} author={book.author} action={editBook.bind(null, book.id)} />
       {book.status !== "want_to_read" && (
         <EditDatesForm
