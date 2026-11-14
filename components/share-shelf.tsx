@@ -23,8 +23,17 @@ export function ShareShelf({ link, shareAction, stopAction }: Props) {
     );
   }
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="min-w-0 break-all rounded-md border px-2 py-1 text-sm">{link}</span>
+    <div className="flex min-w-0 flex-col gap-2">
+      <div className="flex min-w-0 items-center gap-2">
+        <span className="text-sm text-muted-foreground">Share link</span>
+        <a
+          href={link}
+          aria-label="Share link"
+          className="min-w-0 flex-1 truncate font-mono text-sm underline-offset-4 hover:underline"
+        >
+          {link}
+        </a>
+      </div>
       <div className="flex gap-2">
         <Button
           type="button"
