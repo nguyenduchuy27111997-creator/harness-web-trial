@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { Button } from "@/components/ui/button";
 
@@ -13,6 +13,8 @@ type Props = {
 // Share, then the link with Copy link and Stop sharing.
 export function ShareShelf({ link, shareAction, stopAction }: Props) {
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
+  const labelId = useId();
+  const linkId = useId();
   if (!link) {
     return (
       <form action={shareAction}>
@@ -25,11 +27,14 @@ export function ShareShelf({ link, shareAction, stopAction }: Props) {
   return (
     <div className="flex min-w-0 flex-col gap-2">
       <div className="flex min-w-0 items-center gap-2">
-        <span className="text-sm text-muted-foreground">Share link</span>
+        <span id={labelId} className="text-sm text-muted-foreground">
+          Share link
+        </span>
         <a
+          id={linkId}
           href={link}
-          aria-label="Share link"
-          className="min-w-0 flex-1 truncate font-mono text-sm underline-offset-4 hover:underline"
+          aria-labelledby={`${labelId} ${linkId}`}
+          className="min-w-0 flex-1 truncate text-sm text-primary underline-offset-4 hover:underline"
         >
           {link}
         </a>
