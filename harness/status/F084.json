@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "No product change: F083's shared_shelf (public fields only, empty for wrong/revoked token) and the anon cover policy already meet the acceptance. The test-writer's e2e/F084-share-nothing-private.spec.ts (UI no-leak + anon-key integration) passes and typechecks; committed unchanged. Verifier PASS 2/2. Anon table reads give [] or 42501 permission denied (both accepted); anon can call cover_is_shared, which only says whether a path is on a shared shelf."
+}
