@@ -1,4 +1,4 @@
 {
   "status": "passing",
-  "notes": "Cover upload built to docs/design/M8.md. The upload action sniffs the file's own bytes (JPEG/PNG/WebP), so text declared image/png is refused. Migration 20261114100000_covers.sql is the unchanged base version; the shared local DB's copies of its storage policies were renamed covers_owner_*_local so scripts/db-types.sh's scratch dump does not collide with it. Book delete and account delete remove files through the Storage API in the actions."
+  "notes": "Cover upload built to docs/design/M8.md. The upload action sniffs the file's own bytes (JPEG/PNG/WebP), so text declared image/png is refused. Migration 20261114100000_covers.sql is byte-identical to main (idempotent, with drop policy if exists). Book delete and account delete remove files through the Storage API in the actions."
 }
