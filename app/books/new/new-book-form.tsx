@@ -27,13 +27,17 @@ export function NewBookForm() {
     setLookupMessage("");
     try {
       const res = await fetch(`/api/lookup?q=${encodeURIComponent(query)}`);
-      const body = (await res.json()) as LookupResult | { error: string };
-      if ("error" in body) setLookupMessage(body.error);
+      const body = (await res.json().catch(() => ({}))) as LookupResult | { error?: string };
+      if ("error" in body && body.error) setLookupMessage(body.error);
+      else if (!res.ok || !("status" in body)) setLookupMessage("Lookup is not available right now");
       else if (body.status === "found") {
         setTitle(body.book.title);
         setAuthor(body.book.author);
         setTotalPages(body.book.totalPages === null ? "" : String(body.book.totalPages));
       }
+    } catch {
+      // fetch rejects on a network error.
+      setLookupMessage("Lookup is not available right now");
     } finally {
       setLookingUp(false);
     }
