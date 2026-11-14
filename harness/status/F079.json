@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Lookup via GET /api/lookup (fixture when BOOK_LOOKUP_FIXTURE is set; init.sh and playwright.config.ts default it). Add form gained an optional Total pages field saved by insertBook (decision 0021, architect PASS). Failure messages (not_found/timeout/unavailable) are left to F080: the form currently shows nothing for them. Touches lib/books.ts and app/books/actions.ts beyond the feature's touches list."
+}
