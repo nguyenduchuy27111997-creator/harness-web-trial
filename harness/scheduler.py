@@ -69,7 +69,20 @@ class Scheduler:
     # backlog on main ----------------------------------------------------------------
     def refresh_main(self):
         with GIT_LOCK:
-            git("fetch", "-q", "--prune", "origin", cwd=self.root)
+            try:
+                git("fetch", "-q", "--prune", "origin", cwd=self.root)
+                if getattr(self, "fetch_down", False):
+                    self.fetch_down = False
+                    self.event("loop", "git fetch works again")
+            except RuntimeError as e:
+                # Seen on the web trial: "Connection reset by peer" here, called from finished() outside the tick's
+                # guard, ended the loop until a human restarted it. The network: read the last fetched main, and
+                # fetch again next tick. Anything else is a real git error and still raises.
+                if not TRANSIENT.search(str(e)):
+                    raise
+                if not getattr(self, "fetch_down", False):
+                    self.fetch_down = True
+                    self.event("loop", f"git fetch failed (network), using the last fetched main: {str(e)[:160]}")
             sha = git("rev-parse", "origin/main", cwd=self.root).stdout.strip()
             if git("status", "--porcelain", cwd=self.root).stdout.strip() == "":
                 git("merge", "-q", "--ff-only", "origin/main", cwd=self.root, check=False)
