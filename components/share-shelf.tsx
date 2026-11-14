@@ -12,7 +12,7 @@ type Props = {
 
 // Share, then the link with Copy link and Stop sharing.
 export function ShareShelf({ link, shareAction, stopAction }: Props) {
-  const [copied, setCopied] = useState(false);
+  const [copiedLink, setCopiedLink] = useState<string | null>(null);
   if (!link) {
     return (
       <form action={shareAction}>
@@ -31,10 +31,10 @@ export function ShareShelf({ link, shareAction, stopAction }: Props) {
         variant="outline"
         onClick={async () => {
           await navigator.clipboard.writeText(link);
-          setCopied(true);
+          setCopiedLink(link);
         }}
       >
-        {copied ? "Copied" : "Copy link"}
+        {copiedLink === link ? "Copied" : "Copy link"}
       </Button>
       <form action={stopAction}>
         <PendingSubmitButton variant="outline" size="sm" pendingLabel="Stopping…">
