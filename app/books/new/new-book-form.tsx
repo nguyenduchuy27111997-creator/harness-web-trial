@@ -34,7 +34,9 @@ export function NewBookForm() {
         setTitle(body.book.title);
         setAuthor(body.book.author);
         setTotalPages(body.book.totalPages === null ? "" : String(body.book.totalPages));
-      }
+      } else if (body.status === "timeout") setLookupMessage("Lookup timed out, enter the book by hand");
+      else if (body.status === "not_found") setLookupMessage(`No book found for ${query.trim()}`);
+      else setLookupMessage("Lookup is not available right now");
     } catch {
       // fetch rejects on a network error.
       setLookupMessage("Lookup is not available right now");
