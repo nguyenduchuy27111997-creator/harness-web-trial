@@ -54,8 +54,15 @@ One person per account, on desktop or phone. They add a book in a few seconds, m
 - `/up-next` is a queue of my Want to read books in the order I choose (move up, move down, remove); "Start reading" moves the first one to Reading. A book that leaves Want to read leaves the queue.
 - `/settings`: a display name (1 to 40 characters) shown in the header, and deleting my account after typing DELETE, with all my data. No one else can see or change my tags, queue, name or imported books.
 
+### M8: covers, book lookup, sharing, live list
+- Add a book by looking it up: on the add form, "Look up" takes an ISBN or a title and fills title, author and total pages from Open Library through our own server route (a 5 s timeout, results cached for a day). When the lookup times out, finds nothing or is refused, the form says so and stays usable by hand. Tests never call Open Library: the route reads a fixture when `BOOK_LOOKUP_FIXTURE` is set.
+- A cover image on a book: upload a JPEG, PNG or WebP up to 2 MB from the book's page, replace it or remove it. Covers live in a private Supabase Storage bucket, readable only by the owner (and through a share link, below). The list and the book page show the cover, or a placeholder.
+- Share a shelf by link: on `/shelves`, a shelf's "Share" makes a link `/s/<token>` that anyone can open without signing in, showing that shelf's books (title, author, status, rating, cover) read-only. "Stop sharing" makes the link show not found. A shared page never shows notes, quotes, reviews, tags, other shelves or the owner's email.
+- The list loads 20 books at a time with "Load more", together with the tab, search, sort, shelf and tag filters.
+- The list updates by itself: a book added, changed or deleted in another tab shows within a few seconds without a reload (Supabase Realtime, only my own books).
+
 ## Out of scope
-- Book search APIs, covers, ISBN lookup, sharing, social features. (CSV import and export came into scope in M7.)
+- Social features (following, comments, likes), public profiles. (CSV import and export came into scope in M7; book lookup, covers and shelf share links in M8.)
 - Password reset, social login, email confirmation.
 
 ## Look and feel
@@ -72,3 +79,4 @@ Next.js + Supabase (the nextjs-supabase preset).
 - M5: I can write a note on a book, save a quote from page 42 of it, find that quote on `/quotes` by a word in it, and after deleting the book its quote is gone.
 - M6: I can see that I read a book in 12 days after fixing its start date, read it again and still see the first read, and see on `/stats/<year>` the books I finished that year.
 - M7: I can tag two books "classic" and filter my list to them, export my library and import it into a second account with the same books, put three books in Up next and start the top one, and after deleting the second account its books are gone.
+- M8: I can add a book by its ISBN from the lookup, give it a cover, share my "Travel" shelf and open the link signed out, then stop sharing and see the link go dead, and see a book I add in one tab appear in another.

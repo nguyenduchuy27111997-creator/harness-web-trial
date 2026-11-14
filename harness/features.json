@@ -1490,6 +1490,202 @@
         "Only masks and the baselines they change are touched: every assertion, step and screenshot stays",
         "Each changed spec passes in Playwright's Docker browser (scripts/e2e.sh <spec>), and CI's e2e shards pass on the PR"
       ]
+    },
+    {
+      "id": "F079",
+      "milestone": "M8",
+      "priority": 79,
+      "complexity": "L",
+      "title": "Look up a book by ISBN or title and fill the add form",
+      "depends_on": [
+        "F005"
+      ],
+      "touches": [
+        "app/api/lookup/**",
+        "lib/lookup*",
+        "app/books/new/**",
+        "components/*add-book*",
+        "e2e/*lookup*",
+        "e2e/fixtures/lookup*"
+      ],
+      "acceptance": [
+        "The add form has a 'Look up' field and button; an ISBN or a title fills title, author and total pages, which can still be edited before saving",
+        "The lookup goes through our server route, never from the browser to Open Library; the route answers from a fixture when BOOK_LOOKUP_FIXTURE is set, and every test and the verifier use the fixture",
+        "Looking up the same ISBN twice within a day calls Open Library once (a unit test with a fake fetch)"
+      ],
+      "owner_check": true
+    },
+    {
+      "id": "F080",
+      "milestone": "M8",
+      "priority": 80,
+      "complexity": "S",
+      "title": "Lookup failures: timeout, nothing found or refused keep the form usable",
+      "depends_on": [
+        "F079"
+      ],
+      "touches": [
+        "lib/lookup*",
+        "components/*add-book*",
+        "e2e/*lookup*",
+        "e2e/fixtures/lookup*"
+      ],
+      "acceptance": [
+        "When Open Library takes over 5 s, the form says 'Lookup timed out, enter the book by hand' and the fields stay editable",
+        "When nothing is found it says 'No book found for <query>'; when the service refuses (429 or 5xx) it says 'Lookup is not available right now'",
+        "In each case 'Add book' still saves a book typed by hand"
+      ]
+    },
+    {
+      "id": "F081",
+      "milestone": "M8",
+      "priority": 81,
+      "complexity": "M",
+      "title": "Upload, replace or remove a book's cover image",
+      "depends_on": [
+        "F009"
+      ],
+      "touches": [
+        "supabase/migrations/*cover*",
+        "supabase/config.toml",
+        "app/books/[id]/**",
+        "lib/cover*",
+        "components/*cover*",
+        "e2e/*cover*",
+        "e2e/fixtures/*cover*"
+      ],
+      "acceptance": [
+        "A book's page has 'Add cover'; a JPEG, PNG or WebP up to 2 MB uploads and shows on the page; 'Replace cover' and 'Remove cover' work and survive a reload",
+        "A file over 2 MB or of another type is refused with 'Use a JPEG, PNG or WebP image up to 2 MB' and nothing is stored",
+        "Covers are in a private bucket: storage policies let only the owner read, write or delete their book's cover (an integration test with a second account)",
+        "Deleting the book or the account deletes its cover file"
+      ]
+    },
+    {
+      "id": "F082",
+      "milestone": "M8",
+      "priority": 82,
+      "complexity": "S",
+      "title": "Covers on the list and the book page, with a placeholder",
+      "depends_on": [
+        "F081"
+      ],
+      "touches": [
+        "components/*book-card*",
+        "components/*cover*",
+        "app/books/page.tsx",
+        "e2e/*cover*"
+      ],
+      "acceptance": [
+        "The list shows each book's cover as a small thumbnail, or a placeholder with the title's first letter when it has none",
+        "Covers load through short-lived signed URLs, never a public URL; the page has no layout shift when a cover loads (the thumbnail has a fixed size)"
+      ]
+    },
+    {
+      "id": "F083",
+      "milestone": "M8",
+      "priority": 83,
+      "complexity": "L",
+      "title": "Share a shelf by link, read-only, without signing in",
+      "depends_on": [
+        "F082",
+        "F031"
+      ],
+      "touches": [
+        "supabase/migrations/*share*",
+        "app/s/**",
+        "app/shelves/**",
+        "lib/share*",
+        "components/*share*",
+        "middleware.ts",
+        "e2e/*share*"
+      ],
+      "acceptance": [
+        "Each shelf on /shelves has 'Share'; it makes a link /s/<token> (an unguessable token) and 'Copy link'",
+        "Signed out, /s/<token> shows the shelf's name and its books with title, author, status, rating and cover, read-only, with no header links to my pages",
+        "'Stop sharing' makes the old link show the not found page; sharing again makes a new token",
+        "Anonymous access goes through one security definer function or view that returns only the shared shelf's allowed columns; RLS on books, notes, quotes, reviews and tags is unchanged"
+      ],
+      "owner_check": true
+    },
+    {
+      "id": "F084",
+      "milestone": "M8",
+      "priority": 84,
+      "complexity": "S",
+      "title": "A shared shelf shows nothing private",
+      "depends_on": [
+        "F083"
+      ],
+      "touches": [
+        "e2e/*share*",
+        "supabase/migrations/*share*"
+      ],
+      "acceptance": [
+        "A shared page never shows notes, quotes, reviews, tags, other shelves, the owner's email or display name",
+        "With the anon key against the local Supabase, the share function returns nothing for a wrong or revoked token, and no anon query can read books, notes, quotes or covers outside a shared shelf (an integration test the verifier runs)"
+      ]
+    },
+    {
+      "id": "F085",
+      "milestone": "M8",
+      "priority": 85,
+      "complexity": "M",
+      "title": "The list loads 20 books at a time with 'Load more'",
+      "depends_on": [
+        "F066"
+      ],
+      "touches": [
+        "app/books/page.tsx",
+        "lib/books*",
+        "components/*load-more*",
+        "e2e/*load-more*"
+      ],
+      "acceptance": [
+        "With 45 books the list shows 20, 'Load more' shows 40, then 45 and the button goes away",
+        "Paging keeps the tab, search, sort, shelf and tag filters, and the counts in the tabs are unchanged",
+        "A book added while paged in still shows once, not twice"
+      ]
+    },
+    {
+      "id": "F086",
+      "milestone": "M8",
+      "priority": 86,
+      "complexity": "M",
+      "title": "The list updates live when my books change in another tab",
+      "depends_on": [
+        "F085"
+      ],
+      "touches": [
+        "supabase/migrations/*realtime*",
+        "app/books/page.tsx",
+        "lib/realtime*",
+        "components/*live*",
+        "e2e/*live*"
+      ],
+      "acceptance": [
+        "With /books open in two tabs, a book added in one shows in the other within 5 seconds without a reload; a status change and a delete show too",
+        "Only my own books come through: a second account's changes never reach my tab (Realtime with RLS)",
+        "When the connection drops and comes back, the list catches up"
+      ]
+    },
+    {
+      "id": "F087",
+      "milestone": "M8",
+      "priority": 87,
+      "complexity": "S",
+      "title": "No one else can read my covers, or shelves I did not share",
+      "depends_on": [
+        "F084",
+        "F086"
+      ],
+      "touches": [
+        "e2e/*m8-isolation*"
+      ],
+      "acceptance": [
+        "Account B cannot open A's cover by its storage path or a stale signed URL, cannot see A's books through Realtime, and /s/<made-up token> is not found",
+        "After A stops sharing, B and a signed-out visitor both get not found on the old link"
+      ]
     }
   ]
 }
