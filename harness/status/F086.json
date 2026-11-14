@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "LiveRefresh client component + lib/realtime.ts subscribeToBooks + browser client; migration was already in place. Verifier PASS."
+}
