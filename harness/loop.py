@@ -10,6 +10,8 @@ feature, and merges each PR itself once it is green. See DESIGN.md section 10.
   loop.py budget M1 20             set a milestone's budget (spent across runs); also start --milestone-budget M1=20
   loop.py events [--follow]        one line per event, for the /build skill's monitor
   loop.py monitor [backtest LOG]   incidents open and recent (DESIGN.md 18), or the rules replayed over a log
+  loop.py monitor setup [KEY]      the heartbeat on Healthchecks.io that rings when the loop or the Mac goes silent
+  loop.py doctor sleep             what put the Mac to sleep lately and the setting that stops it
 
 A feature goes queued -> building -> review -> (fixing) -> ci -> (waiting on its
 base PR) -> merging -> merged. Stages that run Claude (building, review, fixing)
@@ -35,6 +37,7 @@ worktrees in ../<repo>-loop/<id>. CLAUDE_BIN and GH_BIN override the binaries,
 LOOP_POLL the polling interval in seconds.
 """
 
+import getpass
 import sys
 from pathlib import Path
 
@@ -451,6 +454,7 @@ class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge, dispa
                 if slept > 120:
                     self.state["sleeps"] = self.state.get("sleeps", 0) + 1
                     self.event("loop", f"slept: the Mac was asleep for about {slept / 60:.0f} min")
+                    monitor.note_sleep(self, slept, monitor.on_battery() if slept >= monitor.SLEEP_MIN * 60 else None)
                 if offline and not online():  # probe first: a tick against a dead network waits out every command
                     if not announced:
                         announced = True
@@ -468,6 +472,7 @@ class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge, dispa
                 try:
                     self.tick()
                     errors = 0
+                    self.monitor.beat(self.home)  # Healthchecks rings when these stop (A1)
                     if offline and announced:
                         self.event("loop", f"online again after {(time.time() - offline) / 60:.0f} min")
                     offline, announced, waits = None, False, 0
@@ -506,6 +511,8 @@ class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge, dispa
             self.save()
             self.write_history()
             self.event("loop", f"stopped: {self.state['stop_reason']} · spent ${self.state['spent']:.2f}")
+            if not self.state.get("crashed") and monitor.pause(self.home):  # a crash still rings, once launchd gives up
+                self.event("loop", "heartbeat paused: a stop on purpose does not ring")
             self.flush_questions()  # what was held back goes out now
             self.push(f"end:{self.state['started']}", lang.say("Loop stopped: {why}", why=self.state["stop_reason"])[:120],
                       "\n".join(digest_for(self.home, self.state)), wait=True)
@@ -544,6 +551,7 @@ class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge, dispa
         self.state["running"], self.state["stop_reason"] = False, "stopped at once"
         self.save()
         self.write_history()  # the History tab shows this run too
+        monitor.pause(self.home)
         os._exit(0)
 
 
@@ -1181,10 +1189,44 @@ def cmd_events(root, a):
                 time.sleep(1)
 
 
+HEARTBEAT_HOWTO = """The watchman outside the Mac (A1): Healthchecks.io rings your phone when the loop goes silent for 15 minutes.
+Once, on healthchecks.io (free):
+  1. Sign up, then in the project: Integrations > ntfy > Add. Server {url}, topic {topic} (the loop's own),
+     priority when a check goes down: Urgent.
+  2. Settings > API Access > Create API key (read-write, not read-only).
+  3. Paste the key below (or run: loop.py monitor setup <key>).
+Only an empty ping leaves the Mac, and the check's name: {name}."""
+
+
 def cmd_monitor(root, a):
-    """Incidents open now and the last ones (incidents.jsonl), or a backtest of the rules over an events.log."""
+    """Incidents open now and the last ones (incidents.jsonl), a backtest of the rules over an events.log, or the
+    heartbeat's setup."""
+    home = home_of(root)
+    if a.action == "setup":
+        cfg = notify.config(home)
+        if not cfg:
+            print("Set up pushes first: loop.py notify set")
+            return 1
+        name = f"harness {root.name}"
+        key = a.arg
+        if not key:
+            print(HEARTBEAT_HOWTO.format(url=cfg["url"], topic=cfg["topic"], name=name))
+            key = getpass.getpass("API key: ").strip()
+        if not key:
+            return 1
+        try:
+            _, channels = monitor.setup_heartbeat(home, key, name)
+        except Exception as e:
+            print(f"Healthchecks said no: {e}")
+            return 1
+        print(f"Check '{name}' made: a ping each minute while the loop runs, a ring after 15 minutes of silence. "
+              "It starts with the loop's first ping; a stop on purpose pauses it, the next start wakes it.")
+        if not any(c.get("kind") == "ntfy" for c in channels):
+            print(f"No ntfy integration on Healthchecks yet: add it (step 1, topic {cfg['topic']}), then run this "
+                  "again, or the silence only goes to your email.")
+        return 0  # no ping here: the check starts with the loop's first one, never before a loop that pings
     if a.action == "backtest":
-        f = Path(a.log) if a.log else home_of(root) / "events.log"
+        f = Path(a.arg) if a.arg else home / "events.log"
         hits = monitor.backtest(f.read_text().splitlines())
         days = {}
         for h in hits:
@@ -1196,13 +1238,24 @@ def cmd_monitor(root, a):
         night = [h for h in hits if monitor.quiet_now(h["at"]) and h["rule"] in ("A2", "A3")]
         print(f"urgent ones in the quiet hours ({monitor.QUIET}): {len(night)} over {len(days)} days")
         return 0
-    state = json.loads((home_of(root) / "state.json").read_text()) if (home_of(root) / "state.json").exists() else {}
+    state = json.loads((home / "state.json").read_text()) if (home / "state.json").exists() else {}
     for inc in (state.get("monitor") or {}).get("open", {}).values():
         print(f"open  {inc['id']:<9} {'urgent ' if inc['urgent'] else ''}{inc.get('title', '')}: {inc.get('text', '')}")
-    f = home_of(root) / "incidents.jsonl"
+    f = home / "incidents.jsonl"
     for line in (f.read_text().splitlines()[-20:] if f.exists() else []):
         r = json.loads(line)
         print(f"{r['at']}  {r['event']:<7} {r['id']:<9} {r.get('title') or r.get('after') or ''}")
+    hb = monitor.heartbeat(home)
+    print(f"heartbeat: check '{hb['name']}' on Healthchecks" if hb else "heartbeat: not set up (loop.py monitor setup)")
+    return 0
+
+
+def cmd_doctor(root, a):
+    """What put the Mac to sleep lately and the setting that stops it (reads pmset; changes nothing)."""
+    if not shutil.which("pmset"):
+        print("pmset not found: this is for macOS.")
+        return 1
+    print("\n".join(monitor.sleep_report(a.days)))
     return 0
 
 
@@ -1253,14 +1306,18 @@ def main():
     no.add_argument("--url", default=notify.DEFAULT_URL)
     no.add_argument("--detail", action="store_true", help="send the full question, not just a line")
     mo = sub.add_parser("monitor")  # incidents (monitor.py, DESIGN.md 18)
-    mo.add_argument("action", nargs="?", choices=["show", "backtest"], default="show")
-    mo.add_argument("log", nargs="?", help="backtest: an events.log (default: this project's)")
+    mo.add_argument("action", nargs="?", choices=["show", "backtest", "setup"], default="show")
+    mo.add_argument("arg", nargs="?", help="backtest: an events.log (default: this project's); setup: the API key")
+    do = sub.add_parser("doctor")  # what keeps the Mac from running the loop
+    do.add_argument("what", choices=["sleep"])
+    do.add_argument("--days", type=int, default=7)
     a = p.parse_args()
     root = Path(git("rev-parse", "--show-toplevel").stdout.strip())
     return {"start": cmd_start, "status": cmd_status, "answer": cmd_answer, "drop": cmd_drop, "stop": cmd_stop, "budget": cmd_budget,
             "events": cmd_events, "digest": cmd_digest, "notify": cmd_notify,
             "runner": cmd_runner, "service": cmd_service, "metrics": cmd_metrics,
-            "forecast": cmd_forecast, "decisions": cmd_decisions, "monitor": cmd_monitor}[a.cmd](root, a)
+            "forecast": cmd_forecast, "decisions": cmd_decisions, "monitor": cmd_monitor,
+            "doctor": cmd_doctor}[a.cmd](root, a)
 
 
 if __name__ == "__main__":

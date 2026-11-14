@@ -21,6 +21,10 @@ The human does not read code or use a terminal. Everything goes through you and 
    to that topic, keep it private), then `notify test`. Also suggest turning on Remote Control in the Claude app, so they
    can answer here from the phone. Pushes come when the loop needs them, a run ends, a milestone is done, or the machine
    or network has trouble; questions also go on the PR, where `/answer <text>` or `/drop <why>` from their account works.
+4b2. Watchman (once per project, after pushes work): if `python3 harness/loop.py monitor` says the heartbeat is not set up, offer
+   it: Healthchecks.io (free) rings the phone when the loop or the Mac is silent for 15 minutes. On yes, ask the human to run
+   `python3 harness/loop.py monitor setup` in a terminal themselves (it prints the steps and asks for an API key; the key
+   never goes in this chat). Also run `python3 harness/loop.py doctor sleep` and pass on what it says to change.
 4c. Unattended (once per project, on this Mac): offer `python3 harness/loop.py service install`, a launchd agent that runs
    the loop so a crash or a reboot does not end a run (it resumes with the same budget, at most 3 times). After that
    `start` hands each run to the service. If CI runs on a self-hosted runner on this Mac (`HARNESS_RUNS_ON`), ask once

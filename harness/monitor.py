@@ -6,11 +6,14 @@ Each tick `Monitor.check(loop)` asks every rule whether it holds. A rule that st
 until the owner taps "Got it" (at most 3 times); a rule that stops holding closes its incident with "Resolved".
 Between LOOP_QUIET hours (23-7) only urgent pushes ring: the rest go out silent (ntfy priority 2).
 
+  A1  urgent  the loop or the Mac silent for 15 minutes: pinged to Healthchecks after each healthy tick, which rings
+              by itself when the pings stop (asleep, off, offline, hung, or gone); a stop on purpose pauses it
   A2  urgent  main red for more than LOOP_RED_MINUTES (60), counted while the loop runs and the Mac is awake
   A4          a feature in the same stage for more than LOOP_STUCK_HOURS (3), not counting time waiting on the
               owner, the usage limit, the network, or (queued) for a lane; all stuck features are one incident
   A5          no merge for LOOP_IDLE_HOURS (6) while work that does not wait on the owner is open
   A7          the same test failed CI on 3 or more different PRs within 24 hours: likely shared, not the PRs' fault
+  A3          the Mac slept 15 minutes or more while the loop ran (urgent when no heartbeat is set up)
   A8          an error in the loop's own code with a signature not seen in 90 days (told once)
   A11         Docker or a stack service failing its probe for 10 minutes; free disk under LOOP_DISK_GB (15)
   A12         Claude Code logged out for 20 minutes; Claude's API unreachable for 60 minutes
@@ -25,6 +28,7 @@ import hashlib
 import json
 import os
 import re
+import subprocess
 import threading
 import time
 import traceback
@@ -187,6 +191,7 @@ class Monitor:
         self.acks = set()  # read by the background poll, applied on the next check
         self.ack_poll = 0.0
         self.polling = False
+        self.beat_at = 0.0
 
     def step(self):
         t = time.monotonic()
@@ -390,6 +395,137 @@ class Monitor:
             finally:
                 self.polling = False
         threading.Thread(target=run, daemon=True).start()
+
+    def beat(self, home):
+        """A1: after a healthy tick, ping the project's check on Healthchecks (at most every BEAT_EVERY seconds, in
+        the background). When the pings stop for PERIOD + GRACE, Healthchecks pushes to the owner's phone itself:
+        the one alarm that still rings when the Mac sleeps, loses power or the loop is gone."""
+        cfg = heartbeat(home) if enabled() else None
+        if not cfg or time.time() - self.beat_at < BEAT_EVERY:
+            return
+        self.beat_at = time.time()
+        threading.Thread(target=ping, args=(cfg["ping_url"],), daemon=True).start()
+
+
+# the watchman outside the Mac (A1) and the Mac's sleep (A3) ------------------------------------
+HC_API = os.environ.get("LOOP_HC_API", "https://healthchecks.io/api/v3")
+PERIOD, GRACE = 300, 600  # Healthchecks rings 15 minutes after the last ping
+BEAT_EVERY = 60
+SLEEP_MIN = 15
+
+
+def heartbeat(home):
+    """The check's config (heartbeat.json beside the loop's state, never in the repo), or None."""
+    try:
+        cfg = json.loads((Path(home) / "heartbeat.json").read_text())
+    except (OSError, ValueError):
+        return None
+    return cfg if cfg.get("ping_url") else None
+
+
+def hc(url, key, body=None):
+    """Call Healthchecks' management API (a POST when there is a body)."""
+    url = url if url.startswith("http") else HC_API + url
+    data = None if body is None else (body if isinstance(body, bytes) else json.dumps(body).encode())
+    req = urllib.request.Request(url, data=data, headers={"X-Api-Key": key, "Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=15) as r:
+        raw = r.read().decode()
+    return json.loads(raw) if raw.strip() else {}
+
+
+def setup_heartbeat(home, key, name):
+    """Make (or, by name, update) the project's check: a ping expected every 5 minutes, 10 minutes' grace, every
+    integration of the Healthchecks project attached. Saves heartbeat.json; returns it and the integrations."""
+    channels = hc("/channels/", key).get("channels", [])
+    check = hc("/checks/", key, {"name": name, "timeout": PERIOD, "grace": GRACE, "channels": "*", "unique": ["name"]})
+    if not check.get("ping_url"):
+        raise ValueError("Healthchecks gave no ping URL: the API key must be read-write, not read-only")
+    cfg = {"name": name, "ping_url": check["ping_url"], "pause_url": check["pause_url"], "key": key}
+    f = Path(home) / "heartbeat.json"
+    f.write_text(json.dumps(cfg, indent=2) + "\n")
+    f.chmod(0o600)
+    return cfg, channels
+
+
+def ping(url):
+    try:
+        urllib.request.urlopen(url, timeout=10).close()
+        return True
+    except Exception:
+        return False
+
+
+def pause(home):
+    """A stop on purpose pauses the check, so it does not ring; the next ping starts it again by itself."""
+    cfg = heartbeat(home) if enabled() else None
+    if not cfg:
+        return False
+    try:
+        hc(cfg["pause_url"], cfg["key"], b"")
+        return True
+    except Exception:
+        return False
+
+
+def on_battery():
+    try:
+        return "Battery Power" in subprocess.run(["pmset", "-g", "batt"], capture_output=True, text=True,
+                                                 timeout=10).stdout
+    except Exception:
+        return None
+
+
+def note_sleep(loop, seconds, battery=None, at=None):
+    """A3: the Mac slept SLEEP_MIN minutes or more while the loop ran. Urgent when no heartbeat is set up (then
+    nothing else told the owner); with one, Healthchecks already rang, so this only says how long and why."""
+    if not enabled() or seconds < SLEEP_MIN * 60:
+        return None
+    at = at or time.time()
+    watched = heartbeat(loop.home) is not None
+    start = datetime.datetime.fromtimestamp(at - seconds)
+    title = lang.say("Mac slept {t} from {at}", t=span(seconds), at=f"{start:%H:%M}") + (
+        " " + lang.say("(on battery)") if battery else "")
+    text = lang.say("Nothing moved meanwhile. What keeps it awake: loop.py doctor sleep")
+    iid = f"A3-{int(at)}"
+    record(loop.home, {"id": iid, "rule": "A3", "event": "open", "urgent": not watched, "title": title})
+    loop.event("loop", f"incident {iid}: {title}")
+    loop.push(f"inc:{iid}", title, text, priority=3 if watched else 5, urgent=not watched)
+    return iid
+
+
+SLEEP_CAUSE = re.compile(r"^(\d{4}-\d\d-\d\d) \S+ \S+ Sleep\s+Entering Sleep state due to '([^']+)'.*?Using (AC|Batt)",
+                         re.M)
+CAUSES = {"Clamshell Sleep": "lid", "Idle Sleep": "idle", "Low Power Sleep": "empty"}
+
+
+def sleep_report(days=7, pm=None):
+    """What put the Mac to sleep in the last `days` (pmset's log) and what stops each cause. Reads only: the kit
+    never changes the Mac's settings; the owner does."""
+    pm = pm or (lambda *a: subprocess.run(["pmset", *a], capture_output=True, text=True, timeout=120).stdout)
+    batt, log = pm("-g", "batt"), pm("-g", "log")
+    laptop, now_batt = "InternalBattery" in batt, "Battery Power" in batt
+    since = (datetime.date.today() - datetime.timedelta(days=days)).isoformat()
+    n = {"lid": 0, "idle": 0, "empty": 0}
+    for day, cause, power in SLEEP_CAUSE.findall(log):
+        if day >= since and cause in CAUSES:
+            n[CAUSES[cause]] += 1
+    out = [lang.say("Sleeps in the last {d} days: lid closed {lid}, idle {idle}, battery empty {empty}.", d=days, **n),
+           lang.say("To do (the kit changes nothing itself):")]
+    if now_batt:
+        out.append("- " + lang.say("The Mac is on battery now: plug it in. The loop keeps it awake only on power."))
+    if n["lid"]:
+        out.append("- " + lang.say("Keep the lid open while the loop runs: a closed MacBook sleeps unless it is on "
+                                   "power with an external display."))
+    if n["idle"]:  # on power the loop's caffeinate stops these; seen anyway, the setting does too
+        where = ("System Settings › Battery › Options… › \"Prevent automatic sleeping on power adapter when the "
+                 "display is off\"" if laptop else
+                 "System Settings › Energy › \"Prevent automatic sleeping when the display is off\"")
+        out.append("- " + lang.say("Turn on {where}.", where=where))
+    if n["empty"]:
+        out.append("- " + lang.say("The battery ran out {n} times: keep it on power.", n=n["empty"]))
+    if len(out) == 2:
+        out[1] = lang.say("Nothing to change.")
+    return out
 
 
 # backtest over an events.log --------------------------------------------------------------------

@@ -40,6 +40,18 @@ VI = {
     "New error in the loop": "Lỗi mới trong loop",
     "Resolved: {title}": "Đã ổn: {title}", "It lasted {t}.": "Kéo dài {t}.",
     "Got it": "Biết rồi", "(again)": "(nhắc lại)",
+    "Mac slept {t} from {at}": "Mac đã ngủ {t} từ {at}", "(on battery)": "(đang chạy pin)",
+    "Nothing moved meanwhile. What keeps it awake: loop.py doctor sleep": "Trong lúc đó không việc gì chạy. Cách giữ máy thức: loop.py doctor sleep",
+    "Sleeps in the last {d} days: lid closed {lid}, idle {idle}, battery empty {empty}.":
+        "Số lần ngủ trong {d} ngày qua: gập máy {lid}, để không {idle}, hết pin {empty}.",
+    "To do (the kit changes nothing itself):": "Việc cần làm (kit không tự đổi gì):",
+    "Nothing to change.": "Không cần đổi gì.",
+    "The Mac is on battery now: plug it in. The loop keeps it awake only on power.":
+        "Mac đang chạy pin: cắm sạc. Loop chỉ giữ được máy thức khi cắm điện.",
+    "Keep the lid open while the loop runs: a closed MacBook sleeps unless it is on power with an external display.":
+        "Để mở nắp khi loop chạy: MacBook gập lại là ngủ, trừ khi cắm điện và nối màn hình ngoài.",
+    "Turn on {where}.": "Bật {where}.",
+    "The battery ran out {n} times: keep it on power.": "Hết pin {n} lần: cứ cắm điện.",
     "queued": "chờ lane", "ci": "CI", "waiting_base": "chờ PR nền", "merging": "merge",
     # alerts (watch.py)
     "{id}: {detail}": "{id}: {detail}",
