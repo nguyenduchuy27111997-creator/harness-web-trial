@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { DeleteShelfButton } from "@/components/delete-shelf-button";
 import { FormField } from "@/components/form-field";
+import { ShareShelf } from "@/components/share-shelf";
 import { Button } from "@/components/ui/button";
 import type { ShelfFormState } from "@/lib/shelves";
 
@@ -12,7 +13,12 @@ type Props = {
   action: (prev: ShelfFormState, formData: FormData) => Promise<ShelfFormState>;
 };
 
-type Row = Pick<Props, "id" | "name" | "action"> & { deleteAction: (formData: FormData) => Promise<void> };
+type Row = Pick<Props, "id" | "name" | "action"> & {
+  deleteAction: (formData: FormData) => Promise<void>;
+  shareLink: string | null;
+  shareAction: () => Promise<void>;
+  stopSharingAction: () => Promise<void>;
+};
 
 // The list of shelves: at most one rename form is open at a time.
 export function RenameShelfList({ shelves }: { shelves: Row[] }) {
@@ -35,15 +41,18 @@ export function RenameShelfList({ shelves }: { shelves: Row[] }) {
 
 type RowProps = Row & { open: boolean; onOpen: () => void; onClose: () => void };
 
-function RenameShelfForm({ open, onOpen, onClose, deleteAction, ...props }: RowProps) {
+function RenameShelfForm({ open, onOpen, onClose, deleteAction, shareLink, shareAction, stopSharingAction, ...props }: RowProps) {
   if (!open) {
     return (
-      <div className="flex items-center gap-3">
-        <span>{props.name}</span>
-        <Button type="button" variant="outline" size="sm" onClick={onOpen}>
-          Rename
-        </Button>
-        <DeleteShelfButton name={props.name} action={deleteAction} />
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-3">
+          <span>{props.name}</span>
+          <Button type="button" variant="outline" size="sm" onClick={onOpen}>
+            Rename
+          </Button>
+          <DeleteShelfButton name={props.name} action={deleteAction} />
+        </div>
+        <ShareShelf link={shareLink} shareAction={shareAction} stopAction={stopSharingAction} />
       </div>
     );
   }

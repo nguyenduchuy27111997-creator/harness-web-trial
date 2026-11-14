@@ -7,7 +7,7 @@ export function SiteHeader({ signedIn, displayName, signOut }: SiteHeaderProps) 
   return (
     <header className="border-b">
       <div className="mx-auto flex w-full max-w-3xl flex-wrap items-center justify-between gap-2 px-4 py-4 sm:px-8">
-        <Link href="/books" className="font-heading text-xl font-semibold">
+        <Link href={signedIn ? "/books" : "/"} className="font-heading text-xl font-semibold">
           Bookshelf
         </Link>
         {signedIn && (

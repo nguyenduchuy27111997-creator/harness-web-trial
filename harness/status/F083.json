@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Share / Copy link / Stop sharing on /shelves; /s/[token] reads through shared_shelf with a cookieless anon client. Signed-out header brand link now goes to / (decision 0022, architect PASS on M8)."
+}

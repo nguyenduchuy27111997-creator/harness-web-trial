@@ -10,6 +10,7 @@ import {
   type ShelfFormState,
   updateShelfName,
 } from "@/lib/shelves";
+import { shareShelf, stopSharing } from "@/lib/share";
 import { createClient, requireUser } from "@/lib/supabase/server";
 
 export async function createShelf(_prev: ShelfFormState, formData: FormData): Promise<ShelfFormState> {
@@ -51,4 +52,16 @@ export async function deleteShelf(id: string, _formData: FormData): Promise<void
   if (isUuid(id)) await removeShelf(await createClient(), id);
   revalidatePath("/shelves");
   revalidatePath("/books", "layout");
+}
+
+export async function shareShelfAction(shelfId: string): Promise<void> {
+  await requireUser();
+  if (isUuid(shelfId)) await shareShelf(await createClient(), shelfId);
+  revalidatePath("/shelves");
+}
+
+export async function stopSharingAction(shelfId: string): Promise<void> {
+  await requireUser();
+  if (isUuid(shelfId)) await stopSharing(await createClient(), shelfId);
+  revalidatePath("/shelves");
 }
