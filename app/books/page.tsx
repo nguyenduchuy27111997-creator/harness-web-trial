@@ -10,6 +10,7 @@ import { SortSelect } from "@/components/sort-select";
 import { StatusTabs } from "@/components/status-tabs";
 import { booksHref, countByStatus, filterBooks, listBooks, parseSearch, parseSort, parseStatusFilter, sortBooks } from "@/lib/books";
 import { filterByShelf, listShelfBookIds, listShelves, parseShelfFilter } from "@/lib/shelves";
+import { signCovers } from "@/lib/covers";
 import { createClient, requireUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "My books · Bookshelf" };
@@ -30,6 +31,7 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
   const visible = filterBooks(taggedIds ? byShelf.filter((book) => taggedIds.has(book.id)) : byShelf, q);
   const counts = countByStatus(visible);
   const books = sortBooks(status ? visible.filter((book) => book.status === status) : visible, sort);
+  const coverUrls = await signCovers(supabase, books.flatMap((b) => (b.cover_path ? [b.cover_path] : [])));
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:p-8">
       <h1 className="font-heading text-4xl font-semibold tracking-tight">My books</h1>
@@ -43,7 +45,7 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
           <Link href="/books/new">Add book</Link>
         </Button>
       )}
-      {books.length > 0 && <BookList books={books} tagsByBook={tagsByBook} />}
+      {books.length > 0 && <BookList books={books} tagsByBook={tagsByBook} coverUrls={coverUrls} />}
       {books.length === 0 && q && (
         <div className="flex flex-col items-start gap-2">
           <p className="text-muted-foreground">No books match &ldquo;{q}&rdquo;.</p>
