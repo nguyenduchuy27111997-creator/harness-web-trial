@@ -2,6 +2,7 @@
 - [MCP browser has no downloads](project_mcp-no-downloads.md) — verify downloads with in-page fetch + e2e spec, not MCP click
 - [MCP upload roots](project_mcp-upload-roots.md) — upload fixtures must live in worktree .playwright-mcp/; no `timeout` on macOS
 - [Storage probes via node --env-file](project_storage-service-role-listing.md) — service-role bucket listing + 2nd-account probes that work
-- [RLS probe via test](project_rls-probe-via-test.md) — curl RLS probes with .env keys get denied; run the integration spec instead
+- [RLS probe via test](project_rls-probe-via-test.md) — .env-sourced curl denied; anon curl via `supabase status -o env` works; else run the spec
 - [MCP rAF stall](project_mcp-raf-stall.md) — clicks hang on "stable": tab stopped rAF; open a new tab
 - [Shared DB vs migration file](project_shared-db-migration-check.md) — live stack may not run this branch's migration; replay it with db-types.sh --check
+- [Migrations land with design](project_migrations-land-with-design.md) — milestone SQL is on main already; read supabase/migrations, not branch diff

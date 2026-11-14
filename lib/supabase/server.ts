@@ -1,5 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
-import type { SupabaseClient, User } from "@supabase/supabase-js";
+import { createClient as createSupabaseClient, type SupabaseClient, type User } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
@@ -34,4 +34,11 @@ export async function requireUser(): Promise<User> {
   const user = await getUser();
   if (!user) redirect("/sign-in");
   return user;
+}
+
+// No cookies and no session: the shared-shelf page reads with anon rights only, signed in or not.
+export function createAnonClient(): SupabaseClient<Database> {
+  return createSupabaseClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 }

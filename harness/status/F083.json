@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Share / Copy link / Stop sharing on /shelves; /s/[token] reads through shared_shelf with a cookieless anon client; stopped or unknown tokens render app/s/[token]/not-found.tsx (Shelf not found). The share link is a one-line truncated text-primary <a> named \"Share link <URL>\" via aria-labelledby with Copy link and Stop sharing in their own row. A read-only Input was not used: the locked e2e reads the link with getByText + textContent (see docs/decisions/0023)."
+}
