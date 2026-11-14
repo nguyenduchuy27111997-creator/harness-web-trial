@@ -4,5 +4,5 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 scripts/db-up.sh
-npx supabase status -o env 2>/dev/null | python3 scripts/supabase_env.py local >.env.test.new
-mv .env.test.new .env.test
+npx supabase status -o env 2>/dev/null | python3 scripts/supabase_env.py local >".env.test.$$"
+mv ".env.test.$$" .env.test  # one temp file per run: init.sh and check.sh may run this at once

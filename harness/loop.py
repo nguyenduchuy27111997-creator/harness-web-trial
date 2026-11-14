@@ -106,7 +106,7 @@ class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge, dispa
             return state
         state.update(started=now(), spent=0.0, cut_off=[], budget=self.opts.budget, lanes=self.opts.lanes,
                      milestone=self.opts.milestone, running=True, stop_reason="", pid=os.getpid(), resumes=0, team={},
-                     opts={k: getattr(self.opts, k) for k in OPT_KEYS})
+                     opts={k: getattr(self.opts, k) for k in OPT_KEYS}, env=run_env())
         state.pop("crashed", None)
         return state
 
@@ -881,6 +881,13 @@ def service_label(root):
 SERVICE_ENV = ("LOOP_", "HARNESS_", "GH_HOST")
 
 
+def run_env():
+    """The loop's own knobs this run was started with (LOOP_DISPATCHER=decide, say), so a run that `answer` starts
+    again keeps them. Never a secret-looking name, and nothing from HARNESS_ (HARNESS_HUMAN_OVERRIDE stays per commit)."""
+    return {k: v for k, v in os.environ.items() if k.startswith(("LOOP_", "GH_HOST"))
+            and not any(s in k for s in ("TOKEN", "KEY", "SECRET", "PASSWORD"))}
+
+
 def service_plist(root):
     return Path(runner.AGENTS) / f"{service_label(root)}.plist"
 
@@ -1022,7 +1029,10 @@ def cmd_answer(root, a):
     # someone restarted it. A stopped loop starts again with the last run's options to act on it.
     opts = state.get("opts") or {}
     flags = [x for k, v in opts.items() if v is not None and k in OPT_KEYS for x in (f"--{k.replace('_', '-')}", str(v))]
-    subprocess.Popen([sys.executable, str(Path(__file__).resolve()), "start", *flags], cwd=root,
+    # Seen on the API trial: the run had been started with LOOP_DISPATCHER=decide and LOOP_BEST_OF=2, and the run an
+    # answer started had neither. It gets the last run's knobs; ones set in this shell win.
+    env = {**(state.get("env") or {}), **os.environ}
+    subprocess.Popen([sys.executable, str(Path(__file__).resolve()), "start", *flags], cwd=root, env=env,
                      stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
     print(f"Answer for {a.feature} recorded. The loop was stopped: it starts again now to act on it"
           + (f" ({' '.join(flags)})." if flags else "."))

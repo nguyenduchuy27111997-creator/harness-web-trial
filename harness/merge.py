@@ -29,6 +29,8 @@ class Merge:
         r = gh("pr", "checks", str(job["pr"]), "--json", "bucket,name,link", cwd=self.root, check=False)
         if "no checks reported" in (r.stderr + r.stdout):
             return "none"
+        if r.returncode and not r.stdout.strip():  # gh failed (the network, auth): an error, not a PR without checks
+            raise RuntimeError(f"gh pr checks failed: {r.stderr.strip()[-400:]}")
         try:
             checks = json.loads(r.stdout or "[]")
         except ValueError:
@@ -100,9 +102,13 @@ class Merge:
         # this older head is refused, so what merges is always a commit CI passed.
         head = self.pr_head(job)
         result = self.pr_checks(job)
-        if result == "none":  # a repo without workflows: give GitHub a moment to register them
-            job["no_checks"] = job.get("no_checks", 0) + 1
-            if job["no_checks"] < 3:
+        if result == "none":
+            if any((Path(job["worktree"]) / ".github/workflows").glob("*.y*ml")):
+                return  # GitHub has not registered this push's checks yet (F083 merged red on a count of 5 old looks)
+            # A repo without workflows: give GitHub a moment, counted for this head only.
+            seen = job.get("no_checks")
+            job["no_checks"] = [head, seen[1] + 1] if isinstance(seen, list) and seen[0] == head else [head, 1]
+            if job["no_checks"][1] < 3:
                 return
             result = "pass"
         if result == "pending":

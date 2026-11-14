@@ -76,7 +76,8 @@ class Stages:
                        "with your work exactly as they are, since the loop rejects a commit that changes them, unless the "
                        "change only waits for the app (a dialog to close, a request to settle) and removes or loosens no "
                        "check: a skeptic reads such a change. If one is "
-                       f"wrong (it asks for what the acceptance does not say), do not change it: write why to {issue}, set "
+                       f"wrong (it asks for what the acceptance does not say, or fails the gate's typecheck or lint on its own lines), "
+                       f"do not change it: write why to {issue}, set "
                        "the feature blocked with blocked_reason failed, and stop; the test-writer writes it again. If it "
                        "lists no files, write the test yourself as usual.)")
             box = {}
