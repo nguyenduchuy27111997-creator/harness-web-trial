@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Cover upload built to docs/design/M8.md. The upload action sniffs the file's own bytes (JPEG/PNG/WebP), so text declared image/png is refused. Migration 20261114100000_covers.sql is idempotent (drop policy if exists) because the shared local stack already holds the storage policies and scripts/db-types.sh dumps them into its scratch database. Book delete and account delete remove files through the Storage API in the actions."
+}
