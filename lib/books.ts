@@ -87,14 +87,28 @@ export function sortBooks(books: ShelfBook[], sort: BookSort): ShelfBook[] {
   return [...books];
 }
 
-// The one URL builder for /books: parameters in the order status, q, sort, shelf, tag.
-export function booksHref({ status, q, sort, shelf, tag }: { status?: BookStatus; q?: string; sort?: BookSort; shelf?: string; tag?: string }): string {
+export const PAGE_SIZE = 20;
+
+// A multiple of 20 from 20 to 1000 from the URL, else 20.
+export function parseLimit(value: string | string[] | undefined): number {
+  const n = typeof value === "string" && /^\d+$/.test(value) ? Number(value) : 0;
+  return n >= PAGE_SIZE && n <= 1000 && n % PAGE_SIZE === 0 ? n : PAGE_SIZE;
+}
+
+// The first `limit` of the filtered, sorted list, and whether more follow.
+export function pageBooks<T>(books: T[], limit: number): { books: T[]; hasMore: boolean } {
+  return { books: books.slice(0, limit), hasMore: books.length > limit };
+}
+
+// The one URL builder for /books: parameters in the order status, q, sort, shelf, tag, limit.
+export function booksHref({ status, q, sort, shelf, tag, limit }: { status?: BookStatus; q?: string; sort?: BookSort; shelf?: string; tag?: string; limit?: number }): string {
   const params = new URLSearchParams();
   if (status) params.set("status", status);
   if (q) params.set("q", q);
   if (sort && sort !== "newest") params.set("sort", sort);
   if (shelf) params.set("shelf", shelf);
   if (tag) params.set("tag", tag);
+  if (limit && limit !== PAGE_SIZE) params.set("limit", String(limit));
   const query = params.toString();
   return query ? `/books?${query}` : "/books";
 }

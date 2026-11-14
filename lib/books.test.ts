@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "./database.types";
-import { booksHref, countByStatus, filterBooks, formatFinishDate, formatReadDays, insertBook, listBooks, parseBookFields, parseNewBook, parseProgress, parseRating, parseReadingDates, parseReview, parseSearch, parseSort, parseStatus, parseStatusFilter, formatProgress, progressPercent, removeBook, sortBooks, type ShelfBook, updateBookFields, updateBookProgress, updateBookRating, updateBookReview, updateBookStatus, updateReadingDates } from "./books";
+import { booksHref, countByStatus, filterBooks, formatFinishDate, formatReadDays, insertBook, listBooks, pageBooks, parseLimit, parseBookFields, parseNewBook, parseProgress, parseRating, parseReadingDates, parseReview, parseSearch, parseSort, parseStatus, parseStatusFilter, formatProgress, progressPercent, removeBook, sortBooks, type ShelfBook, updateBookFields, updateBookProgress, updateBookRating, updateBookReview, updateBookStatus, updateReadingDates } from "./books";
 
 function stubClient(result: { data: unknown; error: { message: string } | null }) {
   const calls: unknown[][] = [];
@@ -449,5 +449,23 @@ describe("insertBook total pages", () => {
       { title: "A", author: "B", status: "reading", total_pages: 300, current_page: 0 },
       { title: "A", author: "B", status: "finished", total_pages: 300, current_page: 300 },
     ]);
+  });
+});
+
+describe("paging", () => {
+  it("parseLimit accepts multiples of 20 up to 1000, else 20", () => {
+    expect(parseLimit("40")).toBe(40);
+    expect(parseLimit("1000")).toBe(1000);
+    for (const bad of [undefined, "", "0", "25", "1020", "-20", "abc", ["40"]]) expect(parseLimit(bad as string)).toBe(20);
+  });
+  it("pageBooks slices and reports more", () => {
+    const all = Array.from({ length: 45 }, (_, i) => i);
+    expect(pageBooks(all, 20)).toEqual({ books: all.slice(0, 20), hasMore: true });
+    expect(pageBooks(all, 40).hasMore).toBe(true);
+    expect(pageBooks(all, 60)).toEqual({ books: all, hasMore: false });
+  });
+  it("booksHref carries limit, omitted at 20", () => {
+    expect(booksHref({ limit: 20 })).toBe("/books");
+    expect(booksHref({ status: "reading", limit: 40 })).toBe("/books?status=reading&limit=40");
   });
 });

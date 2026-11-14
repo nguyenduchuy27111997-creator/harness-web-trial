@@ -7,20 +7,22 @@ import { listTaggedBookIds, listTagsForBooks, parseTagFilter, sortTags } from "@
 import { ShelfSelect } from "@/components/shelf-select";
 import { TagSelect } from "@/components/tag-select";
 import { SortSelect } from "@/components/sort-select";
+import { LoadMore } from "@/components/load-more";
 import { StatusTabs } from "@/components/status-tabs";
-import { booksHref, countByStatus, filterBooks, listBooks, parseSearch, parseSort, parseStatusFilter, sortBooks } from "@/lib/books";
+import { booksHref, countByStatus, filterBooks, listBooks, PAGE_SIZE, pageBooks, parseLimit, parseSearch, parseSort, parseStatusFilter, sortBooks } from "@/lib/books";
 import { filterByShelf, listShelfBookIds, listShelves, parseShelfFilter } from "@/lib/shelves";
 import { signCovers } from "@/lib/covers";
 import { createClient, requireUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "My books · Bookshelf" };
 
-export default async function BooksPage({ searchParams }: { searchParams: Promise<{ status?: string | string[]; q?: string | string[]; sort?: string | string[]; shelf?: string | string[]; tag?: string | string[] }> }) {
+export default async function BooksPage({ searchParams }: { searchParams: Promise<{ status?: string | string[]; q?: string | string[]; sort?: string | string[]; shelf?: string | string[]; tag?: string | string[]; limit?: string | string[] }> }) {
   await requireUser();
   const params = await searchParams;
   const status = parseStatusFilter(params.status);
   const q = parseSearch(params.q);
   const sort = parseSort(params.sort);
+  const limit = parseLimit(params.limit);
   const supabase = await createClient();
   const [rows, shelves, tagsByBook] = await Promise.all([listBooks(supabase), listShelves(supabase), listTagsForBooks(supabase)]);
   const shelf = parseShelfFilter(params.shelf, shelves);
@@ -30,7 +32,8 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
   const byShelf = filterByShelf(rows, shelf ? await listShelfBookIds(supabase, shelf) : undefined);
   const visible = filterBooks(taggedIds ? byShelf.filter((book) => taggedIds.has(book.id)) : byShelf, q);
   const counts = countByStatus(visible);
-  const books = sortBooks(status ? visible.filter((book) => book.status === status) : visible, sort);
+  const sorted = sortBooks(status ? visible.filter((book) => book.status === status) : visible, sort);
+  const { books, hasMore } = pageBooks(sorted, limit);
   const coverUrls = await signCovers(supabase, books.flatMap((b) => (b.cover_path ? [b.cover_path] : [])));
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:p-8">
@@ -46,6 +49,7 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
         </Button>
       )}
       {books.length > 0 && <BookList books={books} tagsByBook={tagsByBook} coverUrls={coverUrls} />}
+      {hasMore && <LoadMore href={booksHref({ status, q, sort, shelf, tag, limit: limit + PAGE_SIZE })} />}
       {books.length === 0 && q && (
         <div className="flex flex-col items-start gap-2">
           <p className="text-muted-foreground">No books match &ldquo;{q}&rdquo;.</p>
