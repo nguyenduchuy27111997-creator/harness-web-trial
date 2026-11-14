@@ -377,6 +377,31 @@ class Merge:
         if self.base_merged(job) and job["id"] not in self.threads:
             self.restack(job)
 
+    def follow_base(self, job):
+        """A stacked PR whose base branch got new commits (a review fix, main merged in, a rebase): rebase it onto
+        the base's new tip, so its CI tests the code that will merge and a conflict shows up one fix at a time
+        rather than all at once when the base merges. A rule job proposed this after F053 and F059 (L-07018e)."""
+        if job["base"] == "main" or job["id"] in self.threads or self.base_merged(job):
+            return
+        base = next((j for j in list(self.state["jobs"].values()) if j.get("branch") == job["base"]), None)
+        if not base or base["id"] in self.threads or base["stage"] not in ("review", "ci", "waiting_base", "merging"):
+            return  # the base is being worked on: follow it once its session has pushed
+        wt = job["worktree"]
+        tip = git("rev-parse", "-q", "--verify", f"refs/heads/{job['base']}", cwd=wt, check=False).stdout.strip()
+        if not tip or tip in (job["base_sha"], job.get("base_tried")):
+            return
+        if git("rebase", "-q", "--onto", tip, job["base_sha"], cwd=wt, check=False).returncode != 0 \
+                and not self.regenerate(job):
+            git("rebase", "--abort", cwd=wt, check=False)
+            job["base_tried"] = tip  # once per tip: what is left is resolved when the base merges (ensure_base)
+            return
+        job.pop("base_tried", None)
+        job["base_sha"] = tip
+        with GIT_LOCK:
+            git("push", "-q", "-f", "origin", job["branch"], cwd=wt)
+        self.event(job["id"], f"{job['base']} moved on; rebased onto its new tip")
+        self.set_stage(job, "ci", note=f"rebased onto {job['base']}'s new tip")
+
     def restack(self, job):
         with GIT_LOCK:
             git("fetch", "-q", "origin", cwd=job["worktree"])

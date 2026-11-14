@@ -340,6 +340,8 @@ class Scheduler:
         self.check_milestones()
         for job in list(self.state["jobs"].values()):
             try:
+                if job["stage"] in ("ci", "waiting_base"):
+                    self.follow_base(job)
                 if job["stage"] == "ci":
                     self.advance_ci(job)
                 elif job["stage"] == "merging":
