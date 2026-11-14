@@ -25,6 +25,17 @@ import {
   type ReviewFormState,
   type StatusFormState,
 } from "@/lib/books";
+import {
+  getCoverPath,
+  parseCoverFile,
+  removeCover,
+  removeCoverObject,
+  sniffImageType,
+  uploadCover,
+  type CoverFormState,
+  COVER_ERROR,
+  COVER_TYPES,
+} from "@/lib/covers";
 import { readAgain, removePastRead } from "@/lib/reads";
 import { insertNote, parseNote, removeNote, updateNote, type NoteFormState } from "@/lib/notes";
 import { insertQuote, parseQuote, removeQuote, updateQuote, type QuoteFormState } from "@/lib/quotes";
@@ -74,7 +85,11 @@ export async function saveRating(
 
 export async function deleteBook(id: string, _formData: FormData): Promise<void> {
   await requireUser();
-  if (isUuid(id)) await removeBook(await createClient(), id);
+  if (isUuid(id)) {
+    const supabase = await createClient();
+    const coverPath = await getCoverPath(supabase, id);
+    if (await removeBook(supabase, id)) await removeCoverObject(supabase, coverPath);
+  }
   revalidatePath("/books");
   revalidatePath("/quotes");
   redirect("/books");
@@ -366,4 +381,33 @@ export async function addToUpNext(bookId: string, _formData: FormData): Promise<
   await queueBook(await createClient(), bookId);
   revalidatePath(`/books/${bookId}`);
   revalidatePath("/up-next");
+}
+
+export async function uploadCoverAction(bookId: string, _prev: CoverFormState, formData: FormData): Promise<CoverFormState> {
+  const user = await requireUser();
+  const parsed = parseCoverFile(formData.get("cover"));
+  if ("error" in parsed) return { error: parsed.error };
+  if (!isUuid(bookId)) return { error: "Book not found" };
+  try {
+    // The declared type is only a claim: the file's own bytes must be an image, and they name its type.
+    const type = sniffImageType(new Uint8Array(await parsed.file.slice(0, 12).arrayBuffer()));
+    if (!type) return { error: COVER_ERROR };
+    if (!(await uploadCover(await createClient(), user.id, bookId, parsed.file, COVER_TYPES[type]))) return { error: "Book not found" };
+  } catch {
+    return { error: "Could not save. Try again." };
+  }
+  revalidatePath("/books");
+  revalidatePath(`/books/${bookId}`);
+  return {};
+}
+
+export async function removeCoverAction(bookId: string, _formData: FormData): Promise<void> {
+  await requireUser();
+  try {
+    if (isUuid(bookId)) await removeCover(await createClient(), bookId);
+  } catch {
+    // A database error leaves the cover in place; the page shows it unchanged instead of the error boundary.
+  }
+  revalidatePath("/books");
+  revalidatePath(`/books/${bookId}`);
 }

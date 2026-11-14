@@ -11,6 +11,7 @@ import {
   type DeleteAccountState,
   type NameFormState,
 } from "@/lib/profile";
+import { removeAllCovers } from "@/lib/covers";
 import { createClient, requireUser } from "@/lib/supabase/server";
 
 export async function saveName(_prev: NameFormState, formData: FormData): Promise<NameFormState> {
@@ -28,10 +29,12 @@ export async function saveName(_prev: NameFormState, formData: FormData): Promis
 }
 
 export async function deleteAccountAction(_prev: DeleteAccountState, formData: FormData): Promise<DeleteAccountState> {
-  await requireUser();
+  const user = await requireUser();
   if (formData.get("confirm") !== DELETE_CONFIRM_WORD) return { formError: DELETE_CONFIRM_MESSAGE };
   try {
-    await deleteAccount(await createClient());
+    const supabase = await createClient();
+    await removeAllCovers(supabase, user.id); // storage forbids SQL deletes, so the files go first
+    await deleteAccount(supabase);
   } catch {
     return { formError: "Could not delete the account. Try again." };
   }
