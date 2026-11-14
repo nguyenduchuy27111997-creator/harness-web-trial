@@ -403,7 +403,11 @@ export async function uploadCoverAction(bookId: string, _prev: CoverFormState, f
 
 export async function removeCoverAction(bookId: string, _formData: FormData): Promise<void> {
   await requireUser();
-  if (isUuid(bookId)) await removeCover(await createClient(), bookId);
+  try {
+    if (isUuid(bookId)) await removeCover(await createClient(), bookId);
+  } catch {
+    // A database error leaves the cover in place; the page shows it unchanged instead of the error boundary.
+  }
   revalidatePath("/books");
   revalidatePath(`/books/${bookId}`);
 }

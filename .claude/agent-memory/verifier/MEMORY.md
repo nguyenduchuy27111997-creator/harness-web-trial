@@ -3,3 +3,4 @@
 - [MCP upload roots](project_mcp-upload-roots.md) — upload fixtures must live in worktree .playwright-mcp/; no `timeout` on macOS
 - [Storage probes via node --env-file](project_storage-service-role-listing.md) — service-role bucket listing + 2nd-account probes that work
 - [RLS probe via test](project_rls-probe-via-test.md) — curl RLS probes with .env keys get denied; run the integration spec instead
+- [MCP rAF stall](project_mcp-raf-stall.md) — clicks hang on "stable": tab stopped rAF; open a new tab
