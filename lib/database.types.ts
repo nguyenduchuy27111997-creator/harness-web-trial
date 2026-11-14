@@ -57,13 +57,13 @@ isOneToOne: false
                   ]
                 },"books": {
                   Row: {
-                    "author": string,"created_at": string,"current_page": number | null,"finished_on": string | null,"id": string,"rating": number | null,"review": string | null,"started_on": string | null,"status": string,"title": string,"total_pages": number | null,"user_id": string
+                    "author": string,"cover_path": string | null,"created_at": string,"current_page": number | null,"finished_on": string | null,"id": string,"rating": number | null,"review": string | null,"started_on": string | null,"status": string,"title": string,"total_pages": number | null,"user_id": string
                   }
                   Insert: {
-                    "author": string,"created_at"?: string,"current_page"?: number | null,"finished_on"?: string | null,"id"?: string,"rating"?: number | null,"review"?: string | null,"started_on"?: string | null,"status"?: string,"title": string,"total_pages"?: number | null,"user_id"?: string
+                    "author": string,"cover_path"?: string | null,"created_at"?: string,"current_page"?: number | null,"finished_on"?: string | null,"id"?: string,"rating"?: number | null,"review"?: string | null,"started_on"?: string | null,"status"?: string,"title": string,"total_pages"?: number | null,"user_id"?: string
                   }
                   Update: {
-                    "author"?: string,"created_at"?: string,"current_page"?: number | null,"finished_on"?: string | null,"id"?: string,"rating"?: number | null,"review"?: string | null,"started_on"?: string | null,"status"?: string,"title"?: string,"total_pages"?: number | null,"user_id"?: string
+                    "author"?: string,"cover_path"?: string | null,"created_at"?: string,"current_page"?: number | null,"finished_on"?: string | null,"id"?: string,"rating"?: number | null,"review"?: string | null,"started_on"?: string | null,"status"?: string,"title"?: string,"total_pages"?: number | null,"user_id"?: string
                   }
                   Relationships: [
                     
@@ -151,6 +151,25 @@ isOneToOne: false
       referencedColumns: ["id","user_id"]
     }
                   ]
+                },"shelf_shares": {
+                  Row: {
+                    "created_at": string,"shelf_id": string,"token": string,"user_id": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"shelf_id": string,"token"?: string,"user_id"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"shelf_id"?: string,"token"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "shelf_shares_shelf_id_user_id_fkey"
+      columns: ["shelf_id","user_id"]
+isOneToOne: false
+      referencedRelation: "shelves"
+      referencedColumns: ["id","user_id"]
+    }
+                  ]
                 },"shelves": {
                   Row: {
                     "created_at": string,"id": string,"name": string,"user_id": string
@@ -202,7 +221,10 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "delete_account":
+            "cover_is_shared":
+{ Args: { "p_name": string }; Returns: boolean
+                           },
+"delete_account":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
 "import_books":
@@ -213,6 +235,11 @@ isOneToOne: false
                            },
 "read_again":
 { Args: { "p_book_id": string }; Returns: boolean
+                           },
+"shared_shelf":
+{ Args: { "p_token": string }; Returns: {
+              "added_at": string,"author": string,"book_id": string,"cover_path": string,"rating": number,"shelf_name": string,"status": string,"title": string
+            }[]
                            }
           }
           Enums: {

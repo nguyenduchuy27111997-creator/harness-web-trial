@@ -13,6 +13,10 @@ module.exports = {
       from: { path: "^components/" }, to: { path: ["^lib/supabase/", "@supabase/"] } },
     { name: "ssr-only-in-lib-supabase", severity: "error", comment: "@supabase/ssr is imported only by lib/supabase/ (docs/design/M1.md, Modules).",
       from: { path: "^(app|components|lib)/", pathNot: "^lib/supabase/" }, to: { path: "@supabase/ssr" } },
+    { name: "lookup-fixture-only-in-route", severity: "error", comment: "Only the lookup route reads the lookup fixture (docs/design/M8.md, Modules).",
+      from: { pathNot: "^app/api/lookup/route\\.ts$" }, to: { path: "^lib/lookup-fixture\\.ts$" } },
+    { name: "browser-client-only-in-app", severity: "error", comment: "Only app/ creates the browser Supabase client (docs/design/M8.md, Modules).",
+      from: { pathNot: "^app/" }, to: { path: "^lib/supabase/client\\.ts$" } },
   ],
   options: {
     doNotFollow: { path: "node_modules" },
