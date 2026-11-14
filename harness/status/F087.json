@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Isolation already held (RLS, storage policies, private Realtime channels, share tokens); no product code changed. Added the test-writer's e2e/F087-m8-isolation.spec.ts and shareShelfLink helper; one wait for the book heading was added in the stop-sharing test (no check removed)."
+}

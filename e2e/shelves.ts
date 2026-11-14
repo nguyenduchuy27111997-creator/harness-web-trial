@@ -29,3 +29,13 @@ export async function shelveOpenBook(page: Page, shelf: string) {
   await page.getByRole("button", { name: "Add to shelf" }).click();
   await expect(page.getByRole("list", { name: "Shelves this book is on" })).toContainText(shelf);
 }
+
+// Shares `shelf` on /shelves and returns the link's address (/s/<token>).
+export async function shareShelfLink(page: Page, shelf: string) {
+  const row = page.getByRole("listitem").filter({ hasText: shelf });
+  await row.getByRole("button", { name: "Share" }).click();
+  await expect(row.getByRole("button", { name: "Copy link" })).toBeVisible();
+  const match = ((await row.getByText(/\/s\/[0-9a-f]{48}/).textContent()) ?? "").match(/(\S*\/s\/[0-9a-f]{48})/);
+  expect(match).not.toBeNull();
+  return match![1];
+}
