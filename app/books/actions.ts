@@ -12,6 +12,7 @@ export async function createBook(_prev: BookFormState, formData: FormData): Prom
     title: String(formData.get("title") ?? ""),
     author: String(formData.get("author") ?? ""),
     status: String(formData.get("status") ?? ""),
+    total_pages: String(formData.get("total_pages") ?? ""),
   };
   if (!parsed.ok) return { fieldErrors: parsed.fieldErrors, values };
   try {

@@ -19,5 +19,6 @@ create trigger books_broadcast after insert or update or delete on public.books
   for each row execute function public.books_broadcast();
 
 -- Only the owner may join (and so receive) their private books topic.
+drop policy if exists books_topic_owner_receives on realtime.messages;
 create policy books_topic_owner_receives on realtime.messages for select to authenticated
   using (realtime.messages.extension = 'broadcast' and (select realtime.topic()) = 'books:' || (select auth.uid())::text);

@@ -105,9 +105,9 @@ export const STATUS_LABELS: Record<BookStatus, string> = {
   finished: "Finished",
 };
 
-export type BookFormState = FormState<"title" | "author" | "status">;
+export type BookFormState = FormState<"title" | "author" | "status" | "total_pages">;
 
-type NewBook = { title: string; author: string; status: BookStatus };
+type NewBook = { title: string; author: string; status: BookStatus; total_pages?: number };
 
 export function parseBookFields(formData: FormData): Parsed<{ title: string; author: string }, "title" | "author"> {
   const title = String(formData.get("title") ?? "").trim();
@@ -121,14 +121,18 @@ export function parseBookFields(formData: FormData): Parsed<{ title: string; aut
   return { ok: true, value: { title, author } };
 }
 
-export function parseNewBook(formData: FormData): Parsed<NewBook, "title" | "author" | "status"> {
+// Total pages is optional (blank → left out); when given, the same rule as the progress form.
+export function parseNewBook(formData: FormData): Parsed<NewBook, "title" | "author" | "status" | "total_pages"> {
   const fields = parseBookFields(formData);
   const rawStatus = formData.get("status");
   const status = rawStatus === null || rawStatus === "" ? "want_to_read" : String(rawStatus);
-  const fieldErrors: FieldErrors<"title" | "author" | "status"> = fields.ok ? {} : { ...fields.fieldErrors };
+  const rawTotal = String(formData.get("total_pages") ?? "").trim();
+  const total = /^\d+$/.test(rawTotal) ? Number(rawTotal) : NaN;
+  const fieldErrors: FieldErrors<"title" | "author" | "status" | "total_pages"> = fields.ok ? {} : { ...fields.fieldErrors };
   if (!isBookStatus(status)) fieldErrors.status = "Choose a status";
-  if (!fields.ok || !isBookStatus(status)) return { ok: false, fieldErrors };
-  return { ok: true, value: { ...fields.value, status } };
+  if (rawTotal && !(total >= 1 && total <= 10000)) fieldErrors.total_pages = "Total pages must be a whole number from 1 to 10,000";
+  if (!fields.ok || Object.keys(fieldErrors).length > 0 || !isBookStatus(status)) return { ok: false, fieldErrors };
+  return { ok: true, value: { ...fields.value, status, ...(rawTotal && { total_pages: total }) } };
 }
 
 export function isBookStatus(value: string): value is BookStatus {
@@ -136,8 +140,13 @@ export function isBookStatus(value: string): value is BookStatus {
 }
 
 // user_id is filled by the column default (auth.uid()), never sent by the app.
+// With total pages, current_page starts at 0 (or at the end for a finished book), as the import does.
 export async function insertBook(supabase: SupabaseClient<Database>, input: NewBook): Promise<void> {
-  const { error } = await supabase.from("books").insert(input);
+  const row =
+    input.total_pages === undefined
+      ? input
+      : { ...input, current_page: input.status === "finished" ? input.total_pages : 0 };
+  const { error } = await supabase.from("books").insert(row);
   if (error) throw new Error(error.message);
 }
 
