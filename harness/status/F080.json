@@ -1,0 +1,1 @@
+{"status":"passing","notes":"Form shows timeout / not found / unavailable messages; fields stay editable; hand-typed save works. Mapping in lib/lookup.ts (F079) has no unit tests for timeout/429/5xx."}
