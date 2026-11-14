@@ -6,6 +6,7 @@ import { BookTags } from "@/components/book-tags";
 import { BookShelves } from "@/components/book-shelves";
 import { BookStatusForm } from "@/components/book-status-form";
 import { BookNotes } from "@/components/book-notes";
+import { BookCover } from "@/components/book-cover";
 import { CoverForm } from "@/components/cover-form";
 import { DeleteBookButton } from "@/components/delete-book-button";
 import { EditBookForm } from "@/components/edit-book-form";
@@ -78,15 +79,17 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
         Back to my books
       </Link>
       <Card>
-        <CardContent className="flex flex-col gap-3 break-words">
-          <h1 className="font-heading text-4xl font-semibold tracking-tight">{book.title}</h1>
-          <p className="text-muted-foreground">{book.author}</p>
-          <StatusBadge status={book.status} />
-          <ReadingDates startedOn={book.started_on} finishedOn={book.finished_on} />
+        <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-start">
+          <BookCover title={book.title} url={coverUrl} size="lg" />
+          <div className="flex min-w-0 flex-1 flex-col gap-3 break-words">
+            <h1 className="font-heading text-4xl font-semibold tracking-tight">{book.title}</h1>
+            <p className="text-muted-foreground">{book.author}</p>
+            <StatusBadge status={book.status} />
+            <ReadingDates startedOn={book.started_on} finishedOn={book.finished_on} />
+          </div>
         </CardContent>
       </Card>
       <CoverForm
-        title={book.title}
         url={coverUrl}
         uploadAction={uploadCoverAction.bind(null, book.id)}
         removeAction={removeCoverAction.bind(null, book.id)}

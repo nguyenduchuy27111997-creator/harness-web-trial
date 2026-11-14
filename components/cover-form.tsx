@@ -1,20 +1,18 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { BookCover } from "@/components/book-cover";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { COVER_ERROR, COVER_MAX_BYTES, COVER_TYPES, type CoverFormState } from "@/lib/covers";
 
 type Props = {
-  title: string;
   url: string | null;
   uploadAction: (prev: CoverFormState, formData: FormData) => Promise<CoverFormState>;
   removeAction: (formData: FormData) => Promise<void>;
 };
 
-export function CoverForm({ title, url, uploadAction, removeAction }: Props) {
+export function CoverForm({ url, uploadAction, removeAction }: Props) {
   const [state, formAction] = useActionState(uploadAction, {} as CoverFormState);
   const [clientError, setClientError] = useState<string>();
   const error = clientError ?? state.error;
@@ -33,7 +31,6 @@ export function CoverForm({ title, url, uploadAction, removeAction }: Props) {
 
   return (
     <section aria-label="Cover" className="flex flex-col gap-3">
-      <BookCover title={title} url={url} size="lg" />
       <form action={submit} className="flex flex-col gap-2">
         <Label htmlFor="cover">Cover image</Label>
         <Input

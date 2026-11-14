@@ -18,7 +18,6 @@ export function BookList({ books, tagsByBook, coverUrls }: { books: ShelfBook[];
           <li key={book.id}>
             <Card>
               <CardContent className="flex items-center justify-between gap-4">
-                <BookCover title={book.title} url={(book.cover_path && coverUrls?.get(book.cover_path)) || null} size="sm" />
                 <div className="flex min-w-0 flex-1 flex-col gap-1 break-words">
                   <Link href={`/books/${book.id}`} className="font-heading text-lg font-semibold hover:underline">
                     {book.title}
@@ -40,6 +39,7 @@ export function BookList({ books, tagsByBook, coverUrls }: { books: ShelfBook[];
                     </div>
                   )}
                 </div>
+                <BookCover title={book.title} url={(book.cover_path && coverUrls?.get(book.cover_path)) || null} size="sm" className="order-first" />
                 <StatusBadge status={book.status} />
               </CardContent>
             </Card>
