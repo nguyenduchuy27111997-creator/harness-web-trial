@@ -45,9 +45,11 @@ test("Load more shows 20, 40, then 45 books and the button goes away", async ({ 
   await expect(page.getByRole("link", { name: `Book 45 ${s}` })).toBeVisible();
   await page.mouse.move(0, 0);
   await expectAccessible(page);
+  // The end of the list, where "Load more" was: only the per-run titles are masked.
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await expect(page).toHaveScreenshot("F085-all-loaded.png", {
     stylePath: "e2e/hide-dev-overlay.css",
-    mask: [page.getByRole("list")],
+    mask: [bookLinks(page, s)],
   });
 });
 
