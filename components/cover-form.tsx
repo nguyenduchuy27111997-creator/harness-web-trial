@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { BookCover } from "@/components/book-cover";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
@@ -32,10 +33,7 @@ export function CoverForm({ title, url, uploadAction, removeAction }: Props) {
 
   return (
     <section aria-label="Cover" className="flex flex-col gap-3">
-      {url && (
-        // eslint-disable-next-line @next/next/no-img-element -- a signed URL of a private file
-        <img src={url} alt={`Cover of ${title}`} width={128} height={192} className="h-48 w-32 rounded-md object-cover" />
-      )}
+      <BookCover title={title} url={url} size="lg" />
       <form action={submit} className="flex flex-col gap-2">
         <Label htmlFor="cover">Cover image</Label>
         <Input

@@ -1,0 +1,1 @@
+{"status": "passing", "notes": "BookCover (sm/lg) on the list and book page; signCovers batches one createSignedUrls(600) call for the visible list; ShelfBook.cover_path optional."}

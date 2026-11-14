@@ -94,3 +94,12 @@ export async function signCover(supabase: Client, path: string | null): Promise<
   const { data } = await supabase.storage.from("covers").createSignedUrl(path, 600);
   return data?.signedUrl ?? null;
 }
+
+// One call for many covers: path -> signed URL. A path that fails is left out (placeholder shown).
+export async function signCovers(supabase: Client, paths: string[]): Promise<Map<string, string>> {
+  const urls = new Map<string, string>();
+  if (paths.length === 0) return urls;
+  const { data } = await supabase.storage.from("covers").createSignedUrls(paths, 600);
+  for (const item of data ?? []) if (item.path && item.signedUrl) urls.set(item.path, item.signedUrl);
+  return urls;
+}
