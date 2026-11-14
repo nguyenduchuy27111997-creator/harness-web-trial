@@ -414,3 +414,40 @@ describe("updateReadingDates", () => {
     await expect(updateReadingDates(updateClient({ data: null, error: { message: "boom" } }), "x", "reading", { started_on: null })).rejects.toThrow("boom");
   });
 });
+
+describe("parseNewBook total pages", () => {
+  it("leaves blank total pages out and keeps a valid one", () => {
+    expect(parseNewBook(form({ title: "A", author: "B", total_pages: " " }))).toEqual({
+      ok: true,
+      value: { title: "A", author: "B", status: "want_to_read" },
+    });
+    expect(parseNewBook(form({ title: "A", author: "B", total_pages: " 310 " }))).toEqual({
+      ok: true,
+      value: { title: "A", author: "B", status: "want_to_read", total_pages: 310 },
+    });
+  });
+
+  it("refuses total pages that are not a whole number from 1 to 10,000", () => {
+    for (const total_pages of ["0", "10001", "1.5", "abc"]) {
+      expect(parseNewBook(form({ title: "A", author: "B", total_pages }))).toEqual({
+        ok: false,
+        fieldErrors: { total_pages: "Total pages must be a whole number from 1 to 10,000" },
+      });
+    }
+  });
+});
+
+describe("insertBook total pages", () => {
+  it("starts the progress at 0, or at the end for a finished book", async () => {
+    const inserted: unknown[] = [];
+    const client = {
+      from: () => ({ insert: (row: unknown) => (inserted.push(row), Promise.resolve({ error: null })) }),
+    } as unknown as SupabaseClient<Database>;
+    await insertBook(client, { title: "A", author: "B", status: "reading", total_pages: 300 });
+    await insertBook(client, { title: "A", author: "B", status: "finished", total_pages: 300 });
+    expect(inserted).toEqual([
+      { title: "A", author: "B", status: "reading", total_pages: 300, current_page: 0 },
+      { title: "A", author: "B", status: "finished", total_pages: 300, current_page: 300 },
+    ]);
+  });
+});

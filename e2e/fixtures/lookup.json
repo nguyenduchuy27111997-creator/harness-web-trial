@@ -1,0 +1,6 @@
+{
+  "9780141439518": { "status": "found", "book": { "title": "Pride and Prejudice", "author": "Jane Austen", "totalPages": 480 } },
+  "the hobbit": { "status": "found", "book": { "title": "The Hobbit", "author": "J.R.R. Tolkien", "totalPages": 310 } },
+  "slow book": { "status": "timeout" },
+  "broken book": { "status": "unavailable" }
+}

@@ -4,6 +4,9 @@ import { existsSync } from "node:fs";
 // Local Supabase keys for the tests and the dev server (written by scripts/env-test.sh).
 if (existsSync(".env.test")) process.loadEnvFile(".env.test");
 
+// Book lookups answer from this fixture in every test (never Open Library); the dev server inherits it.
+process.env.BOOK_LOOKUP_FIXTURE ??= "e2e/fixtures/lookup.json";
+
 // The loop gives each lane its own free PORT.
 const port = Number(process.env.PORT ?? 3300);
 // Playwright's Linux browser server (scripts/browser.sh), set by scripts/e2e.sh.

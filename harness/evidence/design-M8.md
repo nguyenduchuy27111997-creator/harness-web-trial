@@ -1,19 +1,17 @@
 <!-- written by harness/hooks/verifier-evidence.py; do not edit -->
-- Verified at: 2026-11-14T12:56:32 on dbe3561 plus working tree
-- Architect run: a16ef98b6c82f18cc
-- Design sha256: 183a259eba2f0352cc01b2c7cc0f5cc8610626ac7fda5f77643d8129dc2db6c4
+- Verified at: 2026-11-14T13:01:31 on 4e202fc plus working tree
+- Architect run: a0612d86161e1276a
+- Design sha256: b668ecf73f2771a0ccec4e6dcb7c2255bdb599a95c120e42e3a8a02fa6521695
 
 VERDICT: PASS
 DESIGN: M8
 CHECKED:
-- Round 2 fix: Contract > Covers now says `components/cover-form.tsx` (client) checks the chosen file's size and type against `COVER_MAX_BYTES` and `COVER_TYPES` from `lib/covers.ts`. On failure it shows "Use a JPEG, PNG or WebP image up to 2 MB" and does not submit, so a file over the 3 MB action body limit never reaches Next. The input sets `accept="image/jpeg,image/png,image/webp"`. `parseCoverFile` and the bucket limits still check on the server. The F081 e2e tests one file between 2 and 3 MB and one over 3 MB. The import is allowed: rule 4 only stops `components/` from importing `lib/supabase/` and `@supabase/` directly. `lib/covers.ts` takes the Supabase client as a parameter and imports it only as a type, so the client bundle gets no server code. This closes the F081 acceptance gap ("refused with the message and nothing is stored").
-- Coverage: F079 to F087 each still map to their modules, contract entries and migrations. Nothing changed outside the Covers bullet since round 2.
-- Data model and migrations: unchanged since round 2. The three migrations only add things and each has a rollback comment. `lib/database.types.ts` is regenerated. The constraints, column grants, storage policies, security definer functions and the Realtime topic policy all fit the features.
-- Contract: the lookup route, lib functions, actions and form state still match the data model. `next.config.ts` still says `"2mb"`; the doc assigns the change to `"3mb"` to F081, not to the scaffold, so this is expected.
-- Module boundaries: 8 rules, all acyclic. `.dependency-cruiser.cjs` contains `lookup-fixture-only-in-route` and `browser-client-only-in-app`, and they match the doc.
-- NFR: load, threat model (tokens, storage, Realtime, lookup proxy) and cost are stated and match the spec and decision 0019.
-- Consistency: no conflict with M1 to M7 or decisions 0001 to 0019. The body limit change is recorded in 0020. That decision does not mention the client-side check, but it does not contradict it.
-- Simplicity: nothing speculative. The client check adds no new abstraction; it reuses the existing constants.
+- Coverage: F079 needs the lookup to fill title, author and total pages, and the user must be able to edit them before saving. Before this change the M1 add form had no total pages field. The changed F079 line in /Users/huynguyen/Desktop/harness-web-trial-loop/F079/docs/design/M8.md now covers that: an optional "Total pages" input, read by `parseNewBook` and saved by `insertBook`. The rest of F079 is as before: the server route `app/api/lookup`, the fixture switch `BOOK_LOOKUP_FIXTURE`, and the one-day cache in `createLookup`/`lookupBook`. The other M8 features are untouched by this change.
+- Data model and migrations: no migration is needed, and that holds. `books.total_pages` (1 to 10000) and `current_page` already exist (20261105120000_book_reading_progress.sql). `books` has no column-level insert revoke, so `authenticated` can already insert these columns; the CSV import `import_books` (security invoker, 20261110100000_tags.sql) already inserts them as the user. The `books_progress_pair` check needs both columns null or both set, with `current_page <= total_pages`. The rule in decision 0021 satisfies it: `current_page` is 0, or `total_pages` for a Finished book. That rule is the same as the import's. `books_finish_progress` fires only on update, so setting `current_page` explicitly on insert is correct.
+- Contract: decision 0021 states the extension to M1's contract. `NewBook` gains `total_pages?: number`. `BookFormState` and the `parseNewBook` error fields gain `total_pages`. A blank value is left out; otherwise the progress form's rule and message apply ("Total pages must be a whole number from 1 to 10,000"). The code in the working tree matches: /Users/huynguyen/Desktop/harness-web-trial-loop/F079/lib/books.ts (`parseNewBook`, `insertBook`), /Users/huynguyen/Desktop/harness-web-trial-loop/F079/app/books/actions.ts (echoes `total_pages` back in `values`), and /Users/huynguyen/Desktop/harness-web-trial-loop/F079/app/books/new/new-book-form.tsx (controlled title, author and total pages fields that a lookup fills and the user can still edit). A book added without pages is stored as before.
+- Module boundaries: unchanged. The form stays in `app/` and imports `createBook`. The `lib/books.ts` change adds no new imports.
+- NFR and threat model: unchanged. The new field is validated on the server and backed by the table's check; RLS and ownership are unaffected.
+- Consistency: changing M1's add form contract is allowed here because decision /Users/huynguyen/Desktop/harness-web-trial-loop/F079/docs/decisions/0021-add-form-total-pages.md records why, and the M8 line cites it. It reuses the M5 progress rule and the M7 import rule, so it conflicts with neither.
+- Simplicity: this is one optional field, the minimum F079's acceptance needs. Decision 0021 rejects the hidden-field alternative and gives the reason.
+- Outside the design (not blocking): F079's `touches` list in harness/features.json does not include `lib/books.ts` or `app/books/actions.ts`, but this change edits both, and F085 also edits `lib/books.ts`. The loop may need to know about that overlap when it runs features in parallel. Humans own features.json, so this is for the human to decide.
 PROBLEMS:
-
-Relevant files: /Users/huynguyen/Desktop/harness-web-trial-loop/D-M8/docs/design/M8.md, /Users/huynguyen/Desktop/harness-web-trial-loop/D-M8/docs/decisions/0020-cover-body-size-limit.md, /Users/huynguyen/Desktop/harness-web-trial-loop/D-M8/.dependency-cruiser.cjs, /Users/huynguyen/Desktop/harness-web-trial-loop/D-M8/next.config.ts

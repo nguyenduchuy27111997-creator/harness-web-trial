@@ -12,6 +12,8 @@ if [ -z "${PORT:-}" ]; then
   while lsof -nP -tiTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1; do port=$((port + 1)); done
 fi
 set -a; . ./.env.test; set +a
+# Book lookups answer from the fixture; `BOOK_LOOKUP_FIXTURE= ./init.sh` uses Open Library.
+export BOOK_LOOKUP_FIXTURE="${BOOK_LOOKUP_FIXTURE-e2e/fixtures/lookup.json}"
 # The loop may already run this lane's dev server for the office (harness/preview.py): use that one.
 if curl -sf -o /dev/null --max-time 3 "http://localhost:$port/api/harness-health"; then
   echo "Already serving on http://localhost:$port"; exit 0
