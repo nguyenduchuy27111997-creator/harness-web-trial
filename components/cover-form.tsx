@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { COVER_ERROR, COVER_MAX_BYTES, COVER_TYPES, type CoverFormState } from "@/lib/covers";
 
@@ -36,9 +37,7 @@ export function CoverForm({ title, url, uploadAction, removeAction }: Props) {
         <img src={url} alt={`Cover of ${title}`} width={128} height={192} className="h-48 w-32 rounded-md object-cover" />
       )}
       <form action={submit} className="flex flex-col gap-2">
-        <label htmlFor="cover" className="text-sm font-medium">
-          Cover image
-        </label>
+        <Label htmlFor="cover">Cover image</Label>
         <Input
           id="cover"
           name="cover"
