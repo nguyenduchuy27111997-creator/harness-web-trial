@@ -41,7 +41,11 @@ test("the list shows a thumbnail for a book with a cover and a first-letter plac
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F082-cover-display.png", {
     stylePath: "e2e/hide-dev-overlay.css",
-    mask: [page.getByRole("listitem"), page.getByRole("heading", { level: 1 })],
+    mask: [
+      page.getByRole("heading", { level: 1 }),
+      page.getByRole("listitem").getByText(/Quiet |Zebra /),
+      page.getByRole("listitem").getByText(/^(Some Author|George Eliot)$/),
+    ],
   });
 });
 
