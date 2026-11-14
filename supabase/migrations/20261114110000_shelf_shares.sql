@@ -54,6 +54,7 @@ revoke execute on function public.cover_is_shared(text) from public;
 grant execute on function public.cover_is_shared(text) to anon;
 
 -- Anonymous visitors may sign a shared cover's URL (storage operations object.sign and object.sign_many), never list or download directly.
+drop policy if exists covers_anon_sign_shared on storage.objects;
 create policy covers_anon_sign_shared on storage.objects for select to anon
   using (
     bucket_id = 'covers'
