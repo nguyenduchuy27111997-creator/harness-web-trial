@@ -11,3 +11,5 @@ On F086 (2026-11-14): a node script (see [[storage-service-role-listing]] for th
 **How to apply:** for any live/realtime feature, run these probes and flag spec gaps like these.
 
 On F086 re-verify (2026-11-16): `page.screenshot` at the default MCP viewport cuts off the /books list below the filter bar; pass `fullPage: true` so the screenshot actually shows the live rows. The spec gaps above were still there (catch-up test adds the book after going back online).
+
+On F086 3rd verify (2026-11-16): the MCP browser kept the previous run's session, so /sign-up redirected to /books; click "Sign out" first. Toggling setOffline mid-flow logs one harmless server "⨯ Error: The destination stream errored while writing data." in the init log. The 45s offline wait came back about 10s after going online.
