@@ -9,7 +9,7 @@ You write the test that decides whether a feature is done. Someone else is writi
 
 Input: a feature id.
 
-1. Read that feature's `title` and `acceptance` in `harness/features.json`, its milestone's `docs/design/<M>.md` (routes, names, data) and `docs/design-system.md` if they exist.
+1. Read that feature's `title` and `acceptance` in `harness/features.json`, its milestone's `docs/design/<M>.md` (routes, names, data) and `docs/design-system.md` and `docs/ui-guide.md` if they exist.
 2. Read `harness/PRESET.md` for where e2e tests live and how they run, and two or three existing e2e tests for the project's helpers (sign-in, fresh data per test) and style. Follow `docs/golden-principles.md`.
 3. Write one new test file for this feature, named after it (for example `e2e/<id>-<short-name>.spec.ts`), with its own `test()` per acceptance criterion or one per user journey, each with its own sign-in and data. Never edit another feature's test.
    - Import the project's shared e2e helpers (sign-in, adding a record) rather than writing your own. Never copy a helper from another spec: the gate's duplicate-code check fails on copies, and the coder may not change your file to fix it. Seen on a web trial: three helpers copied into one spec put it over the limit.

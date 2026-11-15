@@ -19,7 +19,7 @@ Product idea: $ARGUMENTS
    - edge cases: empty states, errors, permissions, limits
    - what is explicitly out of scope for this version
    - data: what is stored, where it comes from, what is sensitive
-   - look and feel, if it has a UI: mood, products it should feel like, brand colors or logo, light or dark, density
+   - look and feel, if it has a UI (the kit builds to `docs/ui-guide.md`, Apple's HIG for the web, so ask only what makes this product its own): two or three apps or sites the human likes and what exactly they like in each; brand (colors, logo, fonts if any, the tone of its words); density (calm and roomy, or dense with data); the main device (phone, desktop or both) and the moment it is used in; anything it must not look like. Light and dark both follow the system unless the human says otherwise
    - stack and hosting constraints (budget, existing accounts, languages the human can maintain)
    - how the human will judge that this version works
 3. Stop when every section of the spec can be written concretely. Usually 3 to 5 rounds.

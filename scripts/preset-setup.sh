@@ -13,7 +13,7 @@ SHADCN=4.21.3
 # vite and @types/node are vitest 5 peers that npm does not add on its own
 # (a real setup failed with "Cannot find package 'vite'").
 DEV_DEPS="@lhci/cli@0.15.1 @axe-core/playwright@4.13.0 @playwright/test@1.64.0 vitest@5.0.3 @vitest/coverage-v8@5.0.3 vite@8.3.1 @types/node@24.19.0 jscpd@5.4.0 dependency-cruiser@18.4.0 supabase@2.119.0"
-DEPS="next@16.4.2 @supabase/supabase-js@2.117.2"
+DEPS="next@16.4.2 @supabase/supabase-js@2.117.2 motion@14.9.0"
 DEV_DEPS="$DEV_DEPS eslint-config-next@16.4.2"
 
 # 1. Next.js app. create-next-app refuses a folder that already has the harness in
@@ -28,8 +28,10 @@ if [ ! -f package.json ]; then
   # shadcn/ui's tokens read the font from --font-sans; the dev badge would show up in
   # every screenshot and visual baseline. Geist Mono goes: no page uses it, and its download
   # pushed /styleguide's LCP over the 2500 ms budget in the web trial's CI (2618 ms).
+  # The UI font is Inter (docs/ui-guide.md), self-hosted by next/font.
   sed -i.bak -e 's/--font-geist-sans/--font-sans/' -e "s/Create Next App/$name/" \
-    -e 's/import { Geist, Geist_Mono }/import { Geist }/' -e '/^const geistMono = Geist_Mono({$/,/^$/d' \
+    -e 's/import { Geist, Geist_Mono }/import { Inter }/' -e '/^const geistMono = Geist_Mono({$/,/^$/d' \
+    -e 's/const geistSans = Geist(/const inter = Inter(/' -e 's/geistSans\.variable/inter.variable/' \
     -e 's/ ${geistMono.variable}//' app/layout.tsx && rm app/layout.tsx.bak
   sed -i.bak 's|/\* config options here \*/|devIndicators: false, // keeps the dev badge out of screenshots|' next.config.ts && rm next.config.ts.bak
   # The generator's demo page uses raw colors and arbitrary values (scripts/ui-tokens.py).
@@ -67,6 +69,27 @@ if [ ! -f components.json ]; then
     -e 's/--font-mono: var(--font-geist-mono);/--font-mono: ui-monospace, monospace;/' app/globals.css
   rm app/globals.css.bak
 fi
+# Light and dark follow the system setting (docs/ui-guide.md), not a .dark class nothing sets; the type scale,
+# touch targets and reduced motion come from app/ui-base.css.
+python3 - <<'PY'
+import re, sys
+from pathlib import Path
+css = Path("app/globals.css")
+text = css.read_text() if css.is_file() else sys.exit("preset-setup: no app/globals.css; set up the tokens by hand")
+if "prefers-color-scheme: dark" not in text:
+    text, n = re.subn(r"^\.dark \{\n(.*?)^\}", lambda m: "@media (prefers-color-scheme: dark) {\n  :root {\n"
+                      + "".join("  " + l if l.strip() else l for l in m.group(1).splitlines(True)) + "  }\n}",
+                      text, count=1, flags=re.S | re.M)
+    if not n:
+        print("preset-setup: no .dark block in app/globals.css; add dark tokens under prefers-color-scheme by hand",
+              file=sys.stderr)
+    text = text.replace("@custom-variant dark (&:is(.dark *));", "@custom-variant dark (@media (prefers-color-scheme: dark));")
+if "ui-base.css" not in text:
+    imports = list(re.finditer(r"^@import .*;\n", text, re.M))
+    at = imports[-1].end() if imports else 0
+    text = text[:at] + '@import "./ui-base.css";\n' + text[at:]
+css.write_text(text)
+PY
 
 # 3. Local Supabase on its own block of ports. Another project's stack may already
 #    use the default 5432x block, and this one must never collide with it.
@@ -109,7 +132,7 @@ fi
 if ! grep -q "Design tokens and base components only" docs/golden-principles.md; then
   cat >>docs/golden-principles.md <<'EOF'
 
-8. **Design tokens and base components only.** UI code uses the token classes (`bg-primary`, `text-muted-foreground`), the Tailwind scale and `components/ui/`, as `docs/design-system.md` says: no color literals, palette colors, arbitrary values or raw form elements. Enforced by: `scripts/ui-tokens.py` in `check.sh`, the `designer` subagent, and the visual baselines in `e2e/__screenshots__/`.
+8. **Design tokens and base components only.** UI code uses the token classes (`bg-primary`, `text-muted-foreground`), the named text styles (`text-body`), the 4/8 spacing grid and `components/ui/`, as `docs/design-system.md` and `docs/ui-guide.md` say: no color literals, palette colors, default text sizes, off-grid spacing, arbitrary values or raw form elements. Enforced by: `scripts/ui-tokens.py` in `check.sh`, the `designer` subagent (it scores every screen on the guide's rubric), and the light and dark visual baselines in `e2e/__screenshots__/`.
 EOF
 fi
 

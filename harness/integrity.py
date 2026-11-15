@@ -46,7 +46,7 @@ STATUS_DIR = "harness/status/"
 EDITABLE = {"status", "notes", "blocked_reason", "attempts"}
 TEST_FILE = re.compile(
     r"(^|/)(tests?|e2e|__tests__)/|\.(test|spec)\.[cm]?[jt]sx?$|(^|/)test_[^/]*\.py$|_test\.(py|go)$")
-ASSERTION = re.compile(r"\bassert\w*|\bexpect\s*\(|\.should\b|\bt\.(is|ok|equal|deepEqual|true|false|throws)\b")
+ASSERTION = re.compile(r"\bassert\w*|\bexpect(Screens)?\s*\(|\.should\b|\bt\.(is|ok|equal|deepEqual|true|false|throws)\b")
 IMAGE = re.compile(r"\.(png|jpe?g|gif|webp)$")  # visual baselines: may change, may not be deleted
 SKIP = re.compile(r"\.(skip|only)\s*\(|\bx(it|describe|test)\s*\(|@pytest\.mark\.skip|@unittest\.skip|\bt\.skip\b")
 
@@ -182,7 +182,9 @@ def check(base, head, override, rule=False, agent=False):
         merged = files(MAIN_REF) if git("rev-parse", "--verify", "-q", MAIN_REF) is not None else None
         for path in sorted(p for p in files(base) if TEST_FILE.search(p) and (merged is None or p in merged)):
             if path not in head_files:
-                problems.append(f"{path}: test file deleted")
+                # A baseline that expectScreens now takes per color scheme (<name>-light.png beside it) is renamed.
+                if not (IMAGE.search(path) and re.sub(r"(\.\w+)$", r"-light\1", path) in head_files):
+                    problems.append(f"{path}: test file deleted")
                 continue
             if IMAGE.search(path):
                 continue
