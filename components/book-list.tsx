@@ -19,7 +19,7 @@ export function BookList({ books, tagsByBook, coverUrls }: { books: ShelfBook[];
             <Card>
               <CardContent className="flex items-center justify-between gap-4">
                 <div className="flex min-w-0 flex-1 flex-col gap-1 break-words">
-                  <Link href={`/books/${book.id}`} className="font-heading text-headline font-semibold hover:underline">
+                  <Link href={`/books/${book.id}`} className="link-target font-heading text-headline font-semibold hover:underline">
                     {book.title}
                   </Link>
                   <span className="text-subheadline text-muted-foreground">{book.author}</span>

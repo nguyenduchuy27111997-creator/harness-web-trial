@@ -21,7 +21,7 @@ export default async function StatsPage() {
       <p>Average rating: {formatAverage(stats.averageRating)}</p>
       <p>{formatPagesRead(stats.pagesRead)}</p>
       <MonthlyChart byMonth={byMonth} />
-      <Link href={`/stats/${new Date().getUTCFullYear()}`} className="self-start text-primary hover:underline">
+      <Link href={`/stats/${new Date().getUTCFullYear()}`} className="link-target self-start text-primary hover:underline">
         Year in review
       </Link>
       {goal === null ? (

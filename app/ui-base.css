@@ -60,6 +60,12 @@
     :is(button, [role="button"], a[data-slot="button"])[data-size^="icon"] {
       min-width: 2.75rem;
     }
+    /* Standalone text links (Back to my books, Year in review, a list's book title) get the same 44 px row. */
+    .link-target {
+      display: inline-flex;
+      align-items: center;
+      min-height: 2.75rem;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {

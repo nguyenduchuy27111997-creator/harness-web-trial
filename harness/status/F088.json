@@ -1,4 +1,4 @@
 {
   "status": "passing",
-  "notes": "Dark tokens under prefers-color-scheme in app/globals.css, ui-base.css imported, Inter + Lora via next/font, every Tailwind text size mapped to a named style (decision 0025), /styleguide type scale, app/error.tsx, Finished badge outline+Check, cover lg dark:brightness-90, design-system.md rewritten; all baselines regenerated light+dark. Verifier: some block links (book title in list, 'Year in review', 'Back to my books', 'Previous year', 'Go to Bookshelf') are under 44 px at phone width; expectTouchTargets will flag them when a later feature calls expectScreens on those pages."
+  "notes": "Dark tokens under prefers-color-scheme in app/globals.css, ui-base.css imported, Inter + Lora via next/font, every Tailwind text size mapped to a named style (decision 0025), /styleguide type scale, app/error.tsx, Finished badge outline+Check, dark:brightness-90 on the lg cover image only, design-system.md rewritten; all baselines regenerated light+dark. Standalone links use .link-target (44 px at phone width, ui-base.css)."
 }

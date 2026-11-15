@@ -56,14 +56,14 @@ export function YearReview({ year, reads, hasNextYear }: { year: number; reads: 
       )}
       <nav aria-label="Years" className="flex justify-between">
         {year > 1000 ? (
-          <Link href={`/stats/${year - 1}`} className="text-primary hover:underline">
+          <Link href={`/stats/${year - 1}`} className="link-target text-primary hover:underline">
             Previous year
           </Link>
         ) : (
           <span />
         )}
         {hasNextYear && (
-          <Link href={`/stats/${year + 1}`} className="text-primary hover:underline">
+          <Link href={`/stats/${year + 1}`} className="link-target text-primary hover:underline">
             Next year
           </Link>
         )}

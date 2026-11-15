@@ -8,3 +8,4 @@
 - [Migrations land with design](project_migrations-land-with-design.md) — milestone SQL is on main already; read supabase/migrations, not branch diff
 - [Realtime probes](project_realtime-probes.md) — node channel probe for topic RLS; offline+insert-while-offline for catch-up
 - [Axe sweep in MCP](project_axe-sweep-in-mcp.md) — inject axe-core via addScriptTag to check every page in light/dark + 44px
+- [e2e queue](project_e2e-queue.md) — e2e.sh is serialized across lanes, may wait >10 min; give init.sh a long timeout
