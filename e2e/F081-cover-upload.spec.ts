@@ -8,7 +8,7 @@ const REFUSED = "Use a JPEG, PNG or WebP image up to 2 MB";
 const MB = 1024 * 1024;
 
 async function openBook(page: import("@playwright/test").Page, id: string) {
-  const title = `Cover ${id} ${process.env.HARNESS_LANE ?? "local"}-${Date.now()}`;
+  const title = `Cover ${id}`; // the account is new each run; a fixed title keeps the heading on one line in the baseline
   await signUpAs(page, `f081-${id}-${process.env.HARNESS_LANE ?? "local"}-${Date.now()}@example.com`);
   await addAndOpenBook(page, title, "Reading");
   await expect(page.getByRole("heading", { level: 1, name: title })).toBeVisible();
@@ -81,6 +81,6 @@ test("a refused replacement keeps the current cover", async ({ page }) => {
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F081-cover-upload.png", {
     stylePath: "e2e/hide-dev-overlay.css",
-    mask: [page.getByRole("heading", { level: 1 }), cover],
+    mask: [page.getByRole("heading", { level: 1 }), cover, page.locator("time")],
   });
 });
