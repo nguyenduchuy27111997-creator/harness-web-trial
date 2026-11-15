@@ -8,6 +8,7 @@ import { ShelfSelect } from "@/components/shelf-select";
 import { TagSelect } from "@/components/tag-select";
 import { SortSelect } from "@/components/sort-select";
 import { LoadMore } from "@/components/load-more";
+import { LiveRefresh } from "./live-refresh";
 import { StatusTabs } from "@/components/status-tabs";
 import { booksHref, countByStatus, filterBooks, listBooks, PAGE_SIZE, pageBooks, parseLimit, parseSearch, parseSort, parseStatusFilter, sortBooks } from "@/lib/books";
 import { filterByShelf, listShelfBookIds, listShelves, parseShelfFilter } from "@/lib/shelves";
@@ -17,7 +18,7 @@ import { createClient, requireUser } from "@/lib/supabase/server";
 export const metadata: Metadata = { title: "My books · Bookshelf" };
 
 export default async function BooksPage({ searchParams }: { searchParams: Promise<{ status?: string | string[]; q?: string | string[]; sort?: string | string[]; shelf?: string | string[]; tag?: string | string[]; limit?: string | string[] }> }) {
-  await requireUser();
+  const user = await requireUser();
   const params = await searchParams;
   const status = parseStatusFilter(params.status);
   const q = parseSearch(params.q);
@@ -37,6 +38,7 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
   const coverUrls = await signCovers(supabase, books.flatMap((b) => (b.cover_path ? [b.cover_path] : [])));
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:p-8">
+      <LiveRefresh userId={user.id} />
       <h1 className="font-heading text-4xl font-semibold tracking-tight">My books</h1>
       <SearchForm key={q} status={status} q={q} sort={sort} shelf={shelf} tag={tag} />
       {shelves.length > 0 && <ShelfSelect status={status} q={q} sort={sort} shelf={shelf} tag={tag} shelves={shelves} />}

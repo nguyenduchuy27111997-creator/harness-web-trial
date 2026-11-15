@@ -6,3 +6,4 @@
 - [MCP rAF stall](project_mcp-raf-stall.md) — clicks hang on "stable": tab stopped rAF; open a new tab
 - [Shared DB vs migration file](project_shared-db-migration-check.md) — live stack may not run this branch's migration; replay it with db-types.sh --check
 - [Migrations land with design](project_migrations-land-with-design.md) — milestone SQL is on main already; read supabase/migrations, not branch diff
+- [Realtime probes](project_realtime-probes.md) — node channel probe for topic RLS; offline+insert-while-offline for catch-up
