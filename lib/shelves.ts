@@ -23,6 +23,23 @@ export async function listShelves(supabase: SupabaseClient<Database>): Promise<S
   return data;
 }
 
+export type ShelfSummary = Shelf & { count: number; coverPaths: string[] };
+
+// One query: each shelf with its books' cover paths. `coverPaths` holds up to 3 of the most recently added books' covers.
+export async function listShelfSummaries(supabase: SupabaseClient<Database>): Promise<ShelfSummary[]> {
+  const { data, error } = await supabase
+    .from("shelves")
+    .select("id, name, book_shelves(created_at, books(cover_path))")
+    .order("name")
+    .order("id");
+  if (error) throw new Error(error.message);
+  return data.map(({ book_shelves, ...shelf }) => {
+    const entries = [...(book_shelves ?? [])].sort((a, b) => b.created_at.localeCompare(a.created_at));
+    const coverPaths = entries.flatMap((e) => (e.books?.cover_path ? [e.books.cover_path] : [])).slice(0, 3);
+    return { ...shelf, count: entries.length, coverPaths };
+  });
+}
+
 // user_id comes from the column default (auth.uid()), never from the client.
 export async function insertShelf(supabase: SupabaseClient<Database>, name: string): Promise<"ok" | "taken"> {
   const { error } = await supabase.from("shelves").insert({ name });

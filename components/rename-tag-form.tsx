@@ -13,17 +13,17 @@ type Row = { id: string; name: string; count: number; action: Action };
 export function RenameTagList({ tags }: { tags: Row[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
   return (
-    <ul className="flex flex-col gap-3">
+    <ul className="flex flex-col divide-y">
       {tags.map((tag) => (
-        <li key={tag.id}>
+        <li key={tag.id} className="py-3">
           {openId === tag.id ? (
             <OpenForm {...tag} onClose={() => setOpenId(null)} />
           ) : (
             <div className="flex items-center gap-3">
-              <Link href={`/books?tag=${encodeURIComponent(tag.name)}`} className="text-primary hover:underline">
+              <Link href={`/books?tag=${encodeURIComponent(tag.name)}`} className="inline-flex min-h-11 items-center text-headline text-primary hover:underline">
                 {tag.name}
               </Link>
-              <span className="text-subheadline text-muted-foreground">{tag.count === 1 ? "1 book" : `${tag.count} books`}</span>
+              <span className="ml-auto text-subheadline tabular-nums text-muted-foreground">{tag.count === 1 ? "1 book" : `${tag.count} books`}</span>
               <Button type="button" variant="outline" size="sm" onClick={() => setOpenId(tag.id)}>
                 Rename
               </Button>

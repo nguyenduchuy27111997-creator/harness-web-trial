@@ -25,12 +25,17 @@ export default async function QuotesPage({ searchParams }: { searchParams: Promi
           </Button>
         </div>
       ) : quotes.length === 0 ? (
-        <p className="text-muted-foreground">You have no quotes yet.</p>
+        <div className="flex flex-col items-start gap-2">
+          <p className="text-title-2">You have no quotes yet.</p>
+          <Button asChild variant="secondary">
+            <Link href="/books">Go to my books</Link>
+          </Button>
+        </div>
       ) : (
-        <ul aria-label="My quotes" className="flex flex-col gap-4">
+        <ul aria-label="My quotes" className="flex max-w-3xl flex-col divide-y">
           {quotes.map((quote) => (
-            <li key={quote.id} className="flex flex-col gap-1 border-l-2 border-border pl-3">
-              <blockquote className="whitespace-pre-wrap break-words">{quote.body}</blockquote>
+            <li key={quote.id} className="flex flex-col gap-1 py-4">
+              <blockquote className="max-w-prose whitespace-pre-wrap break-words font-heading text-body italic">{quote.body}</blockquote>
               <p className="text-subheadline text-muted-foreground">
                 <Link href={`/books/${quote.book.id}`} className="font-heading font-semibold text-primary hover:underline">
                   {quote.book.title}

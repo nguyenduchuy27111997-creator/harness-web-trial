@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Shelf rows (covers, name, count), tag rows with count, quotes in serif, empty states. Kept inline Rename/Delete/Share buttons instead of the design's actions menu so existing specs keep passing. Shelf cover alt text uses the shelf name, not book titles."
+}

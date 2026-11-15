@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { BookCover } from "@/components/book-cover";
 import { DeleteShelfButton } from "@/components/delete-shelf-button";
 import { FormField } from "@/components/form-field";
 import { ShareShelf } from "@/components/share-shelf";
@@ -14,6 +15,8 @@ type Props = {
 };
 
 type Row = Pick<Props, "id" | "name" | "action"> & {
+  count: number;
+  covers: string[];
   deleteAction: (formData: FormData) => Promise<void>;
   shareLink: string | null;
   shareAction: () => Promise<void>;
@@ -24,9 +27,9 @@ type Row = Pick<Props, "id" | "name" | "action"> & {
 export function RenameShelfList({ shelves }: { shelves: Row[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
   return (
-    <ul className="flex flex-col gap-3">
+    <ul className="flex flex-col divide-y">
       {shelves.map((shelf) => (
-        <li key={shelf.id}>
+        <li key={shelf.id} className="py-3">
           <RenameShelfForm
             {...shelf}
             open={openId === shelf.id}
@@ -41,12 +44,22 @@ export function RenameShelfList({ shelves }: { shelves: Row[] }) {
 
 type RowProps = Row & { open: boolean; onOpen: () => void; onClose: () => void };
 
-function RenameShelfForm({ open, onOpen, onClose, deleteAction, shareLink, shareAction, stopSharingAction, ...props }: RowProps) {
+function RenameShelfForm({ open, onOpen, onClose, count, covers, deleteAction, shareLink, shareAction, stopSharingAction, ...props }: RowProps) {
   if (!open) {
     return (
       <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-3">
-          <span>{props.name}</span>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex w-16 shrink-0 -space-x-6" data-testid="shelf-covers">
+            {covers.length === 0 ? (
+              <BookCover title={props.name} url={null} size="sm" />
+            ) : (
+              covers.map((url, i) => <BookCover key={i} title={props.name} url={url} size="sm" className="ring-2 ring-background" />)
+            )}
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col">
+            <span className="text-headline">{props.name}</span>
+            <span className="text-subheadline tabular-nums text-muted-foreground">{count === 1 ? "1 book" : `${count} books`}</span>
+          </div>
           <Button type="button" variant="outline" size="sm" onClick={onOpen}>
             Rename
           </Button>
