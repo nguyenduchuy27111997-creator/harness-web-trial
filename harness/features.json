@@ -1686,6 +1686,210 @@
         "Account B cannot open A's cover by its storage path or a stale signed URL, cannot see A's books through Realtime, and /s/<made-up token> is not found",
         "After A stops sharing, B and a signed-out visitor both get not found on the old link"
       ]
+    },
+    {
+      "id": "F088",
+      "milestone": "M9",
+      "priority": 88,
+      "complexity": "L",
+      "title": "The app has a light and a dark look that follow my system, built on the UI guide",
+      "depends_on": [
+        "F087"
+      ],
+      "touches": [
+        "app/globals.css",
+        "app/layout.tsx",
+        "app/styleguide/*",
+        "docs/design-system.md",
+        "components/**",
+        "app/**",
+        "e2e/*styleguide*"
+      ],
+      "acceptance": [
+        "With the system set to dark every page shows a dark look (warm dark background, cream text, the green accent) and with light the cream look it has today, with no setting to change",
+        "Text uses the UI guide's type styles: the serif for page and book titles, Inter for everything else; /styleguide shows the type scale in light and dark",
+        "Every page passes the accessibility check in both looks, and on a phone every button and field is at least 44 px tall"
+      ],
+      "owner_check": true
+    },
+    {
+      "id": "F089",
+      "milestone": "M9",
+      "priority": 89,
+      "complexity": "L",
+      "title": "Navigation fits the screen: a sidebar on a computer, a tab bar on a phone",
+      "depends_on": [
+        "F088"
+      ],
+      "touches": [
+        "components/site-header*",
+        "components/*nav*",
+        "app/layout.tsx",
+        "e2e/*navigation*"
+      ],
+      "acceptance": [
+        "On a computer (1024 px and wider) a sidebar lists My books, Up next, Shelves, Tags, Quotes and Stats, with Import / export and Settings at the bottom, and marks the page I am on",
+        "On a phone a bar at the bottom holds My books, Up next, Shelves, Stats and More; More opens Tags, Quotes, Import / export and Settings",
+        "My name and Sign out sit in an account menu, and the top bar stays in place while I scroll, with the page blurred under it"
+      ],
+      "owner_check": true
+    },
+    {
+      "id": "F090",
+      "milestone": "M9",
+      "priority": 90,
+      "complexity": "L",
+      "title": "My books looks like a library: covers in a grid on a computer, rows on a phone",
+      "depends_on": [
+        "F089"
+      ],
+      "touches": [
+        "app/books/page.tsx",
+        "components/book-list*",
+        "components/*book-card*",
+        "e2e/*library-view*"
+      ],
+      "acceptance": [
+        "On a computer my books show as a grid of covers with title and author under each; on a phone as rows with a small cover, title, author and status",
+        "The status filter is a segmented control with counts, search sits at the top and says 'Search books', and sort is a menu",
+        "While the list loads it shows placeholders in the shape of books, and an empty shelf says what to do next with an Add book button"
+      ],
+      "owner_check": true
+    },
+    {
+      "id": "F091",
+      "milestone": "M9",
+      "priority": 91,
+      "complexity": "M",
+      "title": "A book's page puts its cover first",
+      "depends_on": [
+        "F089"
+      ],
+      "touches": [
+        "app/books/[id]/page.tsx",
+        "components/*book-detail*",
+        "e2e/*book-page-layout*"
+      ],
+      "acceptance": [
+        "The page opens with a large cover beside the title and author on a computer, and above them on a phone",
+        "Status is a segmented control, reading progress is a bar with pages read of the total, and rating, review, notes and quotes follow in that order",
+        "Delete sits at the bottom in red and asks to confirm, naming the book"
+      ],
+      "owner_check": true
+    },
+    {
+      "id": "F092",
+      "milestone": "M9",
+      "priority": 92,
+      "complexity": "M",
+      "title": "Adding a book happens in a sheet over my list",
+      "depends_on": [
+        "F090"
+      ],
+      "touches": [
+        "app/books/new/*",
+        "components/*add-book*",
+        "e2e/*add-sheet*"
+      ],
+      "acceptance": [
+        "Add book opens a sheet from the bottom on a phone and a dialog on a computer, over the list; /books/new still works as its own page",
+        "Looking up a title or ISBN shows the matches with their covers, and picking one fills in the form",
+        "After saving, the sheet closes and the new book appears at the top of the list"
+      ],
+      "owner_check": true
+    },
+    {
+      "id": "F093",
+      "milestone": "M9",
+      "priority": 93,
+      "complexity": "M",
+      "title": "Shelves, tags and quotes read as tidy lists",
+      "depends_on": [
+        "F089"
+      ],
+      "touches": [
+        "app/shelves/**",
+        "app/tags/**",
+        "app/quotes/**",
+        "e2e/*lists-layout*"
+      ],
+      "acceptance": [
+        "Shelves show as rows with up to three of their covers, the name and a book count; tags as rows with a count",
+        "Quotes show as a list with each quote in the serif and its book under it",
+        "Each of these pages has a large title and an empty state with its one action"
+      ],
+      "owner_check": true
+    },
+    {
+      "id": "F094",
+      "milestone": "M9",
+      "priority": 94,
+      "complexity": "M",
+      "title": "Stats look like a year in review",
+      "depends_on": [
+        "F089"
+      ],
+      "touches": [
+        "app/stats/**",
+        "components/monthly-chart*",
+        "components/goal-form*",
+        "components/*stats*",
+        "e2e/*stats-layout*"
+      ],
+      "acceptance": [
+        "Books finished, pages read and average rating sit in tiles whose numbers line up; the months show as bars in the accent color",
+        "The reading goal shows as a ring with books finished out of the goal",
+        "On a phone the tiles sit two per row and the chart fits the width"
+      ],
+      "owner_check": true
+    },
+    {
+      "id": "F095",
+      "milestone": "M9",
+      "priority": 95,
+      "complexity": "M",
+      "title": "Changes move gently",
+      "depends_on": [
+        "F090",
+        "F091"
+      ],
+      "touches": [
+        "components/*providers*",
+        "components/book-list*",
+        "components/book-status-form*",
+        "app/layout.tsx",
+        "e2e/*motion*"
+      ],
+      "acceptance": [
+        "A book added, deleted or moved to another status slides in or out of the list instead of jumping",
+        "Changing a status or a rating gives a short press and settle",
+        "With reduced motion turned on, nothing slides or scales: changes fade or happen at once"
+      ],
+      "owner_check": true
+    },
+    {
+      "id": "F096",
+      "milestone": "M9",
+      "priority": 96,
+      "complexity": "M",
+      "title": "Sign-in, settings, import and shared shelves match the new look",
+      "depends_on": [
+        "F089"
+      ],
+      "touches": [
+        "app/(auth)/**",
+        "components/auth-form*",
+        "app/settings/**",
+        "app/library/**",
+        "app/s/**",
+        "e2e/*pages-polish*"
+      ],
+      "acceptance": [
+        "Sign in and sign up are a centered card under the app name, with errors under their field",
+        "Settings groups my name, account and delete account in grouped rows, like a settings app",
+        "Import / export and a shared shelf page use the same type, colors and dark look as the rest"
+      ],
+      "owner_check": true
     }
   ]
 }
