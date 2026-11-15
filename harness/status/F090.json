@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Library view on /books: a cover grid on a computer and rows on a phone, a segmented status filter with counts, 'Search books' at the top, a sort menu, book-shaped loading placeholders and an empty shelf with Add book. The test-writer's spec sorts by title, so the old order question is settled. Baselines that end on /books were regenerated. On a phone the segmented control scrolls sideways with no visible hint (the verifier noted it; the design allows it)."
+}
