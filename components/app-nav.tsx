@@ -95,9 +95,12 @@ function Sidebar({ pathname }: { pathname: string }) {
   );
 }
 
+// Not merged through cn(): tailwind-merge reads text-caption-2 as a colour and drops it.
+const TAB_LABEL = "w-full truncate text-caption-2 font-medium leading-none";
+
 const tabClass = (current: boolean) =>
   cn(
-    "flex min-h-11 flex-1 flex-col items-center justify-center gap-1 pt-2 pb-1 text-caption-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+    "flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
     current ? "text-primary" : "text-muted-foreground hover:text-foreground",
   );
 
@@ -116,7 +119,7 @@ function TabBar({ pathname }: { pathname: string }) {
             className={tabClass(current)}
           >
             <Icon className="size-6" aria-hidden />
-            {label}
+            <span className={TAB_LABEL}>{label}</span>
           </Link>
         );
       })}
@@ -126,7 +129,7 @@ function TabBar({ pathname }: { pathname: string }) {
           className={tabClass(moreCurrent)}
         >
           <Ellipsis className="size-6" aria-hidden />
-          More
+          <span className={TAB_LABEL}>More</span>
         </SheetTrigger>
         <SheetContent side="bottom" className="pb-safe">
           <SheetHeader>

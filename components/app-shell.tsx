@@ -76,7 +76,7 @@ export function AppShell({
         </main>
       </div>
       {signedIn && (
-        <div className="fixed inset-x-0 bottom-0 z-10 border-t bg-background/80 pb-safe backdrop-blur lg:hidden">
+        <div className="fixed inset-x-0 bottom-0 z-10 border-t bg-background/80 pt-2 pb-safe-1 backdrop-blur lg:hidden">
           <AppNav variant="tabs" />
         </div>
       )}
