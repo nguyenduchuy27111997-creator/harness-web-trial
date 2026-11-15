@@ -19,9 +19,9 @@ export function BookQuotes({ quotes, action, editAction, deleteAction }: Props) 
   const [openId, setOpenId] = useState<string | null>(null);
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="font-heading text-xl font-semibold">Quotes</h2>
+      <h2 className="font-heading text-title-3 font-semibold">Quotes</h2>
       {quotes.length === 0 ? (
-        <p className="text-sm text-muted-foreground">This book has no quotes yet.</p>
+        <p className="text-subheadline text-muted-foreground">This book has no quotes yet.</p>
       ) : (
         <ul aria-label="Quotes from this book" className="flex flex-col gap-3">
           {quotes.map((quote) => (
@@ -35,7 +35,7 @@ export function BookQuotes({ quotes, action, editAction, deleteAction }: Props) 
               ) : (
                 <>
                   <blockquote className="whitespace-pre-wrap break-words">{quote.body}</blockquote>
-                  {quote.page !== null && <p className="text-sm text-muted-foreground">Page {quote.page}</p>}
+                  {quote.page !== null && <p className="text-subheadline text-muted-foreground">Page {quote.page}</p>}
                   <div className="flex gap-2">
                     <Button type="button" variant="outline" size="sm" onClick={() => setOpenId(quote.id)}>
                       Edit

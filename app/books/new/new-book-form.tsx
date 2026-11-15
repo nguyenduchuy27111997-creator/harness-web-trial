@@ -54,7 +54,7 @@ export function NewBookForm() {
   return (
     <form action={action} noValidate className="flex flex-col gap-4">
       {state.formError && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-subheadline text-destructive">
           {state.formError}
         </p>
       )}
@@ -73,7 +73,7 @@ export function NewBookForm() {
             {lookingUp ? "Looking up…" : "Look up"}
           </Button>
         </div>
-        <p id="lookup-message" role="status" className="text-sm text-muted-foreground">
+        <p id="lookup-message" role="status" className="text-subheadline text-muted-foreground">
           {lookupMessage}
         </p>
       </div>
@@ -101,7 +101,7 @@ export function NewBookForm() {
             ))}
           </SelectContent>
         </Select>
-        {state.fieldErrors?.status && <p className="text-sm text-destructive">{state.fieldErrors.status}</p>}
+        {state.fieldErrors?.status && <p className="text-subheadline text-destructive">{state.fieldErrors.status}</p>}
       </div>
       <div className="flex gap-3">
         <Button type="submit" disabled={pending}>

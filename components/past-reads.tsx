@@ -14,12 +14,12 @@ export function PastReads({
   if (reads.length === 0) return null;
   return (
     <section className="flex flex-col gap-2">
-      <h2 className="font-heading text-xl font-semibold">Past reads</h2>
+      <h2 className="font-heading text-title-3 font-semibold">Past reads</h2>
       <ul className="flex flex-col gap-3">
         {reads.map((read) => (
           <li key={read.id}>
             <Card>
-              <CardContent className="flex flex-col gap-1 text-sm">
+              <CardContent className="flex flex-col gap-1 text-subheadline">
                 {read.started_on && (
                   <p>Started on <time dateTime={read.started_on}>{formatFinishDate(read.started_on)}</time></p>
                 )}

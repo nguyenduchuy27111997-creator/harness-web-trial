@@ -26,7 +26,7 @@ export function NoteForm({ action }: Props) {
         aria-describedby={error ? "note-error" : undefined}
       />
       {error && (
-        <p id="note-error" role="alert" className="text-sm text-destructive">
+        <p id="note-error" role="alert" className="text-subheadline text-destructive">
           {error}
         </p>
       )}

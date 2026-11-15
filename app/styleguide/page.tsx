@@ -16,16 +16,31 @@ const colors = [
   ["destructive", "bg-destructive", "text-primary-foreground"],
 ];
 
+// The named text styles (app/ui-base.css), each shown in its own size.
+const typeScale = [
+  ["Large title", "font-heading text-large-title"],
+  ["Title 1", "font-heading text-title-1"],
+  ["Title 2", "text-title-2"],
+  ["Title 3", "text-title-3"],
+  ["Headline", "text-headline"],
+  ["Body", "text-body"],
+  ["Callout", "text-callout"],
+  ["Subheadline", "text-subheadline"],
+  ["Footnote", "text-footnote"],
+  ["Caption", "text-caption"],
+  ["Caption 2", "text-caption-2"],
+];
+
 export default function Styleguide() {
   return (
     <main className="mx-auto flex max-w-4xl flex-col gap-12 p-8">
-      <h1 className="text-4xl font-semibold tracking-tight">Styleguide</h1>
+      <h1 className="text-large-title">Styleguide</h1>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-2xl font-semibold">Colors</h2>
+        <h2 className="text-title-2">Colors</h2>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {colors.map(([name, bg, fg]) => (
-            <div key={name} className={`${bg} ${fg} rounded-lg border p-4 text-sm font-medium`}>
+            <div key={name} className={`${bg} ${fg} rounded-lg border p-4 text-subheadline font-medium`}>
               {name}
             </div>
           ))}
@@ -33,16 +48,17 @@ export default function Styleguide() {
       </section>
 
       <section className="flex flex-col gap-2">
-        <h2 className="text-2xl font-semibold">Type</h2>
-        <p className="font-heading text-4xl font-semibold tracking-tight">Heading 1</p>
-        <p className="font-heading text-2xl font-semibold">Heading 2</p>
-        <p className="font-heading text-lg font-medium">Heading 3</p>
-        <p className="text-base">Body text for paragraphs and labels.</p>
-        <p className="text-sm text-muted-foreground">Muted text for hints and metadata.</p>
+        <h2 className="text-title-2">Type</h2>
+        <p className="text-subheadline text-muted-foreground">Lora (font-heading) for page and book titles; Inter for everything else.</p>
+        {typeScale.map(([name, cls]) => (
+          <p key={name} className={cls}>
+            {name}
+          </p>
+        ))}
       </section>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-2xl font-semibold">Buttons</h2>
+        <h2 className="text-title-2">Buttons</h2>
         <div className="flex flex-wrap gap-2">
           <Button>Primary</Button>
           <Button variant="secondary">Secondary</Button>
@@ -54,7 +70,7 @@ export default function Styleguide() {
       </section>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-2xl font-semibold">Form and card</h2>
+        <h2 className="text-title-2">Form and card</h2>
         <Card className="max-w-sm">
           <CardHeader>
             <CardTitle>Card title</CardTitle>

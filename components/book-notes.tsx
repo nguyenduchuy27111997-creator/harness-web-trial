@@ -20,12 +20,12 @@ export function BookNotes({ notes, action, editAction, deleteAction }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
   return (
     <section aria-labelledby="notes-heading" className="flex flex-col gap-3">
-      <h2 id="notes-heading" className="font-heading text-xl font-semibold">
+      <h2 id="notes-heading" className="font-heading text-title-3 font-semibold">
         Notes
       </h2>
       <NoteForm action={action} />
       {notes.length === 0 ? (
-        <p className="text-sm text-muted-foreground">This book has no notes yet.</p>
+        <p className="text-subheadline text-muted-foreground">This book has no notes yet.</p>
       ) : (
         <ul className="flex flex-col gap-3">
           {notes.map((note) => (
@@ -41,8 +41,8 @@ export function BookNotes({ notes, action, editAction, deleteAction }: Props) {
                     />
                   ) : (
                     <>
-                      <p className="whitespace-pre-wrap text-base">{note.body}</p>
-                      <p className="text-sm text-muted-foreground">{formatNoteDate(note.created_at)}</p>
+                      <p className="whitespace-pre-wrap text-body">{note.body}</p>
+                      <p className="text-subheadline text-muted-foreground">{formatNoteDate(note.created_at)}</p>
                       <div className="flex gap-2">
                         <Button type="button" variant="outline" size="sm" onClick={() => setOpenId(note.id)}>
                           Edit

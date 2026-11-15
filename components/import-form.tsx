@@ -53,7 +53,7 @@ export function ImportForm({ preview, confirm }: { preview: Action; confirm: Act
           }}
         />
         {state.error && (
-          <p id={`${id}-error`} role="alert" className="text-sm text-destructive">
+          <p id={`${id}-error`} role="alert" className="text-subheadline text-destructive">
             {state.error}
           </p>
         )}
@@ -67,7 +67,7 @@ export function ImportForm({ preview, confirm }: { preview: Action; confirm: Act
         <form action={confirmAction} className="flex flex-col gap-3">
           <Input type="hidden" name="csv" value={state.csv} />
           {state.skipped && state.skipped.length > 0 && (
-            <div className="text-sm">
+            <div className="text-subheadline">
               <p role="status">
                 {state.skipped.length} {state.skipped.length === 1 ? "row" : "rows"} will be skipped
               </p>
@@ -99,7 +99,7 @@ export function ImportForm({ preview, confirm }: { preview: Action; confirm: Act
                     <TableCell className="whitespace-normal">
                       <span className="font-heading">{row.title}</span>
                       {row.author && (
-                        <span className="block text-sm text-muted-foreground sm:hidden">{row.author}</span>
+                        <span className="block text-subheadline text-muted-foreground sm:hidden">{row.author}</span>
                       )}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">{row.author}</TableCell>

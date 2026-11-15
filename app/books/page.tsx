@@ -39,7 +39,7 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:p-8">
       <LiveRefresh userId={user.id} />
-      <h1 className="font-heading text-4xl font-semibold tracking-tight">My books</h1>
+      <h1 className="font-heading text-large-title">My books</h1>
       <SearchForm key={q} status={status} q={q} sort={sort} shelf={shelf} tag={tag} />
       {shelves.length > 0 && <ShelfSelect status={status} q={q} sort={sort} shelf={shelf} tag={tag} shelves={shelves} />}
       {tagNames.length > 0 && <TagSelect status={status} q={q} sort={sort} shelf={shelf} tag={tag} tags={tagNames.map((t) => t.name)} />}

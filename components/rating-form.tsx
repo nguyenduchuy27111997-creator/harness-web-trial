@@ -67,12 +67,12 @@ export function RatingForm({ rating, action }: Props) {
         </Button>
       </div>
       {(state.fieldErrors?.rating ?? state.formError) && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-subheadline text-destructive">
           {state.fieldErrors?.rating ?? state.formError}
         </p>
       )}
       {state.saved && submitted === value && !pending && (
-        <p role="status" className="text-sm text-muted-foreground">
+        <p role="status" className="text-subheadline text-muted-foreground">
           Saved
         </p>
       )}

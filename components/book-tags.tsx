@@ -19,9 +19,9 @@ export function BookTags({ tags, action, removeAction }: Props) {
   const [state, formAction, pending] = useActionState(action, {} as TagFormState);
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="font-heading text-xl font-semibold">Tags</h2>
+      <h2 className="font-heading text-title-3 font-semibold">Tags</h2>
       {tags.length === 0 ? (
-        <p className="text-sm text-muted-foreground">This book has no tags.</p>
+        <p className="text-subheadline text-muted-foreground">This book has no tags.</p>
       ) : (
         <ul aria-label="Tags on this book" className="flex flex-wrap gap-2">
           {tags.map((tag) => (
@@ -51,9 +51,9 @@ export function BookTags({ tags, action, removeAction }: Props) {
             Add
           </Button>
         </div>
-        {state.fieldErrors?.name && <p className="text-sm text-destructive">{state.fieldErrors.name}</p>}
+        {state.fieldErrors?.name && <p className="text-subheadline text-destructive">{state.fieldErrors.name}</p>}
         {state.formError && (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-subheadline text-destructive">
             {state.formError}
           </p>
         )}

@@ -15,10 +15,10 @@ export function UpNextList({ books, moveUp, moveDown, remove, startFirst }: Prop
           <Card>
             <CardContent className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex min-w-0 flex-col gap-1 break-words">
-                <Link href={`/books/${book.bookId}`} className="font-heading text-lg font-semibold hover:underline">
+                <Link href={`/books/${book.bookId}`} className="font-heading text-headline font-semibold hover:underline">
                   {book.title}
                 </Link>
-                <span className="text-sm text-muted-foreground">{book.author}</span>
+                <span className="text-subheadline text-muted-foreground">{book.author}</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {i === 0 && (

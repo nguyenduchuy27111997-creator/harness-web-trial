@@ -75,14 +75,14 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
   const coverUrl = await signCover(supabase, coverPath);
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:p-8">
-      <Link href="/books" className="self-start text-sm text-primary hover:underline">
+      <Link href="/books" className="self-start text-subheadline text-primary hover:underline">
         Back to my books
       </Link>
       <Card>
         <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-start">
           <BookCover title={book.title} url={coverUrl} size="lg" />
           <div className="flex min-w-0 flex-1 flex-col gap-3 break-words">
-            <h1 className="font-heading text-4xl font-semibold tracking-tight">{book.title}</h1>
+            <h1 className="font-heading text-title-1">{book.title}</h1>
             <p className="text-muted-foreground">{book.author}</p>
             <StatusBadge status={book.status} />
             <ReadingDates startedOn={book.started_on} finishedOn={book.finished_on} />
@@ -107,7 +107,7 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
       {book.status === "want_to_read" &&
         (queued ? (
           // The link text avoids "Up next": the header's "Up next" link must stay the only link with that name.
-          <p className="text-sm text-muted-foreground">
+          <p className="text-subheadline text-muted-foreground">
             In Up next.{" "}
             <Link href="/up-next" className="text-primary underline">
               See your queue

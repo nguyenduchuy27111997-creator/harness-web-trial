@@ -35,14 +35,14 @@ export function BookStatusForm({ status, action }: Props) {
           {pending ? "Saving…" : "Save status"}
         </Button>
       </div>
-      {state.fieldErrors?.status && <p className="text-sm text-destructive">{state.fieldErrors.status}</p>}
+      {state.fieldErrors?.status && <p className="text-subheadline text-destructive">{state.fieldErrors.status}</p>}
       {state.formError && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-subheadline text-destructive">
           {state.formError}
         </p>
       )}
       {state.saved && !changed && !pending && (
-        <p role="status" className="text-sm text-muted-foreground">
+        <p role="status" className="text-subheadline text-muted-foreground">
           Saved
         </p>
       )}

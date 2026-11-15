@@ -27,14 +27,14 @@ export function ShareShelf({ link, shareAction, stopAction }: Props) {
   return (
     <div className="flex min-w-0 flex-col gap-2">
       <div className="flex min-w-0 items-center gap-2">
-        <span id={labelId} className="text-sm text-muted-foreground">
+        <span id={labelId} className="text-subheadline text-muted-foreground">
           Share link
         </span>
         <a
           id={linkId}
           href={link}
           aria-labelledby={`${labelId} ${linkId}`}
-          className="min-w-0 flex-1 truncate text-sm text-primary underline-offset-4 hover:underline"
+          className="min-w-0 flex-1 truncate text-subheadline text-primary underline-offset-4 hover:underline"
         >
           {link}
         </a>

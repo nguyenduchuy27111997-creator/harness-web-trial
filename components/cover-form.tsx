@@ -41,7 +41,7 @@ export function CoverForm({ url, uploadAction, removeAction }: Props) {
           onChange={() => setClientError(undefined)}
         />
         {error && (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-subheadline text-destructive">
             {error}
           </p>
         )}

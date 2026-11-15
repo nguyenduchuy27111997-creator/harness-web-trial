@@ -6,8 +6,8 @@ type SiteHeaderProps = { signedIn: boolean; displayName?: string | null; signOut
 export function SiteHeader({ signedIn, displayName, signOut }: SiteHeaderProps) {
   return (
     <header className="border-b">
-      <div className="mx-auto flex w-full max-w-3xl flex-wrap items-center justify-between gap-2 px-4 py-4 sm:px-8">
-        <Link href={signedIn ? "/books" : "/"} className="font-heading text-xl font-semibold">
+      <div className="mx-auto flex w-full max-w-3xl flex-wrap items-center justify-between gap-2 px-4 py-2 sm:px-8">
+        <Link href={signedIn ? "/books" : "/"} className="inline-flex min-h-11 items-center font-heading text-title-3 font-semibold">
           Bookshelf
         </Link>
         {signedIn && (

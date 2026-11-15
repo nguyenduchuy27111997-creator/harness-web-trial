@@ -17,7 +17,7 @@ export default async function ShelvesPage() {
   const origin = `${h.get("x-forwarded-proto") ?? "http"}://${h.get("x-forwarded-host") ?? h.get("host")}`;
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:p-8">
-      <h1 className="font-heading text-4xl font-semibold tracking-tight">Shelves</h1>
+      <h1 className="font-heading text-large-title">Shelves</h1>
       {shelves.length === 0 ? (
         <p className="text-muted-foreground">You have no shelves yet.</p>
       ) : (

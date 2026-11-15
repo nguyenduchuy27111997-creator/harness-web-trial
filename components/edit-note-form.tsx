@@ -36,7 +36,7 @@ export function EditNoteForm({ id, body, action, onClose }: Props) {
         aria-describedby={error ? `note-${id}-error` : undefined}
       />
       {error && (
-        <p id={`note-${id}-error`} role="alert" className="text-sm text-destructive">
+        <p id={`note-${id}-error`} role="alert" className="text-subheadline text-destructive">
           {error}
         </p>
       )}
