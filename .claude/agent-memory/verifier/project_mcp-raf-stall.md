@@ -9,3 +9,5 @@ On F081 (2026-11-14), after several reloads, every click in the MCP tab timed ou
 
 **Why:** Playwright's stability check needs animation frames. The stall comes from the tool, not the app, and is easy to mistake for an app bug.
 **How to apply:** if clicks hang, check `requestAnimationFrame` with a 2 s timeout. If it never fires, open the same URL with browser_tabs new and close the old tab. Cookies carry over. See [[mcp-upload-roots]].
+
+On F086 (2026-11-16), in two-tab flows a background tab also stalls on "stable": call `a.bringToFront()` before clicking in a tab. Variables set on `globalThis` in browser_run_code_unsafe do not persist between calls; read state back from the page.

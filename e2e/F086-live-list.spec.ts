@@ -37,10 +37,6 @@ test("add, status change and delete show in another tab without a reload", async
 
   await expect(other.getByRole("link", { name: title })).toBeVisible();
   await expectAccessible(other);
-  await expect(other).toHaveScreenshot("F086-live-list.png", {
-    stylePath: "e2e/hide-dev-overlay.css",
-    mask: [other.getByRole("main")],
-  });
 
   // Delete in the first tab.
   const dialog = page.getByRole("alertdialog");
@@ -49,6 +45,10 @@ test("add, status change and delete show in another tab without a reload", async
   await expect(dialog).toBeHidden();
   await expect(page).toHaveURL(/\/books$/);
   await expect(other.getByRole("link", { name: title })).toHaveCount(0, LIVE);
+  await expectAccessible(other);
+  await expect(other).toHaveScreenshot("F086-live-list.png", {
+    stylePath: "e2e/hide-dev-overlay.css",
+  });
 });
 
 test("a second account's changes never reach my tab", async ({ page, browser, baseURL }) => {
