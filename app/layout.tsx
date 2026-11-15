@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Lora } from "next/font/google";
 import "./globals.css";
-import { SiteHeader } from "@/components/site-header";
+import { AppShell } from "@/components/app-shell";
 import { cn } from "@/lib/utils";
 import { getDisplayName } from "@/lib/profile";
 import { createClient, getUser } from "@/lib/supabase/server";
@@ -17,11 +17,15 @@ export const metadata: Metadata = {
 };
 
 // Reads the session cookie. Awaited without a Suspense fallback so a page's notFound() can still set 404.
-async function Header() {
+async function Shell({ children }: { children: React.ReactNode }) {
   const user = await getUser();
-  // A failed profile read only drops the name from the header; it must not break every page.
+  // A failed profile read only drops the name from the account menu; it must not break every page.
   const displayName = user ? await getDisplayName(await createClient()).catch(() => null) : null;
-  return <SiteHeader signedIn={!!user} displayName={displayName} signOut={signOut} />;
+  return (
+    <AppShell signedIn={!!user} displayName={displayName} signOut={signOut}>
+      {children}
+    </AppShell>
+  );
 }
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -31,8 +35,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={cn("h-full", "antialiased", "font-sans", inter.variable, lora.variable)}
     >
       <body className="min-h-full flex flex-col">
-        <Header />
-        {children}
+        <Shell>{children}</Shell>
       </body>
     </html>
   );

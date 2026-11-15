@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
+import { signOut } from "./accounts";
 
 // F001: sign up with email and password. Each run uses a fresh email (golden principle 7).
 test("sign up with email and password", async ({ page }) => {
@@ -25,14 +26,14 @@ test("sign up with email and password", async ({ page }) => {
   await page.getByRole("button", { name: "Sign up" }).click();
   await expect(page).toHaveURL(/\/books$/);
   await expect(page.getByRole("heading", { name: "My books" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Account" })).toBeVisible();
   await expectAccessible(page);
 
   // Signed out, the same email again: a form error and no new account.
-  await page.getByRole("button", { name: "Sign out" }).click();
+  await signOut(page);
   await expect(page).toHaveURL(/\/sign-in$/);
   await page.goto("/sign-up");
-  await expect(page.getByRole("button", { name: "Sign out" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Account" })).toHaveCount(0);
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill("another123");
   await page.getByRole("button", { name: "Sign up" }).click();
@@ -44,4 +45,5 @@ test("sign up with email and password", async ({ page }) => {
   await expect(page.getByLabel("Email")).toHaveValue(email);
   await page.getByLabel("Email").fill("f001@example.com");
   await expect(page).toHaveScreenshot("F001-duplicate-email.png");
+  await expectScreens(page, "sign-up-end");
 });

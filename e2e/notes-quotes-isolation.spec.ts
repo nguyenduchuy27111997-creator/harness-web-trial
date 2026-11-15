@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
-import { signUpAs } from "./accounts";
+import { expectAccessible, expectScreens } from "./a11y";
+import { signOut, signUpAs } from "./accounts";
 import { openNewBookPage } from "./notes";
 
 // F051: no one else can see or change my notes and quotes. Fresh accounts per run (golden principle 7).
@@ -28,8 +28,9 @@ test("another account sees none of my notes and quotes", async ({ page }) => {
     await expect(quoteItem).toContainText(QUOTE, { timeout: 3000 });
   }).toPass();
 
-  await page.getByRole("button", { name: "Sign out" }).click();
+  await signOut(page);
   await expect(page).toHaveURL(/\/sign-in$/);
+  await expectScreens(page, "notes-quotes-isolation-signed-out");
   await signUpAs(page, `f051-b-${t}@example.com`);
 
   await page.goto("/quotes");

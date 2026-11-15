@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
+import { signOut } from "./accounts";
 
 // F002: sign in and sign out from the header. Own account per run (golden principle 7).
 test("sign in and sign out from the header", async ({ page }) => {
@@ -11,7 +12,7 @@ test("sign in and sign out from the header", async ({ page }) => {
   await page.getByRole("button", { name: "Sign up" }).click();
   await expect(page).toHaveURL(/\/books$/);
 
-  await page.getByRole("button", { name: "Sign out" }).click();
+  await signOut(page);
   await expect(page).toHaveURL(/\/sign-in$/);
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
   await expectAccessible(page);
@@ -28,7 +29,7 @@ test("sign in and sign out from the header", async ({ page }) => {
   await page.getByLabel("Password").fill("secret123");
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/books$/);
-  await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Account" })).toBeVisible();
 
   await page.context().clearCookies();
   await page.goto("/sign-in");
@@ -37,4 +38,5 @@ test("sign in and sign out from the header", async ({ page }) => {
   await page.getByRole("link", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/sign-in$/);
   await expect(page).toHaveScreenshot("F002-sign-in.png");
+  await expectScreens(page, "sign-in-end");
 });

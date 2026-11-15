@@ -20,7 +20,7 @@ type AuthFormProps = {
 export function AuthForm({ action, title, description, pendingLabel, passwordAutoComplete, footer, notice }: AuthFormProps) {
   const [state, formAction, pending] = useActionState(action, {} as AuthFormState);
   return (
-    <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 py-8 sm:p-8">
+    <div className="mx-auto flex w-full max-w-md flex-col gap-6">
       <Card>
         <CardHeader>
           <CardTitle>
@@ -62,6 +62,6 @@ export function AuthForm({ action, title, description, pendingLabel, passwordAut
           </form>
         </CardContent>
       </Card>
-    </main>
+    </div>
   );
 }

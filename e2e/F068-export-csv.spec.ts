@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { expect, test, type Page } from "@playwright/test";
-import { expectAccessible } from "./a11y";
-import { signUpAs } from "./accounts";
+import { expectAccessible, expectScreens } from "./a11y";
+import { signOut, signUpAs } from "./accounts";
 import { pick } from "./books";
 
 const HEADER = "title,author,status,rating,total_pages,started_on,finished_on";
@@ -65,7 +65,7 @@ test("another account's books never appear in my file", async ({ page }, testInf
 
   await signUpAs(page, `f068-b-${tag}@example.com`);
   await addBook(page, theirs, "Other Person", "Reading");
-  await page.getByRole("button", { name: "Sign out" }).click();
+  await signOut(page);
   await expect(page).toHaveURL(/\/sign-in$/);
 
   await signUpAs(page, `f068-c-${tag}@example.com`);
@@ -77,4 +77,5 @@ test("another account's books never appear in my file", async ({ page }, testInf
   const lines = await downloadCsv(page, testInfo);
   expect(lines).toEqual([HEADER, `${mine},Me Myself,want_to_read,,,,`]);
   expect(lines.join("\n")).not.toContain(theirs);
+  await expectScreens(page, "F068-export-csv-end");
 });

@@ -33,7 +33,7 @@ const typeScale = [
 
 export default function Styleguide() {
   return (
-    <main className="mx-auto flex max-w-4xl flex-col gap-12 p-8">
+    <div className="flex max-w-4xl flex-col gap-12">
       <h1 className="text-large-title">Styleguide</h1>
 
       <section className="flex flex-col gap-4">
@@ -82,6 +82,6 @@ export default function Styleguide() {
           </CardContent>
         </Card>
       </section>
-    </main>
+    </div>
   );
 }

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
-import { signUpAs } from "./accounts";
+import { expectAccessible, expectScreens } from "./a11y";
+import { signOut, signUpAs } from "./accounts";
 
 // F028: make named shelves. Each run uses fresh accounts (golden principle 7).
 test("shelves: create named shelves, own to each account", async ({ page }) => {
@@ -27,10 +27,11 @@ test("shelves: create named shelves, own to each account", async ({ page }) => {
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F028-shelves.png", { stylePath: "e2e/hide-dev-overlay.css" });
 
-  await page.getByRole("button", { name: "Sign out" }).click();
+  await signOut(page);
   await expect(page).toHaveURL(/\/sign-in$/);
   await signUpAs(page, `f028b-${stamp}@example.com`);
   await page.goto("/shelves");
   await expect(page.getByText("You have no shelves yet.")).toBeVisible();
   await expect(page.getByRole("listitem")).toHaveCount(0);
+  await expectScreens(page, "shelves-create-end");
 });

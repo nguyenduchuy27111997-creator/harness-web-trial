@@ -8,13 +8,13 @@ export const metadata: Metadata = { title: "Add book · Bookshelf" };
 export default async function NewBookPage() {
   await requireUser();
   return (
-    <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 py-8 sm:p-8">
+    <div className="flex w-full max-w-md flex-col gap-6">
       <h1 className="font-heading text-large-title">Add book</h1>
       <Card>
         <CardContent>
           <NewBookForm />
         </CardContent>
       </Card>
-    </main>
+    </div>
   );
 }

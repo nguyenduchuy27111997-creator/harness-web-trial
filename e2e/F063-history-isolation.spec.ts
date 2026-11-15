@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
-import { signUpAs } from "./accounts";
+import { expectAccessible, expectScreens } from "./a11y";
+import { signOut, signUpAs } from "./accounts";
 import { addBookWithStatus, finishAndRateBook, pastReadsBlock } from "./reads";
 
 // F063: no one else can see or change my reading history. Fresh accounts per test (golden principle 7).
@@ -21,8 +21,9 @@ test("another account sees none of my reads on /stats, /stats/<year> or my book'
   const bookUrl = page.url();
   expect(bookUrl).toMatch(/\/books\/[0-9a-f-]{36}$/);
 
-  await page.getByRole("button", { name: "Sign out" }).click();
+  await signOut(page);
   await expect(page).toHaveURL(/\/sign-in$/);
+  await expectScreens(page, "F063-history-isolation-signed-out");
   await signUpAs(page, `f063-b-${t}@example.com`);
 
   await page.goto("/stats");

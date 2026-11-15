@@ -132,6 +132,8 @@
   }
   html {
     @apply font-sans;
+    /* Keeps focused fields out from under the sticky top bar (docs/design/M9.md, Navigation). */
+    scroll-padding-top: 4rem;
   }
   h1, h2, h3 {
     @apply font-heading;

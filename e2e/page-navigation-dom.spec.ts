@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
+import { signOut } from "./accounts";
 
 // F025: pages kept mounted (hidden) after navigating must not leave duplicate mains, ids or field names.
 test("after moving between pages the document has one main, unique ids and single field names", async ({ page }) => {
@@ -25,7 +26,7 @@ test("after moving between pages the document has one main, unique ids and singl
   await expect(page).toHaveURL(/\/books$/);
   await expectCleanDom();
 
-  await page.getByRole("button", { name: "Sign out" }).click();
+  await signOut(page);
   await expect(page).toHaveURL(/\/sign-in$/);
   await expectCleanDom();
   await expect(page.getByRole("textbox", { name: "Email", exact: true })).toBeVisible();
@@ -35,6 +36,7 @@ test("after moving between pages the document has one main, unique ids and singl
   await page.getByLabel("Password").fill("secret123");
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/books$/);
+  await expectScreens(page, "page-navigation-dom-signed-in");
 
   await page.getByRole("link", { name: "Add book" }).first().click();
   await page.getByLabel("Title").fill("Dom Book");

@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
+import { signOut } from "./accounts";
 
 // F008: each account only sees its own books. Two fresh accounts per run (golden principle 7).
 test("I only see my own books", async ({ page }) => {
@@ -24,7 +25,7 @@ test("I only see my own books", async ({ page }) => {
   await expect(page).toHaveURL(/\/books$/);
   await expect(page.getByText(title, { exact: true })).toBeVisible();
 
-  await page.getByRole("button", { name: "Sign out" }).click();
+  await signOut(page);
   await expect(page).toHaveURL(/\/sign-in$/);
 
   await signUp(emailB);
@@ -33,7 +34,7 @@ test("I only see my own books", async ({ page }) => {
   await expect(page.getByText(title, { exact: true })).toHaveCount(0);
   await expectAccessible(page);
 
-  await page.getByRole("button", { name: "Sign out" }).click();
+  await signOut(page);
   await expect(page).toHaveURL(/\/sign-in$/);
   await page.getByLabel("Email").fill(emailA);
   await page.getByLabel("Password").fill("secret123");
@@ -42,4 +43,5 @@ test("I only see my own books", async ({ page }) => {
   await expect(page.getByText(title, { exact: true })).toBeVisible();
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F008-own-books.png", { mask: [page.getByRole("listitem")] });
+  await expectScreens(page, "book-isolation-end", { mask: [page.getByRole("main").getByRole("link")] });
 });

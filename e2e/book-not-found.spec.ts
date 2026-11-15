@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { signUpAs } from "./accounts";
-import { expectAccessible } from "./a11y";
+import { signOut, signUpAs } from "./accounts";
+import { expectAccessible, expectScreens } from "./a11y";
 
 // F016: another account's book and an unknown id both answer a 404 "Book not found" page.
 // Two fresh accounts per run (golden principle 7).
@@ -17,7 +17,7 @@ test("missing or foreign books show Book not found with status 404", async ({ pa
   await expect(page).toHaveURL(/\/books\/[0-9a-f-]{36}$/);
   const bookUrl = page.url();
 
-  await page.getByRole("button", { name: "Sign out" }).click();
+  await signOut(page);
   await expect(page).toHaveURL(/\/sign-in$/);
   await signUpAs(page, `f016-b-${tag}@example.com`);
 
@@ -34,4 +34,5 @@ test("missing or foreign books show Book not found with status 404", async ({ pa
 
   await page.getByRole("link", { name: "Back to my books" }).click();
   await expect(page).toHaveURL(/\/books$/);
+  await expectScreens(page, "book-not-found-end");
 });
