@@ -9,3 +9,5 @@ On F086 (2026-11-14): a node script (see [[storage-service-role-listing]] for th
 
 **Why:** the F086 spec only checked the rendered list (server RLS hides other users' rows anyway) and added the book after reconnect, so it never exercised channel RLS or catch-up.
 **How to apply:** for any live/realtime feature, run these probes and flag spec gaps like these.
+
+On F086 re-verify (2026-11-16): `page.screenshot` at the default MCP viewport cuts off the /books list below the filter bar; pass `fullPage: true` so the screenshot actually shows the live rows. The spec gaps above were still there (catch-up test adds the book after going back online).
