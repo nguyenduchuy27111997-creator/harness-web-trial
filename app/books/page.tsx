@@ -91,9 +91,7 @@ async function Books({ params }: { params: BooksParams }) {
   return (
     <BookListPending>
       <Header add />
-      <div className="w-full max-w-xl">
-        <SearchForm key={q} status={status} q={q} sort={sort} shelf={shelf} tag={tag} placeholder="Search books" />
-      </div>
+      <SearchForm key={q} status={status} q={q} sort={sort} shelf={shelf} tag={tag} placeholder="Search books" hideLabel />
       <div className="flex flex-wrap items-end gap-4">
         <StatusTabs current={status} counts={counts} q={q} sort={sort} shelf={shelf} tag={tag} />
         {shelves.length > 0 && <ShelfSelect status={status} q={q} sort={sort} shelf={shelf} tag={tag} shelves={shelves} />}

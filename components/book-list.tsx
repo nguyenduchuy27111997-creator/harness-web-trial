@@ -20,6 +20,7 @@ export function BookList({ books, tagsByBook, coverUrls }: { books: ShelfBook[];
           <li key={book.id} className="group relative flex items-center gap-4 py-2 lg:flex-col lg:items-stretch lg:gap-2 lg:py-0">
             <BookCover
               title={book.title}
+              author={book.author}
               url={(book.cover_path && coverUrls?.get(book.cover_path)) || null}
               size="fill"
               className="transition-opacity duration-150 group-hover:opacity-90 group-active:opacity-80"

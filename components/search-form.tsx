@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { booksHref, parseSearch, type BookSort, type BookStatus } from "@/lib/books";
 
 // Navigates instead of a GET form so an empty search leaves no q in the URL (design M3). `href`, when given, builds the target instead of booksHref (QuoteSearchForm, design M5).
-export function SearchForm({ status, q, sort, shelf, tag, href, placeholder }: { status?: BookStatus; q?: string; sort?: BookSort; shelf?: string; tag?: string; href?: (q?: string) => string; placeholder?: string }) {
+export function SearchForm({ status, q, sort, shelf, tag, href, placeholder, hideLabel }: { status?: BookStatus; q?: string; sort?: BookSort; shelf?: string; tag?: string; href?: (q?: string) => string; placeholder?: string; hideLabel?: boolean }) {
   const router = useRouter();
   const id = useId();
   return (
@@ -23,7 +23,9 @@ export function SearchForm({ status, q, sort, shelf, tag, href, placeholder }: {
       }}
     >
       <div className="flex flex-1 flex-col gap-2">
-        <Label htmlFor={id}>Search</Label>
+        <Label htmlFor={id} className={hideLabel ? "sr-only" : undefined}>
+          Search
+        </Label>
         <Input id={id} name="q" type="search" defaultValue={q} placeholder={placeholder} />
       </div>
       <Button type="submit" variant="outline">
