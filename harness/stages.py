@@ -265,7 +265,9 @@ class Stages:
     def timing_only(self, job, changed):
         """A change to the test-writer's test that only steadies it is let through when the skeptic finds no check
         removed or loosened; the new version is then the locked one. That is a wait for the app (a dialog to close, a
-        request to settle), or a screenshot mask moved from per-run text to a block of fixed size. Seen on the web
+        request to settle), a screenshot mask moved from per-run text to a block of fixed size, narrowed or removed,
+        or the screenshot moved to the test's final state (web trial F086: the designer sent back a baseline that
+        masked all of main mid-test, and the skeptic refused the fix that showed the final page). Seen on the web
         trial: F057's test checked a count of 0 under an open dialog and failed 1 or 2 runs in 3. F064's mask covered a
         title holding Date.now(), whose width changes, and CI failed on its edge (224 pixels) round after round; the
         coder and fixer had no way to fix either but to stop."""
@@ -280,7 +282,8 @@ class Stages:
             job, f"Feature {job['id']}: its code was written to the test-writer's e2e test, which it may not change. "
                  f"This change to that test claims only to make it steady: to wait for the app longer, or to steady "
                  f"a screenshot (a mask over a block whose size does not change from run to run, in place of one over "
-                 f"text that does):\n```diff\n{diff[:8000]}\n```\n"
+                 f"text that does; a mask narrowed or removed so the picture shows more; the screenshot moved to the "
+                 f"test's final state, after its last check, as the design system asks):\n```diff\n{diff[:8000]}\n```\n"
                  "Finding:\n1. [bug] The change removes, loosens or skips a check the test made (an assertion, an "
                  "expected text or count, a step, or what a screenshot shows beyond data that changes per run), "
                  "rather than only steadying it.\n\nReply one line `1: KEEP` "

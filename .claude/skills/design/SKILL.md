@@ -36,6 +36,13 @@ Use exactly these sections. Describe what this milestone adds or changes; refer 
 ## Modules
 <each module or folder, its one job, and the import rules between them (who may import whom)>
 
+## UI
+<only if the product has a UI, built to docs/ui-guide.md and docs/design-system.md. Navigation: the app's
+destinations and how they adapt (phone, tablet, desktop), stated once and referred to by later milestones. Then
+for each screen this milestone adds or changes: its layout at phone, tablet and desktop width (which rung of the
+guide's adaptation ladder), its place in the navigation, the primary action, the empty, loading and error states,
+the components from components/ui/ it uses (and any to add), and what moves, with which spring>
+
 ## Shared scaffold
 <what this branch builds before any feature (step 4): migrations, navigation links and placeholder pages; or None>
 
@@ -65,7 +72,9 @@ When no piece is shared by two features, write "None" and build nothing. Update 
 Run `./scripts/check.sh`; it must pass.
 
 ## 5. Approve
-Spawn the `architect` subagent with the milestone id and wait for its result (foreground). Fix every problem it lists and spawn it again, up to 3 rounds. A hook saves its report as `harness/evidence/design-<M>.md` with a hash of the doc; the integrity guard refuses a design doc without a PASS for exactly that content, so any edit after the PASS needs a new architect run. Never write under `harness/evidence/` yourself.
+If the doc has a `## UI` section, first spawn the `designer` subagent with `design <M>` and wait for it (foreground). Fix every problem it lists in the UI section and spawn it again, up to 3 rounds; the UI section is done only on its PASS. If it still fails after 3 rounds, commit nothing: report its problems and stop.
+
+Then spawn the `architect` subagent with the milestone id and wait for its result (foreground). Fix every problem it lists and spawn it again, up to 3 rounds. A hook saves its report as `harness/evidence/design-<M>.md` with a hash of the doc; the integrity guard refuses a design doc without a PASS for exactly that content, so any edit after the PASS needs a new architect run. Never write under `harness/evidence/` yourself.
 
 If it still fails after 3 rounds, commit nothing: report the remaining problems and stop. The loop retries with your notes.
 

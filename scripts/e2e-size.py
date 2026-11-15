@@ -51,12 +51,19 @@ def main(root="e2e"):
     mine = changed(root)
     ui = [p for p in specs if "page.goto(" in p.read_text()  # any spec that opens a page,
           or (PAGE.search(p.read_text()) and (mine is None or p.resolve() in mine))]  # or a new one that uses it
-    blind = [p for p in ui if "expectAccessible(" not in p.read_text()]
+    # expectScreens(page, name) checks accessibility and leaves light and dark baselines (e2e/a11y.ts).
+    blind = [p for p in ui if not re.search(r"expectAccessible\(|expectScreens\(", p.read_text())]
     for path in blind:
         print(f"{path}: opens a page but never calls expectAccessible(page) from e2e/a11y.ts")
-    unseen = [p for p in ui if "toHaveScreenshot(" not in p.read_text() and (mine is None or p.resolve() in mine)]
+    # With the kit's UI base (app/ui-base.css), a new or changed spec ends with expectScreens: both color schemes.
+    css = Path(root).resolve().parent / "app/globals.css"
+    themed = css.is_file() and "ui-base.css" in css.read_text()
+    shot = re.compile(r"expectScreens\(" if themed else r"toHaveScreenshot\(|expectScreens\(")
+    unseen = [p for p in ui if not shot.search(p.read_text()) and (mine is None or p.resolve() in mine)]
     for path in unseen:
-        print(f"{path}: opens a page but leaves no visual baseline; end it with await expect(page).toHaveScreenshot(...)")
+        print(f"{path}: opens a page but leaves no visual baseline; end it with "
+              + ('await expectScreens(page, "<id>-<what>") from e2e/a11y.ts (light and dark)' if themed
+                 else "await expect(page).toHaveScreenshot(...)"))
     return 1 if found or blind or unseen else 0
 
 

@@ -16,6 +16,7 @@ Input: a milestone id (`M1`, `M2`, ...).
    - **Data model and migrations:** tables, keys, relations, constraints, indexes and access rules (for example RLS) fit the features; every schema change is a new migration that keeps existing data; no step needs downtime or a manual fix.
    - **Contract:** every endpoint, server action or public function the features use is listed with inputs, outputs and errors, and matches the data model.
    - **Module boundaries:** each module has one job; the import rules are explicit and acyclic; if the stack has a boundary tool configured (for example `.dependency-cruiser.cjs`), its rules say the same as the doc.
+   - **UI** (if the product has one): a `## UI` section covers every screen the milestone's features add or change, with its layout per width, navigation, primary action and states, and agrees with the data model and contract (the designer judges how it looks; you judge that it is complete and buildable).
    - **NFR:** expected load and limits, a short threat model (who can read or change what, and what stops everyone else), and infrastructure cost are stated, and match the spec.
    - **Consistency:** no conflict with an earlier design or a decision in `docs/decisions/`, unless the doc says what it replaces and a new decision records why.
    - **Simplicity:** nothing the milestone does not need. Flag speculative layers, abstractions and configurability.

@@ -13,7 +13,8 @@ Bookshelf: a personal reading tracker. One person per account keeps a list of bo
 - `docs/product/spec.md`: what we build and why. Source of truth for scope.
 - `docs/golden-principles.md`: rules every change must follow.
 - `docs/design/<M>.md`: each milestone's design (data model, migrations, contract, modules, NFR), approved by the `architect` subagent. Build to it; change it only with a new decision and a fresh architect PASS.
-- `docs/design-system.md` (if the product has a UI): tokens, base components and UI rules. The `designer` subagent reviews screenshots against it.
+- `docs/ui-guide.md` (if the product has a UI): how every screen should look and behave (Apple's HIG for the web), with the rubric the `designer` subagent scores screenshots on.
+- `docs/design-system.md` (if the product has a UI): this product's tokens, base components and UI rules, on top of the guide.
 - `docs/decisions/`: architecture decision records. Read before changing structure.
 - `harness/PRESET.md` (if present): the stack preset this project was installed with, and its rules.
 - `docs/plans/`: execution plans for work that spans several sessions.
