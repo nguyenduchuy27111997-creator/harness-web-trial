@@ -21,7 +21,7 @@ export default async function SharedShelfPage({ params }: Props) {
   if (!shelf) notFound();
   const coverUrls = await signCovers(supabase, shelf.books.flatMap((b) => (b.coverPath ? [b.coverPath] : [])));
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:p-8">
+    <div className="flex w-full max-w-3xl flex-col gap-6">
       <h1 className="break-words font-heading text-title-1">{shelf.name}</h1>
       {shelf.books.length === 0 ? (
         <p className="text-muted-foreground">This shelf has no books.</p>
@@ -46,6 +46,6 @@ export default async function SharedShelfPage({ params }: Props) {
           ))}
         </ul>
       )}
-    </main>
+    </div>
   );
 }

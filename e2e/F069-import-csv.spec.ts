@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { expect, test, type Page } from "@playwright/test";
-import { expectAccessible } from "./a11y";
-import { signUpAs } from "./accounts";
+import { expectAccessible, expectScreens } from "./a11y";
+import { signOut, signUpAs } from "./accounts";
 
 const HEADER = "title,author,status,rating,total_pages,started_on,finished_on";
 
@@ -104,7 +104,7 @@ test("a file exported from one account imports into a new account unchanged", as
   const first = await exportedText(page, testInfo);
   expect(first).toContain(`Round Finished ${tag},Ann Author,finished,5,300,`);
 
-  await page.getByRole("button", { name: "Sign out" }).click();
+  await signOut(page);
   await expect(page).toHaveURL(/\/sign-in$/);
   await signUpAs(page, `f069-d-${tag}@example.com`);
   await openLibrary(page);
@@ -143,4 +143,5 @@ test("a file with more than 1,000 rows is refused before any preview", async ({ 
   await expect(page.getByText("The file is too large")).toBeVisible();
   await expect(page.getByRole("table")).toHaveCount(0);
   await expect(page.getByRole("button", { name: /^Add \d+ books?$/ })).toHaveCount(0);
+  await expectScreens(page, "F069-import-csv-end");
 });

@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
-import { signUpAs } from "./accounts";
+import { expectAccessible, expectScreens } from "./a11y";
+import { signOut, signUpAs } from "./accounts";
 import { addQueuedBook, addAndOpenBook, tagOpenBook } from "./books";
 import { IMPORT_HEADER, importFile, openLibrary } from "./imports";
 
@@ -36,7 +36,7 @@ test("account B sees none of A's tags, queue, name or imported books; A's are un
   await page.getByRole("button", { name: "Add 1 book" }).click();
   await expect(page.getByText(/Added 1 book/)).toBeVisible();
 
-  await page.getByRole("button", { name: "Sign out" }).click();
+  await signOut(page);
   await expect(page).toHaveURL(/\/sign-in$/);
 
   // B sees nothing of it.
@@ -66,7 +66,7 @@ test("account B sees none of A's tags, queue, name or imported books; A's are un
   await expect(page).toHaveScreenshot("F075-b-empty-shelf.png", { stylePath: "e2e/hide-dev-overlay.css" });
 
   // A again: everything is unchanged.
-  await page.getByRole("button", { name: "Sign out" }).click();
+  await signOut(page);
   await expect(page).toHaveURL(/\/sign-in$/);
   await page.getByLabel("Email").fill(emailA);
   await page.getByLabel("Password").fill("secret123");
@@ -81,6 +81,7 @@ test("account B sees none of A's tags, queue, name or imported books; A's are un
   await expect(page.getByRole("link", { name: queuedTwo })).toBeVisible();
   await page.goto("/books?tag=classic");
   await expect(page.getByRole("link", { name: tagged })).toBeVisible();
+  await expectScreens(page, "F075-m7-isolation-end", { mask: [page.getByRole("main").getByRole("link"), page.getByRole("banner")] });
 });
 
 test("another session cannot read, update or delete my tags, queue rows or profile; mine are unchanged", async () => {

@@ -1,18 +1,18 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
 import { signUpAs } from "./accounts";
 
-// F073: a display name in the header. Each test has its own account (golden principle 7).
+// F073: a display name in the account menu (moved there by F089). Each test has its own account (golden principle 7).
 const stamp = () => `${process.env.HARNESS_LANE ?? "local"}-${Date.now()}-${Math.floor(Math.random() * 1e4)}`;
 
-test("the header links to Settings, and saving a display name shows it before Sign out", async ({ page }) => {
+test("the navigation links to Settings, and saving a display name shows it in the account menu", async ({ page }) => {
   await signUpAs(page, `f073a-${stamp()}@example.com`);
   const header = page.getByRole("banner");
 
-  // Without a display name the header shows no name (a fresh account has none).
+  // Without a display name the account menu shows no name (a fresh account has none).
   await expect(header.getByText("Huy", { exact: true })).toHaveCount(0);
 
-  await header.getByRole("link", { name: "Settings" }).click();
+  await page.getByRole("link", { name: "Settings", exact: true }).click();
   await expect(page).toHaveURL(/\/settings$/);
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
 
@@ -20,10 +20,11 @@ test("the header links to Settings, and saving a display name shows it before Si
   await page.getByRole("button", { name: "Save" }).click();
   await expect(header.getByText("Huy", { exact: true })).toBeVisible();
 
-  // The name sits before "Sign out".
-  const text = (await header.innerText()).replace(/\s+/g, " ");
-  expect(text.indexOf("Huy")).toBeGreaterThan(-1);
-  expect(text.indexOf("Huy")).toBeLessThan(text.indexOf("Sign out"));
+  // The account menu shows the name, with Sign out in it.
+  await header.getByRole("button", { name: "Huy" }).click();
+  await expect(page.getByRole("menu").getByText("Huy", { exact: true })).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: "Sign out" })).toBeVisible();
+  await page.keyboard.press("Escape");
 
   await page.reload();
   await expect(header.getByText("Huy", { exact: true })).toBeVisible();
@@ -55,4 +56,5 @@ test("an empty or too long display name is rejected and the header keeps its nam
   await expect(header.getByText("Huy", { exact: true })).toBeVisible();
   await expect(page.getByText("Names are at most 40 characters")).toHaveCount(0);
   await expectAccessible(page);
+  await expectScreens(page, "F073-display-name-end");
 });

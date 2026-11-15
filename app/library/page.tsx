@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Import / export · Bookshelf" };
 export default async function LibraryPage() {
   await requireUser();
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:p-8">
+    <div className="flex w-full max-w-3xl flex-col gap-6">
       <h1 className="font-heading text-large-title">Import / export</h1>
       <div>
         <Button asChild>
@@ -19,6 +19,6 @@ export default async function LibraryPage() {
         </Button>
       </div>
       <ImportForm preview={previewImport} confirm={confirmImport} />
-    </main>
+    </div>
   );
 }

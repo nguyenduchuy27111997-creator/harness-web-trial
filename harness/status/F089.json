@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Adaptive navigation (sidebar from lg, phone tab bar + More sheet, account menu, sticky blurred top bar). Restored from 4772e34 onto main; end baselines in book-isolation, F074 and F075 now mask per-run text (book links in main, and the banner in F075, whose display name varies). harness/evidence/F089/ still holds step-01-dark, step-02-dark and step-03-menu from the earlier attempt."
+}

@@ -12,7 +12,7 @@ export default async function UpNextPage() {
   await requireUser();
   const books = await listUpNext(await createClient());
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:p-8">
+    <div className="flex w-full max-w-3xl flex-col gap-6">
       <h1 className="font-heading text-large-title">Up next</h1>
       {books.length === 0 ? (
         <p className="text-muted-foreground">
@@ -25,6 +25,6 @@ export default async function UpNextPage() {
       ) : (
         <UpNextList books={books} moveUp={moveUp} moveDown={moveDown} remove={removeFromUpNext} startFirst={startFirst} />
       )}
-    </main>
+    </div>
   );
 }

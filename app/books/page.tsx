@@ -37,7 +37,7 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
   const { books, hasMore } = pageBooks(sorted, limit);
   const coverUrls = await signCovers(supabase, books.flatMap((b) => (b.cover_path ? [b.cover_path] : [])));
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:p-8">
+    <div className="flex w-full max-w-3xl flex-col gap-6">
       <LiveRefresh userId={user.id} />
       <h1 className="font-heading text-large-title">My books</h1>
       <SearchForm key={q} status={status} q={q} sort={sort} shelf={shelf} tag={tag} />
@@ -78,6 +78,6 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
           </Button>
         </div>
       )}
-    </main>
+    </div>
   );
 }

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
 
 // F003: signed-out visitors are sent to sign in. Own account per run (golden principle 7).
 test("signed-out visitors are sent to sign in", async ({ page }) => {
@@ -28,7 +28,8 @@ test("signed-out visitors are sent to sign in", async ({ page }) => {
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/books$/);
   await expect(page.getByRole("heading", { name: "My books" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Account" })).toBeVisible();
   await page.mouse.move(0, 0);
   await expect(page).toHaveScreenshot("F003-books.png");
+  await expectScreens(page, "redirects-end");
 });

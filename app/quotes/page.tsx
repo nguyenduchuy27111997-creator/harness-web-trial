@@ -14,7 +14,7 @@ export default async function QuotesPage({ searchParams }: { searchParams: Promi
   const all = await listQuotes(await createClient());
   const quotes = filterQuotes(all, q);
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:p-8">
+    <div className="flex w-full max-w-3xl flex-col gap-6">
       <h1 className="font-heading text-large-title">Quotes</h1>
       <QuoteSearchForm key={q} q={q} />
       {quotes.length === 0 && q ? (
@@ -41,6 +41,6 @@ export default async function QuotesPage({ searchParams }: { searchParams: Promi
           ))}
         </ul>
       )}
-    </main>
+    </div>
   );
 }

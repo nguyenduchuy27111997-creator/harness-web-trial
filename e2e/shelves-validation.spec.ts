@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
-import { signUpAs } from "./accounts";
+import { expectAccessible, expectScreens } from "./a11y";
+import { signOut, signUpAs } from "./accounts";
 
 // F029: shelf name validation. Each run uses fresh accounts (golden principle 7).
 test("shelves: name is required, at most 40 characters and unique per account", async ({ page }) => {
@@ -31,7 +31,7 @@ test("shelves: name is required, at most 40 characters and unique per account", 
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F029-shelf-name-taken.png", { stylePath: "e2e/hide-dev-overlay.css" });
 
-  await page.getByRole("button", { name: "Sign out" }).click();
+  await signOut(page);
   await expect(page).toHaveURL(/\/sign-in$/);
   await signUpAs(page, `f029b-${stamp}@example.com`);
   await page.goto("/shelves");
@@ -39,4 +39,5 @@ test("shelves: name is required, at most 40 characters and unique per account", 
   await create.click();
   await expect(page.getByRole("listitem")).toContainText(["Travel"]);
   await expect(name).toHaveValue("");
+  await expectScreens(page, "shelves-validation-end");
 });
