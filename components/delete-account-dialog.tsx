@@ -40,7 +40,7 @@ export function DeleteAccountDialog({ action }: Props) {
               onChange={(e) => setValue(e.target.value)}
             />
             {state.formError && (
-              <p role="alert" className="text-sm text-destructive">
+              <p role="alert" className="text-subheadline text-destructive">
                 {state.formError}
               </p>
             )}

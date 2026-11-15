@@ -19,10 +19,10 @@ export function BookList({ books, tagsByBook, coverUrls }: { books: ShelfBook[];
             <Card>
               <CardContent className="flex items-center justify-between gap-4">
                 <div className="flex min-w-0 flex-1 flex-col gap-1 break-words">
-                  <Link href={`/books/${book.id}`} className="font-heading text-lg font-semibold hover:underline">
+                  <Link href={`/books/${book.id}`} className="link-target font-heading text-headline font-semibold hover:underline">
                     {book.title}
                   </Link>
-                  <span className="text-sm text-muted-foreground">{book.author}</span>
+                  <span className="text-subheadline text-muted-foreground">{book.author}</span>
                   {(tagsByBook?.get(book.id)?.length ?? 0) > 0 && (
                     <ul aria-label={`Tags for ${book.title}`} className="flex flex-wrap gap-1">
                       {tagsByBook?.get(book.id)?.map((name) => (
@@ -35,7 +35,7 @@ export function BookList({ books, tagsByBook, coverUrls }: { books: ShelfBook[];
                   {percent !== null && (
                     <div className="flex items-center gap-2">
                       <Progress value={percent} aria-label={`Reading progress for ${book.title}`} className="w-32" />
-                      <span className="text-sm text-muted-foreground">{percent}%</span>
+                      <span className="text-subheadline text-muted-foreground">{percent}%</span>
                     </div>
                   )}
                 </div>

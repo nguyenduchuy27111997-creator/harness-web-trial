@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Lora } from "next/font/google";
+import { Inter, Lora } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { cn } from "@/lib/utils";
@@ -7,7 +7,8 @@ import { getDisplayName } from "@/lib/profile";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { signOut } from "./(auth)/actions";
 
-// Headings and book titles; body text uses the system sans stack from globals.css.
+// Lora for page titles, book titles and quotes; Inter for everything else (docs/design-system.md).
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const lora = Lora({ subsets: ["latin"], variable: "--font-serif" });
 
 export const metadata: Metadata = {
@@ -27,7 +28,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={cn("h-full", "antialiased", "font-sans", lora.variable)}
+      className={cn("h-full", "antialiased", "font-sans", inter.variable, lora.variable)}
     >
       <body className="min-h-full flex flex-col">
         <Header />

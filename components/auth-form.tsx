@@ -24,19 +24,19 @@ export function AuthForm({ action, title, description, pendingLabel, passwordAut
       <Card>
         <CardHeader>
           <CardTitle>
-            <h1 className="font-heading text-2xl font-semibold">{title}</h1>
+            <h1 className="font-heading text-title-2 font-semibold">{title}</h1>
           </CardTitle>
           <CardDescription>{description}</CardDescription>
         </CardHeader>
         <CardContent>
           <form action={formAction} noValidate className="flex flex-col gap-4">
             {notice && (
-              <p role="status" className="text-sm text-muted-foreground">
+              <p role="status" className="text-subheadline text-muted-foreground">
                 {notice}
               </p>
             )}
             {state.formError && (
-              <p role="alert" className="text-sm text-destructive">
+              <p role="alert" className="text-subheadline text-destructive">
                 {state.formError}
               </p>
             )}
@@ -58,7 +58,7 @@ export function AuthForm({ action, title, description, pendingLabel, passwordAut
             <Button type="submit" disabled={pending}>
               {pending ? pendingLabel : title}
             </Button>
-            <p className="text-sm text-muted-foreground">{footer}</p>
+            <p className="text-subheadline text-muted-foreground">{footer}</p>
           </form>
         </CardContent>
       </Card>

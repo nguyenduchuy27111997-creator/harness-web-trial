@@ -22,9 +22,9 @@ export function BookShelves({ shelves, onShelfIds, action, removeAction }: Props
   const available = shelves.filter((shelf) => !onShelfIds.includes(shelf.id));
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="font-heading text-xl font-semibold">Shelves</h2>
+      <h2 className="font-heading text-title-3 font-semibold">Shelves</h2>
       {shelves.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-subheadline text-muted-foreground">
           You have no shelves yet.{" "}
           <Link href="/shelves" className="text-primary underline">
             Make a shelf
@@ -34,7 +34,7 @@ export function BookShelves({ shelves, onShelfIds, action, removeAction }: Props
       ) : (
         <>
           {on.length === 0 ? (
-            <p className="text-sm text-muted-foreground">This book is on no shelves.</p>
+            <p className="text-subheadline text-muted-foreground">This book is on no shelves.</p>
           ) : (
             <ul aria-label="Shelves this book is on" className="flex flex-col gap-1">
               {on.map((shelf) => (
@@ -71,9 +71,9 @@ export function BookShelves({ shelves, onShelfIds, action, removeAction }: Props
                   {pending ? "Adding…" : "Add to shelf"}
                 </Button>
               </div>
-              {state.fieldErrors?.shelf && <p className="text-sm text-destructive">{state.fieldErrors.shelf}</p>}
+              {state.fieldErrors?.shelf && <p className="text-subheadline text-destructive">{state.fieldErrors.shelf}</p>}
               {state.formError && (
-                <p role="alert" className="text-sm text-destructive">
+                <p role="alert" className="text-subheadline text-destructive">
                   {state.formError}
                 </p>
               )}

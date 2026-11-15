@@ -15,7 +15,7 @@ export default async function QuotesPage({ searchParams }: { searchParams: Promi
   const quotes = filterQuotes(all, q);
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:p-8">
-      <h1 className="font-heading text-4xl font-semibold tracking-tight">Quotes</h1>
+      <h1 className="font-heading text-large-title">Quotes</h1>
       <QuoteSearchForm key={q} q={q} />
       {quotes.length === 0 && q ? (
         <div className="flex flex-col items-start gap-2">
@@ -31,7 +31,7 @@ export default async function QuotesPage({ searchParams }: { searchParams: Promi
           {quotes.map((quote) => (
             <li key={quote.id} className="flex flex-col gap-1 border-l-2 border-border pl-3">
               <blockquote className="whitespace-pre-wrap break-words">{quote.body}</blockquote>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-subheadline text-muted-foreground">
                 <Link href={`/books/${quote.book.id}`} className="font-heading font-semibold text-primary hover:underline">
                   {quote.book.title}
                 </Link>

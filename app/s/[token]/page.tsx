@@ -22,7 +22,7 @@ export default async function SharedShelfPage({ params }: Props) {
   const coverUrls = await signCovers(supabase, shelf.books.flatMap((b) => (b.coverPath ? [b.coverPath] : [])));
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:p-8">
-      <h1 className="break-words font-heading text-4xl font-semibold tracking-tight">{shelf.name}</h1>
+      <h1 className="break-words font-heading text-title-1">{shelf.name}</h1>
       {shelf.books.length === 0 ? (
         <p className="text-muted-foreground">This shelf has no books.</p>
       ) : (
@@ -33,10 +33,10 @@ export default async function SharedShelfPage({ params }: Props) {
                 <CardContent className="flex items-center justify-between gap-4">
                   <BookCover title={book.title} url={(book.coverPath && coverUrls.get(book.coverPath)) || null} size="sm" />
                   <div className="flex min-w-0 flex-1 flex-col gap-1 break-words">
-                    <span className="font-heading text-lg font-semibold">{book.title}</span>
-                    <span className="text-sm text-muted-foreground">{book.author}</span>
+                    <span className="font-heading text-headline font-semibold">{book.title}</span>
+                    <span className="text-subheadline text-muted-foreground">{book.author}</span>
                     {book.rating !== null && (
-                      <span className="text-sm">Rating: {book.rating === 1 ? "1 star" : `${book.rating} stars`}</span>
+                      <span className="text-subheadline">Rating: {book.rating === 1 ? "1 star" : `${book.rating} stars`}</span>
                     )}
                   </div>
                   <StatusBadge status={book.status} />

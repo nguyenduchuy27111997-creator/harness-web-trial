@@ -26,7 +26,7 @@ export function DisplayNameForm({ displayName, action }: Props) {
         <Button type="submit" disabled={pending}>
           {pending ? "Saving…" : "Save"}
         </Button>
-        {state.saved && <p role="status" className="text-sm text-muted-foreground">Saved</p>}
+        {state.saved && <p role="status" className="text-subheadline text-muted-foreground">Saved</p>}
       </div>
     </form>
   );

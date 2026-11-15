@@ -16,8 +16,8 @@ export function ProgressForm({ totalPages, currentPage, action }: Props) {
   const saved = totalPages !== null && currentPage !== null;
   return (
     <form action={formAction} noValidate className="flex flex-col gap-3">
-      <h2 className="font-heading text-xl font-semibold">Progress</h2>
-      {saved && <p className="text-sm text-muted-foreground">{formatProgress(currentPage, totalPages)}</p>}
+      <h2 className="font-heading text-title-3 font-semibold">Progress</h2>
+      {saved && <p className="text-subheadline text-muted-foreground">{formatProgress(currentPage, totalPages)}</p>}
       <FormField
         id="total_pages"
         label="Total pages"
@@ -33,7 +33,7 @@ export function ProgressForm({ totalPages, currentPage, action }: Props) {
         error={state.fieldErrors?.current_page}
       />
       {state.formError && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-subheadline text-destructive">
           {state.formError}
         </p>
       )}
@@ -42,7 +42,7 @@ export function ProgressForm({ totalPages, currentPage, action }: Props) {
           {pending ? "Saving…" : "Save progress"}
         </Button>
         {state.saved && !pending && (
-          <p role="status" className="text-sm text-muted-foreground">
+          <p role="status" className="text-subheadline text-muted-foreground">
             Saved
           </p>
         )}

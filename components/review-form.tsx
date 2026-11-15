@@ -46,7 +46,7 @@ export function ReviewForm({ review, action }: Props) {
         aria-describedby={error ? "review-error" : undefined}
       />
       {error && (
-        <p id="review-error" role="alert" className="text-sm text-destructive">
+        <p id="review-error" role="alert" className="text-subheadline text-destructive">
           {error}
         </p>
       )}
@@ -55,7 +55,7 @@ export function ReviewForm({ review, action }: Props) {
           {pending ? "Saving…" : "Post review"}
         </Button>
         {state.saved && submitted === value && !pending && (
-          <p role="status" className="text-sm text-muted-foreground">
+          <p role="status" className="text-subheadline text-muted-foreground">
             Saved
           </p>
         )}

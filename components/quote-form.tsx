@@ -27,7 +27,7 @@ export function QuoteForm({ action }: Props) {
           aria-describedby={quoteError ? `${id}-quote-error` : undefined}
         />
         {quoteError && (
-          <p id={`${id}-quote-error`} className="text-sm text-destructive">
+          <p id={`${id}-quote-error`} className="text-subheadline text-destructive">
             {quoteError}
           </p>
         )}
@@ -42,7 +42,7 @@ export function QuoteForm({ action }: Props) {
         error={state.fieldErrors?.page}
       />
       {state.formError && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-subheadline text-destructive">
           {state.formError}
         </p>
       )}

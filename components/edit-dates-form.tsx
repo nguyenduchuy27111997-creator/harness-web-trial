@@ -36,7 +36,7 @@ function OpenForm({ startedOn, finishedOn, action, onClose }: Props & { onClose:
   return (
     <form action={formAction} noValidate className="flex flex-col gap-4">
       {state.formError && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-subheadline text-destructive">
           {state.formError}
         </p>
       )}

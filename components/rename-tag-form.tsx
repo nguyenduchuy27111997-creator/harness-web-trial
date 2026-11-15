@@ -23,7 +23,7 @@ export function RenameTagList({ tags }: { tags: Row[] }) {
               <Link href={`/books?tag=${encodeURIComponent(tag.name)}`} className="text-primary hover:underline">
                 {tag.name}
               </Link>
-              <span className="text-sm text-muted-foreground">{tag.count === 1 ? "1 book" : `${tag.count} books`}</span>
+              <span className="text-subheadline text-muted-foreground">{tag.count === 1 ? "1 book" : `${tag.count} books`}</span>
               <Button type="button" variant="outline" size="sm" onClick={() => setOpenId(tag.id)}>
                 Rename
               </Button>
@@ -48,7 +48,7 @@ function OpenForm({ id, name, action, onClose }: Row & { onClose: () => void }) 
   return (
     <form action={formAction} noValidate className="flex flex-col gap-2">
       {state.formError && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-subheadline text-destructive">
           {state.formError}
         </p>
       )}
