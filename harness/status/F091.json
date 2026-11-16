@@ -1,4 +1,4 @@
 {
   "status": "passing",
-  "notes": "Review fixes: cover form under the cover, Read again in header, Edit group atop side column (DOM after Quotes, pinned by book-save-buttons), Past reads after Quotes, separator above Delete, status group not disabled/remounted."
+  "notes": "375px overflow fixed: the cover file input is display:none and opened through a ref. Cover is md:w-48 lg:w-56 aspect-2/3 (full width, max-w-60 on a phone). Progress is one line, 'N of M pages · P%', and 'Page N of M (P%)' is sr-only. Cover controls stay buttons, not a dropdown, because F081 pins them."
 }
