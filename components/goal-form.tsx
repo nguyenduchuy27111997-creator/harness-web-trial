@@ -13,10 +13,12 @@ type Props = {
   onCancel?: () => void;
   // The id of a prompt sentence on the page that labels the field; without it the field shows "Reading goal".
   labelledBy?: string;
+  // "outline" when another button on the page is the primary one (the empty year's "Go to my books").
+  submitVariant?: "default" | "outline";
 };
 
 // The short number field and its buttons sit on one row, the error under them.
-export function GoalForm({ goal, submitLabel, action, onCancel, labelledBy }: Props) {
+export function GoalForm({ goal, submitLabel, action, onCancel, labelledBy, submitVariant }: Props) {
   const id = useId();
   const [state, formAction, pending] = useActionState(action, {} as GoalFormState);
   const inputId = `${id}-goal`;
@@ -36,7 +38,7 @@ export function GoalForm({ goal, submitLabel, action, onCancel, labelledBy }: Pr
           aria-describedby={error ? errorId : undefined}
           defaultValue={state.values?.goal ?? goal ?? ""}
         />
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" variant={submitVariant} disabled={pending}>
           {pending ? "Saving…" : submitLabel}
         </Button>
         {onCancel && (

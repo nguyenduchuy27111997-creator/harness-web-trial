@@ -42,7 +42,13 @@ export default async function StatsPage() {
         {goal === null ? (
           <div className="flex flex-col gap-3">
             <p id="goal-prompt">Set a reading goal for this year: how many books do you want to finish?</p>
-            <GoalForm goal={null} submitLabel="Set goal" action={saveGoal} labelledBy="goal-prompt" />
+            <GoalForm
+              goal={null}
+              submitLabel="Set goal"
+              action={saveGoal}
+              labelledBy="goal-prompt"
+              submitVariant={stats.finishedThisYear === 0 ? "outline" : undefined}
+            />
           </div>
         ) : (
           <div className="flex flex-col gap-4 md:flex-row md:items-center">
