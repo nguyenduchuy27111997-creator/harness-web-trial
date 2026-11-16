@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { COVER_ERROR, COVER_MAX_BYTES, COVER_TYPES, type CoverFormState } from "@/lib/covers";
 
@@ -15,6 +15,8 @@ type Props = {
 export function CoverForm({ url, uploadAction, removeAction }: Props) {
   const [state, formAction] = useActionState(uploadAction, {} as CoverFormState);
   const [clientError, setClientError] = useState<string>();
+  const [fileName, setFileName] = useState<string>();
+  const input = useRef<HTMLInputElement>(null);
   const error = clientError ?? state.error;
   const label = url ? "Replace cover" : "Add cover";
 
@@ -30,28 +32,39 @@ export function CoverForm({ url, uploadAction, removeAction }: Props) {
   }
 
   return (
-    <section aria-label="Cover" className="flex flex-col gap-3">
-      <form action={submit} className="flex flex-col gap-2">
-        <Label htmlFor="cover">Cover image</Label>
+    <section aria-label="Cover" className="flex max-w-80 flex-wrap justify-center gap-2 md:justify-start">
+      <form action={submit} className="flex flex-wrap justify-center gap-2 md:justify-start">
+        {/* The native file control stays hidden; the button opens its picker. */}
         <Input
+          ref={input}
           id="cover"
           name="cover"
           type="file"
           accept="image/jpeg,image/png,image/webp"
-          onChange={() => setClientError(undefined)}
+          aria-label="Cover image"
+          tabIndex={-1}
+          className="sr-only"
+          onChange={(e) => {
+            setClientError(undefined);
+            setFileName(e.currentTarget.files?.[0]?.name);
+          }}
         />
+        <Button type="button" variant="outline" onClick={() => input.current?.click()}>
+          Choose image
+        </Button>
+        {fileName && <p className="basis-full truncate text-center text-subheadline text-muted-foreground md:text-left">{fileName}</p>}
         {error && (
-          <p role="alert" className="text-subheadline text-destructive">
+          <p role="alert" className="basis-full text-center text-subheadline text-destructive md:text-left">
             {error}
           </p>
         )}
-        <PendingSubmitButton variant="secondary" className="self-start" pendingLabel="Uploading…">
+        <PendingSubmitButton variant="secondary" pendingLabel="Uploading…">
           {label}
         </PendingSubmitButton>
       </form>
       {url && (
         <form action={removeAction}>
-          <PendingSubmitButton variant="outline" pendingLabel="Removing…">
+          <PendingSubmitButton variant="destructive" pendingLabel="Removing…">
             Remove cover
           </PendingSubmitButton>
         </form>

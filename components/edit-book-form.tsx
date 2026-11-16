@@ -34,7 +34,7 @@ function OpenForm({ title, author, action, onClose }: Props & { onClose: () => v
     {} as EditBookFormState,
   );
   return (
-    <form action={formAction} noValidate className="flex flex-col gap-4">
+    <form action={formAction} noValidate className="flex w-full flex-col gap-4">
       {state.formError && (
         <p role="alert" className="text-subheadline text-destructive">
           {state.formError}

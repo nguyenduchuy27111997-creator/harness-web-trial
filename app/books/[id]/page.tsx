@@ -77,12 +77,20 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
         Back to my books
       </Link>
       <header className="flex flex-col items-center gap-4 md:flex-row md:items-start md:gap-6">
-        <BookCover title={book.title} url={coverUrl} size="lg" />
+        <div className="flex shrink-0 flex-col items-center gap-3 md:w-32 md:items-start">
+          <BookCover title={book.title} url={coverUrl} size="lg" />
+          <CoverForm
+            url={coverUrl}
+            uploadAction={uploadCoverAction.bind(null, book.id)}
+            removeAction={removeCoverAction.bind(null, book.id)}
+          />
+        </div>
         <div className="flex min-w-0 flex-1 flex-col gap-3 break-words">
           <h1 className="font-heading text-title-1">{book.title}</h1>
           <p className="text-muted-foreground">{book.author}</p>
           <BookStatusForm status={book.status} action={updateStatus.bind(null, book.id)} />
           <ReadingDates startedOn={book.started_on} finishedOn={book.finished_on} />
+          {book.status === "finished" && <ReadAgainButton action={readBookAgain.bind(null, book.id)} />}
         </div>
       </header>
       <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
@@ -112,8 +120,6 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
           )}
           {book.status === "finished" && <RatingForm rating={book.rating} action={saveRating.bind(null, book.id)} />}
           {book.status === "finished" && <ReviewForm review={book.review} action={saveReview.bind(null, book.id)} />}
-          {book.status === "finished" && <ReadAgainButton action={readBookAgain.bind(null, book.id)} />}
-          <PastReads reads={pastReads} deleteAction={deletePastRead.bind(null, book.id)} />
           <BookNotes
             notes={notes}
             action={addNote.bind(null, book.id)}
@@ -126,17 +132,21 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
             editAction={editQuote.bind(null, book.id)}
             deleteAction={deleteQuote.bind(null, book.id)}
           />
+          <PastReads reads={pastReads} deleteAction={deletePastRead.bind(null, book.id)} />
         </div>
         <div className="flex min-w-0 flex-col gap-8 lg:w-80 lg:shrink-0">
-          <EditBookForm key={`${book.title}\n${book.author}`} title={book.title} author={book.author} action={editBook.bind(null, book.id)} />
-          {book.status !== "want_to_read" && (
-            <EditDatesForm
-              key={`${book.started_on}\n${book.finished_on}`}
-              startedOn={book.started_on}
-              finishedOn={book.status === "finished" ? book.finished_on : null}
-              action={editDates.bind(null, book.id)}
-            />
-          )}
+          {/* After Quotes in the DOM: e2e/book-save-buttons.spec.ts pins "Save quote" before "Save details". */}
+          <div className="flex flex-wrap items-start gap-2">
+            <EditBookForm key={`${book.title}\n${book.author}`} title={book.title} author={book.author} action={editBook.bind(null, book.id)} />
+            {book.status !== "want_to_read" && (
+              <EditDatesForm
+                key={`${book.started_on}\n${book.finished_on}`}
+                startedOn={book.started_on}
+                finishedOn={book.status === "finished" ? book.finished_on : null}
+                action={editDates.bind(null, book.id)}
+              />
+            )}
+          </div>
           <BookShelves
             shelves={shelves}
             onShelfIds={shelfIds}
@@ -144,14 +154,11 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
             removeAction={removeFromShelf.bind(null, book.id)}
           />
           <BookTags tags={tags} action={addBookTag.bind(null, book.id)} removeAction={removeBookTag.bind(null, book.id)} />
-          <CoverForm
-            url={coverUrl}
-            uploadAction={uploadCoverAction.bind(null, book.id)}
-            removeAction={removeCoverAction.bind(null, book.id)}
-          />
         </div>
       </div>
-      <DeleteBookButton title={book.title} action={deleteBook.bind(null, book.id)} />
+      <div className="border-t pt-8">
+        <DeleteBookButton title={book.title} action={deleteBook.bind(null, book.id)} />
+      </div>
     </div>
   );
 }
