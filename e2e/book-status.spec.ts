@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
+import { saveStatus } from "./books";
 
 // F010: change a book's status; finishing records today's date, leaving Finished hides it.
 // Each run uses a fresh account (golden principle 7).
@@ -20,11 +21,9 @@ test("change status and finish date", async ({ page }) => {
   const main = page.locator("main");
 
   const setStatus = async (name: string) => {
-    await page.getByRole("combobox", { name: "Status" }).click();
-    await page.getByRole("option", { name }).click();
-    await page.getByRole("button", { name: "Save status" }).click();
+    await saveStatus(page, name);
     await expect(page.getByRole("status")).toHaveText("Saved");
-    await expect(page.getByRole("combobox", { name: "Status" })).toHaveText(name);
+    await expect(page.getByRole("radiogroup", { name: "Status" }).getByRole("radio", { name, exact: true })).toBeChecked();
   };
 
   await setStatus("Reading");
@@ -42,10 +41,8 @@ test("change status and finish date", async ({ page }) => {
     mask: [page.getByText(/Started on/), page.getByText(/Finished on/)],
   });
 
-  await page.getByRole("combobox", { name: "Status" }).click();
-  await page.getByRole("option", { name: "Reading" }).click();
-  await expect(page.getByRole("status")).toHaveCount(0);
-  await page.getByRole("button", { name: "Save status" }).click();
+  await saveStatus(page, "Reading");
   await expect(page.getByRole("status")).toHaveText("Saved");
   await expect(page.getByText(/Finished on/)).toHaveCount(0);
+  await expectScreens(page, "book-status-final", { mask: [page.getByText(/(Started|Finished) on/)] });
 });

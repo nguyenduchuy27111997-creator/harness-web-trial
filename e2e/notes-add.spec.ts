@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
+import { saveStatus } from "./books";
 
 // F040: write notes on a book's page, newest first with their date, whatever the status.
 // Each run uses a fresh account (golden principle 7).
@@ -36,9 +37,7 @@ test("add notes to a book", async ({ page }) => {
   await expect(items.first()).toContainText("Chapter 20 is the turning point");
   await expect(items.nth(1)).toContainText("Dorothea reminds me of my aunt");
 
-  await page.getByRole("combobox", { name: "Status" }).click();
-  await page.getByRole("option", { name: "Finished" }).click();
-  await page.getByRole("button", { name: "Save status" }).click();
+  await saveStatus(page, "Finished");
   await expect(page.getByRole("textbox", { name: "Review" })).toBeVisible();
   await field.fill("A third note");
   await notes.getByRole("button", { name: "Add note" }).click();
@@ -51,4 +50,5 @@ test("add notes to a book", async ({ page }) => {
     stylePath: "e2e/hide-dev-overlay.css",
     mask: [page.getByText(/Finished on/), notes.getByText(today)],
   });
+  await expectScreens(page, "notes-add-final", { mask: [page.getByText(/(Started|Finished) on/)] });
 });

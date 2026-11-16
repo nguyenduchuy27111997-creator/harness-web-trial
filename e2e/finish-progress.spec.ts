@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
+import { saveStatus } from "./books";
 import { signUpAs } from "./accounts";
 
 // F038: finishing a Reading book sets its page to the total. Fresh account (golden principle 7).
@@ -16,10 +17,7 @@ test("finishing a book sets its page to the total", async ({ page }) => {
     await page.getByRole("button", { name: "Save", exact: true }).click();
     await page.getByRole("link", { name: title }).click();
   };
-  const setStatus = async (name: string) => {
-    await choose(name);
-    await page.getByRole("button", { name: "Save status" }).click();
-  };
+  const setStatus = (name: string) => saveStatus(page, name);
   const progress = page.getByRole("heading", { name: "Progress", exact: true });
 
   await addReading("Finish Book");
@@ -45,4 +43,5 @@ test("finishing a book sets its page to the total", async ({ page }) => {
   await page.mouse.move(0, 0);
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F038-finish-progress.png", { stylePath: "e2e/hide-dev-overlay.css", mask: [page.getByText(/Started on/)] });
+  await expectScreens(page, "finish-progress-final", { mask: [page.getByText(/(Started|Finished) on/)] });
 });

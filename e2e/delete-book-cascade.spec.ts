@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
 import { signUpAs } from "./accounts";
 import { openNewBookPage } from "./notes";
 
@@ -37,9 +37,9 @@ test("deleting a book deletes its notes and quotes", async ({ page }) => {
   await expect(items).toHaveCount(2);
 
   await page.goto(middlemarchUrl);
-  await page.getByRole("button", { name: "Delete", exact: true }).last().click();
+  await page.getByRole("button", { name: "Delete book" }).click();
   const dialog = page.getByRole("alertdialog");
-  await expect(dialog.getByRole("heading", { name: "Delete this book?" })).toBeVisible();
+  await expect(dialog.getByRole("heading", { name: /^Delete .+\?$/ })).toBeVisible();
   await dialog.getByRole("button", { name: "Delete" }).click();
   await expect(page).toHaveURL(/\/books$/);
 
@@ -62,4 +62,5 @@ test("deleting a book deletes its notes and quotes", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Book not found" })).toBeVisible();
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F050-not-found.png", { stylePath: "e2e/hide-dev-overlay.css" });
+  await expectScreens(page, "delete-book-cascade-final", { mask: [page.getByText(/(Started|Finished) on/)] });
 });

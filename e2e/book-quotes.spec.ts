@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
+import { saveStatus } from "./books";
 
 const FIRST = "It is a narrow mind which cannot look at a subject from various points of view.";
 const SECOND = "What do we live for, if it is not to make life less difficult to each other?";
@@ -40,9 +41,7 @@ test("save quotes from a book", async ({ page }) => {
   await expect(list.getByRole("listitem").first()).toContainText("Page 42");
 
   // A quote with no page goes on top, without a page number. Saved while the book is Finished.
-  await page.getByRole("combobox", { name: "Status" }).click();
-  await page.getByRole("option", { name: "Finished" }).click();
-  await page.getByRole("button", { name: "Save status" }).click();
+  await saveStatus(page, "Finished");
   await expect(page.getByText(/Finished on/)).toBeVisible();
   await quoteField.fill(SECOND);
   await save.click();
@@ -53,9 +52,7 @@ test("save quotes from a book", async ({ page }) => {
   await expect(items.nth(1)).toContainText(FIRST);
 
   // And while Reading.
-  await page.getByRole("combobox", { name: "Status" }).click();
-  await page.getByRole("option", { name: "Reading" }).click();
-  await page.getByRole("button", { name: "Save status" }).click();
+  await saveStatus(page, "Reading");
   await expect(page.getByRole("button", { name: "Save progress" })).toBeVisible();
   await quoteField.fill("Third quote.");
   await pageField.fill("7");
@@ -70,4 +67,5 @@ test("save quotes from a book", async ({ page }) => {
     fullPage: true,
     mask: [page.getByText(/Started on/), page.getByText(/Finished on/)],
   });
+  await expectScreens(page, "book-quotes-final", { mask: [page.getByText(/(Started|Finished) on/), page.getByRole("heading", { level: 1 })] });
 });

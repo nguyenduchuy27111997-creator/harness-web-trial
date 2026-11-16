@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
+import { saveStatus } from "./books";
 
 // A fresh account with one Want to read book (the add form's default), open on its page.
 async function openNewBook(page: Page, email: string) {
@@ -23,10 +24,7 @@ test("review a finished book", async ({ page }) => {
   await expect(review).toHaveCount(0);
 
   // Finishing the book brings up the review field.
-  const statusField = page.getByRole("combobox", { name: "Status" });
-  await statusField.click();
-  await page.getByRole("option", { name: "Finished" }).click();
-  await page.getByRole("button", { name: "Save status" }).click();
+  await saveStatus(page, "Finished");
   await expect(review).toBeVisible();
 
   await review.fill("Loved the ending.");
@@ -40,10 +38,16 @@ test("review a finished book", async ({ page }) => {
   await expect(page.locator("form").filter({ has: review }).getByRole("alert")).toHaveText("Review must be at most 2,000 characters");
   await expectAccessible(page);
   await page.reload();
+  // Hydrated: React has attached its props to the review field (a screenshot before that races hydration).
+  await page.waitForFunction(() => {
+    const field = document.querySelector("textarea");
+    return !!field && Object.keys(field).some((k) => k.startsWith("__reactProps"));
+  });
   await expect(review).toHaveValue("Loved the ending.");
 
   await expect(page).toHaveScreenshot("F012-reviewed.png", {
     stylePath: "e2e/hide-dev-overlay.css",
     mask: [page.getByText(/Finished on/)],
   });
+  await expectScreens(page, "book-review-final", { mask: [page.getByText(/(Started|Finished) on/)] });
 });

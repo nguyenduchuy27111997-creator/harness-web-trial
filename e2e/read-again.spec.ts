@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
 import { signUpAs } from "./accounts";
 import { addAndOpenBook, saveStatus } from "./books";
 
@@ -63,7 +63,7 @@ test("Read again restarts the book and keeps the earlier read under Past reads",
   await page.getByRole("button", { name: "Read again" }).click();
 
   const check = async () => {
-    await expect(page.getByRole("combobox", { name: "Status" })).toContainText("Reading");
+    await expect(page.getByRole("radiogroup", { name: "Status" }).getByRole("radio", { name: "Reading" })).toBeChecked();
     await expect(page.getByText(`Started on ${long()}`).first()).toBeVisible();
     await expect(page.getByRole("button", { name: "Read again" })).toHaveCount(0);
     await expect(page.getByRole("radiogroup", { name: "Rating" })).toHaveCount(0);
@@ -103,4 +103,5 @@ test("reading again twice lists both past reads, newest first", async ({ page })
   await expect(items).toHaveCount(2);
   await expect(stars(items.nth(0), 5)).toBeVisible();
   await expect(stars(items.nth(1), 4)).toBeVisible();
+  await expectScreens(page, "read-again-final", { mask: [page.getByText(/(Started|Finished) on/), page.getByRole("heading", { level: 1 })] });
 });

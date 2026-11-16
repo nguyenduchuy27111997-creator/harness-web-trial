@@ -8,7 +8,9 @@ type Props = {
 export function DeleteBookButton({ title, action }: Props) {
   return (
     <ConfirmDeleteButton
-      heading="Delete this book?"
+      heading={`Delete ${title}?`}
+      triggerVariant="destructive"
+      label="Delete book"
       description={<>“{title}” will be removed from your shelf. This cannot be undone.</>}
       action={action}
     />

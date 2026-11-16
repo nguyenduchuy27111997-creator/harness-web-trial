@@ -1,9 +1,8 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { startTransition, useActionState } from "react";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { BOOK_STATUSES, STATUS_LABELS, type BookStatus, type StatusFormState } from "@/lib/books";
 
 type Props = {
@@ -11,41 +10,46 @@ type Props = {
   action: (prev: StatusFormState, formData: FormData) => Promise<StatusFormState>;
 };
 
+// Status as segments: picking one saves it at once.
 export function BookStatusForm({ status, action }: Props) {
   const [state, formAction, pending] = useActionState(action, {} as StatusFormState);
-  // "Saved" only describes the value that was submitted; hide it once the select changes again.
-  const [changed, setChanged] = useState(false);
+  const pick = (value: string) => {
+    const formData = new FormData();
+    formData.set("status", value);
+    startTransition(() => formAction(formData));
+  };
   return (
-    <form action={formAction} onSubmit={() => setChanged(false)} noValidate className="flex flex-col gap-2">
-      <Label htmlFor="status">Status</Label>
-      <div className="flex gap-3">
-        <Select key={status} name="status" defaultValue={status} onValueChange={() => setChanged(true)}>
-          <SelectTrigger id="status" aria-invalid={state.fieldErrors?.status ? true : undefined}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {BOOK_STATUSES.map((s) => (
-              <SelectItem key={s} value={s}>
-                {STATUS_LABELS[s]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button type="submit" disabled={pending}>
-          {pending ? "Saving…" : "Save status"}
-        </Button>
-      </div>
+    <div className="flex flex-col gap-2">
+      <Label id="status-label">Status</Label>
+      <RadioGroup
+        key={status}
+        aria-labelledby="status-label"
+        defaultValue={status}
+        disabled={pending}
+        onValueChange={pick}
+        className="w-fit max-w-full rounded-lg bg-muted p-1 dark:border dark:bg-card"
+      >
+        {BOOK_STATUSES.map((s) => (
+          <RadioGroupItem
+            key={s}
+            value={s}
+            className="h-11 rounded-md px-3 text-subheadline text-foreground transition-none aria-checked:bg-background aria-checked:font-medium aria-checked:text-foreground lg:h-8 dark:aria-checked:border dark:aria-checked:bg-popover"
+          >
+            {STATUS_LABELS[s]}
+          </RadioGroupItem>
+        ))}
+      </RadioGroup>
       {state.fieldErrors?.status && <p className="text-subheadline text-destructive">{state.fieldErrors.status}</p>}
       {state.formError && (
         <p role="alert" className="text-subheadline text-destructive">
           {state.formError}
         </p>
       )}
-      {state.saved && !changed && !pending && (
+      {state.saved && !pending && (
         <p role="status" className="text-subheadline text-muted-foreground">
           Saved
         </p>
       )}
-    </form>
+    </div>
   );
 }

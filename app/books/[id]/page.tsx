@@ -18,8 +18,6 @@ import { ReadAgainButton } from "@/components/read-again-button";
 import { RatingForm } from "@/components/rating-form";
 import { ReadingDates } from "@/components/reading-dates";
 import { ReviewForm } from "@/components/review-form";
-import { StatusBadge } from "@/components/status-badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { getBook } from "@/lib/books";
 import { getCoverPath, signCover } from "@/lib/covers";
 import { isQueued } from "@/lib/queue";
@@ -74,82 +72,85 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
   if (!book) notFound();
   const coverUrl = await signCover(supabase, coverPath);
   return (
-    <div className="flex w-full max-w-3xl flex-col gap-6">
+    <div className="flex w-full flex-col gap-8">
       <Link href="/books" className="link-target self-start text-subheadline text-primary hover:underline">
         Back to my books
       </Link>
-      <Card>
-        <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-start">
-          <BookCover title={book.title} url={coverUrl} size="lg" />
-          <div className="flex min-w-0 flex-1 flex-col gap-3 break-words">
-            <h1 className="font-heading text-title-1">{book.title}</h1>
-            <p className="text-muted-foreground">{book.author}</p>
-            <StatusBadge status={book.status} />
-            <ReadingDates startedOn={book.started_on} finishedOn={book.finished_on} />
-          </div>
-        </CardContent>
-      </Card>
-      <CoverForm
-        url={coverUrl}
-        uploadAction={uploadCoverAction.bind(null, book.id)}
-        removeAction={removeCoverAction.bind(null, book.id)}
-      />
-      <EditBookForm key={`${book.title}\n${book.author}`} title={book.title} author={book.author} action={editBook.bind(null, book.id)} />
-      {book.status !== "want_to_read" && (
-        <EditDatesForm
-          key={`${book.started_on}\n${book.finished_on}`}
-          startedOn={book.started_on}
-          finishedOn={book.status === "finished" ? book.finished_on : null}
-          action={editDates.bind(null, book.id)}
-        />
-      )}
-      <BookStatusForm status={book.status} action={updateStatus.bind(null, book.id)} />
-      {book.status === "want_to_read" &&
-        (queued ? (
-          // The link text avoids "Up next": the header's "Up next" link must stay the only link with that name.
-          <p className="text-subheadline text-muted-foreground">
-            In Up next.{" "}
-            <Link href="/up-next" className="text-primary underline">
-              See your queue
-            </Link>
-          </p>
-        ) : (
-          <form action={addToUpNext.bind(null, book.id)}>
-            <PendingSubmitButton variant="outline" pendingLabel="Adding…">
-              Add to Up next
-            </PendingSubmitButton>
-          </form>
-        ))}
-      <BookShelves
-        shelves={shelves}
-        onShelfIds={shelfIds}
-        action={addToShelf.bind(null, book.id)}
-        removeAction={removeFromShelf.bind(null, book.id)}
-      />
-      <BookTags tags={tags} action={addBookTag.bind(null, book.id)} removeAction={removeBookTag.bind(null, book.id)} />
-      {book.status === "reading" && (
-        <ProgressForm
-          totalPages={book.total_pages}
-          currentPage={book.current_page}
-          action={saveProgress.bind(null, book.id)}
-        />
-      )}
-      {book.status === "finished" && <RatingForm rating={book.rating} action={saveRating.bind(null, book.id)} />}
-      {book.status === "finished" && <ReadAgainButton action={readBookAgain.bind(null, book.id)} />}
-      {book.status === "finished" && <ReviewForm review={book.review} action={saveReview.bind(null, book.id)} />}
-      <PastReads reads={pastReads} deleteAction={deletePastRead.bind(null, book.id)} />
-      <BookNotes
-        notes={notes}
-        action={addNote.bind(null, book.id)}
-        editAction={editNote.bind(null, book.id)}
-        deleteAction={deleteNote.bind(null, book.id)}
-      />
-      <BookQuotes
-        quotes={quotes}
-        action={addQuote.bind(null, book.id)}
-        editAction={editQuote.bind(null, book.id)}
-        deleteAction={deleteQuote.bind(null, book.id)}
-      />
+      <header className="flex flex-col items-center gap-4 md:flex-row md:items-start md:gap-6">
+        <BookCover title={book.title} url={coverUrl} size="lg" />
+        <div className="flex min-w-0 flex-1 flex-col gap-3 break-words">
+          <h1 className="font-heading text-title-1">{book.title}</h1>
+          <p className="text-muted-foreground">{book.author}</p>
+          <BookStatusForm status={book.status} action={updateStatus.bind(null, book.id)} />
+          <ReadingDates startedOn={book.started_on} finishedOn={book.finished_on} />
+        </div>
+      </header>
+      <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
+        <div className="flex min-w-0 flex-col gap-8 lg:max-w-prose lg:flex-1">
+          {book.status === "want_to_read" &&
+            (queued ? (
+              // The link text avoids "Up next": the header's "Up next" link must stay the only link with that name.
+              <p className="text-subheadline text-muted-foreground">
+                In Up next.{" "}
+                <Link href="/up-next" className="text-primary underline">
+                  See your queue
+                </Link>
+              </p>
+            ) : (
+              <form action={addToUpNext.bind(null, book.id)}>
+                <PendingSubmitButton variant="outline" pendingLabel="Adding…">
+                  Add to Up next
+                </PendingSubmitButton>
+              </form>
+            ))}
+          {book.status === "reading" && (
+            <ProgressForm
+              totalPages={book.total_pages}
+              currentPage={book.current_page}
+              action={saveProgress.bind(null, book.id)}
+            />
+          )}
+          {book.status === "finished" && <RatingForm rating={book.rating} action={saveRating.bind(null, book.id)} />}
+          {book.status === "finished" && <ReviewForm review={book.review} action={saveReview.bind(null, book.id)} />}
+          {book.status === "finished" && <ReadAgainButton action={readBookAgain.bind(null, book.id)} />}
+          <PastReads reads={pastReads} deleteAction={deletePastRead.bind(null, book.id)} />
+          <BookNotes
+            notes={notes}
+            action={addNote.bind(null, book.id)}
+            editAction={editNote.bind(null, book.id)}
+            deleteAction={deleteNote.bind(null, book.id)}
+          />
+          <BookQuotes
+            quotes={quotes}
+            action={addQuote.bind(null, book.id)}
+            editAction={editQuote.bind(null, book.id)}
+            deleteAction={deleteQuote.bind(null, book.id)}
+          />
+        </div>
+        <div className="flex min-w-0 flex-col gap-8 lg:w-80 lg:shrink-0">
+          <EditBookForm key={`${book.title}\n${book.author}`} title={book.title} author={book.author} action={editBook.bind(null, book.id)} />
+          {book.status !== "want_to_read" && (
+            <EditDatesForm
+              key={`${book.started_on}\n${book.finished_on}`}
+              startedOn={book.started_on}
+              finishedOn={book.status === "finished" ? book.finished_on : null}
+              action={editDates.bind(null, book.id)}
+            />
+          )}
+          <BookShelves
+            shelves={shelves}
+            onShelfIds={shelfIds}
+            action={addToShelf.bind(null, book.id)}
+            removeAction={removeFromShelf.bind(null, book.id)}
+          />
+          <BookTags tags={tags} action={addBookTag.bind(null, book.id)} removeAction={removeBookTag.bind(null, book.id)} />
+          <CoverForm
+            url={coverUrl}
+            uploadAction={uploadCoverAction.bind(null, book.id)}
+            removeAction={removeCoverAction.bind(null, book.id)}
+          />
+        </div>
+      </div>
       <DeleteBookButton title={book.title} action={deleteBook.bind(null, book.id)} />
     </div>
   );

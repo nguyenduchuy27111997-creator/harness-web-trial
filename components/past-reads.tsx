@@ -14,7 +14,7 @@ export function PastReads({
   if (reads.length === 0) return null;
   return (
     <section className="flex flex-col gap-2">
-      <h2 className="font-heading text-title-3 font-semibold">Past reads</h2>
+      <h2 className="font-heading text-title-2 font-semibold">Past reads</h2>
       <ul className="flex flex-col gap-3">
         {reads.map((read) => (
           <li key={read.id}>

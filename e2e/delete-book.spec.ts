@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
 
 // F014: delete a book after confirming in a dialog; Cancel keeps it.
 // Each run uses a fresh account (golden principle 7).
@@ -25,7 +25,7 @@ test("delete a book after confirming", async ({ page }) => {
   const dialog = page.getByRole("alertdialog");
   await page.getByRole("button", { name: "Delete" }).click();
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole("heading", { name: "Delete this book?" })).toBeVisible();
+  await expect(dialog.getByRole("heading", { name: "Delete Doomed Book?" })).toBeVisible();
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F014-confirm.png", { stylePath: "e2e/hide-dev-overlay.css" });
 
@@ -43,4 +43,5 @@ test("delete a book after confirming", async ({ page }) => {
   await page.reload();
   await expect(page.getByRole("link", { name: "Doomed Book" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Kept Book" })).toBeVisible();
+  await expectScreens(page, "delete-book-final", { mask: [page.getByText(/(Started|Finished) on/)] });
 });

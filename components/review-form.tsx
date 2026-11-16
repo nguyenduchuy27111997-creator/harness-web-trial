@@ -2,7 +2,6 @@
 
 import { startTransition, useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { ReviewFormState } from "@/lib/books";
 
@@ -35,9 +34,10 @@ export function ReviewForm({ review, action }: Props) {
       noValidate
       className="flex flex-col gap-2"
     >
-      <Label htmlFor="review">Review</Label>
+      <h2 id="review-heading" className="font-heading text-title-2 font-semibold">Review</h2>
       <Textarea
         id="review"
+        aria-labelledby="review-heading"
         name="review"
         rows={4}
         value={value}
@@ -51,7 +51,7 @@ export function ReviewForm({ review, action }: Props) {
         </p>
       )}
       <div className="flex items-center gap-3">
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" variant="secondary" disabled={pending}>
           {pending ? "Saving…" : "Post review"}
         </Button>
         {state.saved && submitted === value && !pending && (

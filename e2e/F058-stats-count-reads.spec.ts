@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
+import { saveStatus } from "./books";
 import { signUpAs } from "./accounts";
 
 // F058: /stats counts every read finished this year, past reads included. Fresh account per test.
@@ -19,8 +20,7 @@ async function addBook(page: Page, title: string) {
 }
 
 async function finish(page: Page, stars: number) {
-  await pick(page, "Status", "Finished");
-  await page.getByRole("button", { name: "Save status" }).click();
+  await saveStatus(page, "Finished");
   await expect(page.getByRole("status").first()).toHaveText("Saved");
   const group = page.getByRole("radiogroup", { name: "Rating" });
   await group.getByRole("radio", { name: stars === 1 ? "1 star" : `${stars} stars` }).click();
@@ -84,4 +84,5 @@ test("the average rating ignores past reads", async ({ page }) => {
   await expect(page.getByText("Average rating: 3.5")).toBeVisible();
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F058-stats-count-reads.png", { stylePath: "e2e/hide-dev-overlay.css", mask: [page.getByRole("region", { name: "Finished by month" }).getByRole("list")] });
+  await expectScreens(page, "F058-stats-count-reads-final", { mask: [page.getByText(/(Started|Finished) on/)] });
 });

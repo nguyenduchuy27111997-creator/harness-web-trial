@@ -19,7 +19,7 @@ export function BookQuotes({ quotes, action, editAction, deleteAction }: Props) 
   const [openId, setOpenId] = useState<string | null>(null);
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="font-heading text-title-3 font-semibold">Quotes</h2>
+      <h2 className="font-heading text-title-2 font-semibold">Quotes</h2>
       {quotes.length === 0 ? (
         <p className="text-subheadline text-muted-foreground">This book has no quotes yet.</p>
       ) : (

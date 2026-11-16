@@ -19,7 +19,7 @@ export function BookTags({ tags, action, removeAction }: Props) {
   const [state, formAction, pending] = useActionState(action, {} as TagFormState);
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="font-heading text-title-3 font-semibold">Tags</h2>
+      <h2 className="font-heading text-title-2 font-semibold">Tags</h2>
       {tags.length === 0 ? (
         <p className="text-subheadline text-muted-foreground">This book has no tags.</p>
       ) : (
@@ -47,7 +47,7 @@ export function BookTags({ tags, action, removeAction }: Props) {
             defaultValue={state.values?.name}
             aria-invalid={state.fieldErrors?.name ? true : undefined}
           />
-          <Button type="submit" disabled={pending}>
+          <Button type="submit" variant="secondary" disabled={pending}>
             Add
           </Button>
         </div>

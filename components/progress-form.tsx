@@ -3,7 +3,8 @@
 import { useActionState } from "react";
 import { FormField } from "@/components/form-field";
 import { Button } from "@/components/ui/button";
-import { formatProgress, type ProgressFormState } from "@/lib/books";
+import { Progress } from "@/components/ui/progress";
+import { formatProgress, progressPercent, type ProgressFormState } from "@/lib/books";
 
 type Props = {
   totalPages: number | null;
@@ -16,8 +17,16 @@ export function ProgressForm({ totalPages, currentPage, action }: Props) {
   const saved = totalPages !== null && currentPage !== null;
   return (
     <form action={formAction} noValidate className="flex flex-col gap-3">
-      <h2 className="font-heading text-title-3 font-semibold">Progress</h2>
-      {saved && <p className="text-subheadline text-muted-foreground">{formatProgress(currentPage, totalPages)}</p>}
+      <h2 className="font-heading text-title-2 font-semibold">Progress</h2>
+      {saved && (
+        <div className="flex flex-col gap-2">
+          <Progress value={progressPercent(currentPage, totalPages)} aria-label="Reading progress" className="h-2" />
+          <p className="text-subheadline tabular-nums">
+            {currentPage} of {totalPages} pages
+          </p>
+          <p className="text-subheadline text-muted-foreground">{formatProgress(currentPage, totalPages)}</p>
+        </div>
+      )}
       <FormField
         id="total_pages"
         label="Total pages"
@@ -38,7 +47,7 @@ export function ProgressForm({ totalPages, currentPage, action }: Props) {
         </p>
       )}
       <div className="flex items-center gap-3">
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" variant="secondary" disabled={pending}>
           {pending ? "Saving…" : "Save progress"}
         </Button>
         {state.saved && !pending && (

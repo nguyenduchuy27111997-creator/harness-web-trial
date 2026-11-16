@@ -47,7 +47,7 @@ export function QuoteForm({ action }: Props) {
         </p>
       )}
       <div>
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" variant="secondary" disabled={pending}>
           {pending ? "Saving…" : "Save quote"}
         </Button>
       </div>

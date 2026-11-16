@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
 import { signUpAs } from "./accounts";
 import { addAndOpenBook } from "./books";
 import { coverFile, submitCover } from "./covers";
@@ -76,7 +76,7 @@ test("deleting the book deletes its cover file", async ({ page }) => {
   const userId = data.user!.id;
   expect(await filesOf(userId)).toHaveLength(1);
 
-  await page.getByRole("button", { name: "Delete", exact: true }).last().click();
+  await page.getByRole("button", { name: "Delete book" }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Delete" }).click();
   await expect(page).toHaveURL(/\/books$/);
   expect(await filesOf(userId)).toHaveLength(0);
@@ -84,6 +84,7 @@ test("deleting the book deletes its cover file", async ({ page }) => {
   await page.mouse.move(0, 0);
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F081-book-deleted.png", { stylePath: "e2e/hide-dev-overlay.css" });
+  await expectScreens(page, "F081-book-deleted-screens");
 });
 
 test("deleting the account deletes its cover files", async ({ page }) => {

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
 import { signUpAs } from "./accounts";
 import { addBookWithStatus, finishAndRateBook, pastReadsBlock } from "./reads";
 
@@ -38,7 +38,7 @@ test("delete a past read after confirming; the other read and the book stay", as
     await expect(items.first().getByText("5 stars")).toBeVisible();
     await expect(pastReadsBlock(page).getByText("4 stars")).toHaveCount(0);
     await expect(page.getByRole("heading", { name: title })).toBeVisible();
-    await expect(page.getByRole("combobox", { name: "Status" })).toContainText("Reading");
+    await expect(page.getByRole("radiogroup", { name: "Status" }).getByRole("radio", { name: "Reading" })).toBeChecked();
   };
   await check();
   await page.reload();
@@ -65,6 +65,7 @@ test("deleting the only past read hides the Past reads section", async ({ page }
   await expect(dialog).toBeHidden();
   await expect(heading).toHaveCount(0);
   await page.reload();
-  await expect(page.getByRole("combobox", { name: "Status" })).toContainText("Reading");
+  await expect(page.getByRole("radiogroup", { name: "Status" }).getByRole("radio", { name: "Reading" })).toBeChecked();
   await expect(heading).toHaveCount(0);
+  await expectScreens(page, "past-reads-delete-final", { mask: [page.getByText(/(Started|Finished) on/), page.getByRole("heading", { level: 1 })] });
 });
