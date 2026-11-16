@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useId, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -14,6 +14,7 @@ export function ImportForm({ preview, confirm }: { preview: Action; confirm: Act
   const id = useId();
   const [state, setState] = useState<ImportState>({});
   const [formKey, setFormKey] = useState(0);
+  const [fileName, setFileName] = useState("");
   const [, previewAction, previewing] = useActionState(async (prev: ImportState, formData: FormData) => {
     const next = await preview(prev, formData);
     setState(next);
@@ -22,36 +23,65 @@ export function ImportForm({ preview, confirm }: { preview: Action; confirm: Act
   const [, confirmAction, adding] = useActionState(async (prev: ImportState, formData: FormData) => {
     const next = await confirm(prev, formData);
     setState(next);
-    if (next.added !== undefined) setFormKey((k) => k + 1);
+    if (next.added !== undefined) {
+      setFormKey((k) => k + 1);
+      setFileName("");
+    }
     return next;
   }, {});
   const reset = () => {
     setState({});
     setFormKey((k) => k + 1);
+    setFileName("");
   };
   const rows = state.rows;
 
   return (
     <section className="flex flex-col gap-4">
       <form key={formKey} action={previewAction} className="flex flex-col gap-2">
-        <Label htmlFor={`${id}-file`}>Import CSV</Label>
-        <Input
-          id={`${id}-file`}
-          name="file"
-          type="file"
-          accept=".csv,text/csv"
-          disabled={previewing}
-          aria-invalid={state.error ? true : undefined}
-          aria-describedby={state.error ? `${id}-error` : undefined}
-          onChange={(e) => {
-            const file = e.currentTarget.files?.[0];
-            if (file && file.size > IMPORT_MAX_BYTES) {
-              setState({ error: "The file is too large" });
-              return;
-            }
-            e.currentTarget.form?.requestSubmit();
-          }}
-        />
+        <Label id={`${id}-label`} htmlFor={`${id}-file`}>
+          Import CSV
+        </Label>
+        <div className="flex items-center gap-3">
+          <Input
+            id={`${id}-file`}
+            className="peer sr-only size-px border-0 p-0"
+            aria-labelledby={`${id}-label`}
+            name="file"
+            type="file"
+            accept=".csv,text/csv"
+            disabled={previewing}
+            aria-invalid={state.error ? true : undefined}
+            aria-describedby={state.error ? `${id}-error` : undefined}
+            onChange={(e) => {
+              const file = e.currentTarget.files?.[0];
+              setFileName(file?.name ?? "");
+              if (file && file.size > IMPORT_MAX_BYTES) {
+                setState({ error: "The file is too large" });
+                return;
+              }
+              e.currentTarget.form?.requestSubmit();
+            }}
+          />
+          <label
+            htmlFor={`${id}-file`}
+            aria-hidden
+            className={buttonVariants({
+              variant: "secondary",
+              className:
+                "shrink-0 cursor-pointer max-sm:min-h-11 peer-focus-visible:ring-3 peer-focus-visible:ring-ring/50 peer-disabled:pointer-events-none peer-disabled:opacity-50",
+            })}
+          >
+            Choose CSV file…
+          </label>
+          {fileName ? (
+            <span className="min-w-0 flex-1 truncate text-body" title={fileName}>
+              {fileName}
+            </span>
+          ) : (
+            <span className="text-body text-muted-foreground">No file selected</span>
+          )}
+        </div>
         {state.error && (
           <p id={`${id}-error`} role="alert" className="text-subheadline text-destructive">
             {state.error}
@@ -90,14 +120,14 @@ export function ImportForm({ preview, confirm }: { preview: Action; confirm: Act
                   <TableHead scope="col">Title</TableHead>
                   <TableHead scope="col" className="hidden sm:table-cell">Author</TableHead>
                   <TableHead scope="col">Status</TableHead>
-                  <TableHead scope="col">Rating</TableHead>
+                  <TableHead scope="col" className="text-right tabular-nums">Rating</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {rows.map((row, i) => (
                   <TableRow key={i}>
                     <TableCell className="whitespace-normal">
-                      <span className="font-heading">{row.title}</span>
+                      <span>{row.title}</span>
                       {row.author && (
                         <span className="block text-subheadline text-muted-foreground sm:hidden">{row.author}</span>
                       )}
@@ -106,7 +136,7 @@ export function ImportForm({ preview, confirm }: { preview: Action; confirm: Act
                     <TableCell>
                       <StatusBadge status={row.status} />
                     </TableCell>
-                    <TableCell>{row.rating ?? ""}</TableCell>
+                    <TableCell className="text-right tabular-nums">{row.rating ?? ""}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -118,7 +148,7 @@ export function ImportForm({ preview, confirm }: { preview: Action; confirm: Act
                 {adding ? "Adding…" : `Add ${rows.length} ${rows.length === 1 ? "book" : "books"}`}
               </Button>
             )}
-            <Button type="button" variant="outline" onClick={reset} disabled={adding}>
+            <Button type="button" variant="secondary" onClick={reset} disabled={adding}>
               Cancel
             </Button>
           </div>
