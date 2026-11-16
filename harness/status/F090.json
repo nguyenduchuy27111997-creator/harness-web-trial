@@ -1,4 +1,4 @@
 {
   "status": "passing",
-  "notes": "Library view on /books: a cover grid on a computer and rows on a phone, a segmented status filter with counts, 'Search books' at the top, a sort menu, book-shaped loading placeholders and an empty shelf with Add book. The test-writer's spec sorts by title, so the old order question is settled. Baselines that end on /books were regenerated. On a phone the segmented control scrolls sideways with no visible hint (the verifier noted it; the design allows it)."
+  "notes": "Library view on /books: a cover grid on a computer and rows on a phone, a segmented status filter with counts, 'Search books' at the top, a sort menu, book-shaped loading placeholders and an empty shelf with Add book. The test-writer's spec sorts by title, so the old order question is settled. Baselines that end on /books were regenerated. On a phone the status filter is a 2x2 grid of 44 px segments with no sideways scroll; on a computer the filter track, Sort, search input and button are all 36 px tall."
 }
