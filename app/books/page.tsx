@@ -92,7 +92,7 @@ async function Books({ params }: { params: BooksParams }) {
     <BookListPending>
       <Header add />
       <SearchForm key={q} status={status} q={q} sort={sort} shelf={shelf} tag={tag} placeholder="Search books" hideLabel />
-      <div className="flex flex-wrap items-end gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <StatusTabs current={status} counts={counts} q={q} sort={sort} shelf={shelf} tag={tag} />
         {shelves.length > 0 && <ShelfSelect status={status} q={q} sort={sort} shelf={shelf} tag={tag} shelves={shelves} />}
         {tagNames.length > 0 && <TagSelect status={status} q={q} sort={sort} shelf={shelf} tag={tag} tags={tagNames.map((t) => t.name)} />}

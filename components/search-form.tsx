@@ -26,9 +26,9 @@ export function SearchForm({ status, q, sort, shelf, tag, href, placeholder, hid
         <Label htmlFor={id} className={hideLabel ? "sr-only" : undefined}>
           Search
         </Label>
-        <Input id={id} name="q" type="search" defaultValue={q} placeholder={placeholder} />
+        <Input id={id} name="q" type="search" defaultValue={q} placeholder={placeholder} className="h-9" />
       </div>
-      <Button type="submit" variant="outline">
+      <Button type="submit" variant="outline" className="h-9">
         Search
       </Button>
     </form>
