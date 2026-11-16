@@ -21,10 +21,11 @@ export function ProgressForm({ totalPages, currentPage, action }: Props) {
       {saved && (
         <div className="flex flex-col gap-2">
           <Progress value={progressPercent(currentPage, totalPages)} aria-label="Reading progress" className="h-2" />
-          <p className="text-subheadline tabular-nums">
-            {currentPage} of {totalPages} pages
+          {/* One visible line; the "Page N of M (P%)" wording other screens use stays for screen readers. */}
+          <p aria-hidden="true" className="text-subheadline tabular-nums">
+            {currentPage} of {totalPages} pages · {progressPercent(currentPage, totalPages)}%
           </p>
-          <p className="text-subheadline text-muted-foreground">{formatProgress(currentPage, totalPages)}</p>
+          <p className="sr-only">{formatProgress(currentPage, totalPages)}</p>
         </div>
       )}
       <FormField

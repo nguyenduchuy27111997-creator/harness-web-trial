@@ -15,7 +15,9 @@ type Props = {
 export function CoverForm({ url, uploadAction, removeAction }: Props) {
   const [state, formAction] = useActionState(uploadAction, {} as CoverFormState);
   const [clientError, setClientError] = useState<string>();
-  const [fileName, setFileName] = useState<string>();
+  // The picked file, tied to the cover it would replace: once an upload lands the URL changes and the pick clears.
+  const [picked, setPicked] = useState<{ name: string; url: string | null }>();
+  const fileName = picked?.url === url ? picked.name : undefined;
   const input = useRef<HTMLInputElement>(null);
   const error = clientError ?? state.error;
   const label = url ? "Replace cover" : "Add cover";
@@ -31,10 +33,11 @@ export function CoverForm({ url, uploadAction, removeAction }: Props) {
     formAction(formData);
   }
 
+  // F081's spec pins "Add cover" / "Replace cover" / "Remove cover" as buttons, so no dropdown menu here.
   return (
-    <section aria-label="Cover" className="flex max-w-80 flex-wrap justify-center gap-2 md:justify-start">
-      <form action={submit} className="flex flex-wrap justify-center gap-2 md:justify-start">
-        {/* The native file control stays hidden; the button opens its picker. */}
+    <section aria-label="Cover" className="flex w-full flex-col items-center gap-2 md:items-start">
+      <form action={submit} className="flex w-full flex-col items-center gap-2 md:items-start">
+        {/* display:none, so it has no box; the button opens its picker. */}
         <Input
           ref={input}
           id="cover"
@@ -43,28 +46,32 @@ export function CoverForm({ url, uploadAction, removeAction }: Props) {
           accept="image/jpeg,image/png,image/webp"
           aria-label="Cover image"
           tabIndex={-1}
-          className="sr-only"
+          className="hidden"
           onChange={(e) => {
             setClientError(undefined);
-            setFileName(e.currentTarget.files?.[0]?.name);
+            const name = e.currentTarget.files?.[0]?.name;
+            setPicked(name ? { name, url } : undefined);
           }}
         />
-        <Button type="button" variant="outline" onClick={() => input.current?.click()}>
-          Choose image
-        </Button>
-        {fileName && <p className="basis-full truncate text-center text-subheadline text-muted-foreground md:text-left">{fileName}</p>}
+        {fileName ? (
+          <div className="flex w-full min-w-0 items-center gap-2">
+            <p className="min-w-0 flex-1 truncate text-subheadline text-muted-foreground">{fileName}</p>
+            <PendingSubmitButton pendingLabel="Uploading…">{label}</PendingSubmitButton>
+          </div>
+        ) : (
+          <Button type="button" variant="outline" className="min-h-11 w-full" onClick={() => input.current?.click()}>
+            {label}
+          </Button>
+        )}
         {error && (
-          <p role="alert" className="basis-full text-center text-subheadline text-destructive md:text-left">
+          <p role="alert" className="text-center text-subheadline text-destructive md:text-left">
             {error}
           </p>
         )}
-        <PendingSubmitButton variant="secondary" pendingLabel="Uploading…">
-          {label}
-        </PendingSubmitButton>
       </form>
       {url && (
-        <form action={removeAction}>
-          <PendingSubmitButton variant="destructive" pendingLabel="Removing…">
+        <form action={removeAction} className="w-full">
+          <PendingSubmitButton variant="destructive" pendingLabel="Removing…" className="min-h-11 w-full">
             Remove cover
           </PendingSubmitButton>
         </form>
