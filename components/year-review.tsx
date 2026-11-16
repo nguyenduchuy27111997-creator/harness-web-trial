@@ -31,7 +31,8 @@ export function YearReview({
   return (
     <>
       <h1 className="font-heading text-title-1">{year} in review</h1>
-      <p>{reads.length === 0 ? `You finished no books in ${year}.` : `You finished ${reads.length} ${reads.length === 1 ? "book" : "books"} in ${year}.`}</p>
+      {/* An empty year shows only the empty state; the sentence stays for screen readers (F061, F063 read it). */}
+      <p className={reads.length === 0 ? "sr-only" : undefined}>{reads.length === 0 ? `You finished no books in ${year}.` : `You finished ${reads.length} ${reads.length === 1 ? "book" : "books"} in ${year}.`}</p>
       {summary}
       {averageRating !== null && <p>Average rating: {averageRating.toFixed(1)}</p>}
       {highestRated.length > 0 && (

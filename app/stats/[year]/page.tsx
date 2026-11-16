@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { EmptyYear } from "@/components/empty-year";
 import { MonthlyChart } from "@/components/monthly-chart";
 import { StatsTiles } from "@/components/stats-tiles";
 import { YearReview } from "@/components/year-review";
@@ -20,12 +20,7 @@ export default async function YearReviewPage({ params }: { params: Promise<{ yea
   // The average tile matches the review's "Average rating" sentence (summarizeYear).
   const summary =
     reads.length === 0 ? (
-      <section className="flex flex-col gap-2">
-        <p className="text-headline">No books finished in {year}</p>
-        <Link href="/books" className="link-target self-start text-primary hover:underline">
-          Go to my books
-        </Link>
-      </section>
+      <EmptyYear year={year} />
     ) : (
       <>
         <StatsTiles

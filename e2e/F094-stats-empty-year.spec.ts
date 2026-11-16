@@ -13,7 +13,9 @@ test("with nothing finished this year, /stats says so, links to my books and kee
   await page.goto("/stats");
   await expect(page.getByText(`No books finished in ${year}`)).toBeVisible();
   await expect(page.getByText("Pages read", { exact: true })).toHaveCount(0);
-  await expect(page.getByText("Books you finish this year show up here.")).toBeVisible();
+  // The chart stays with its 12 months at 0 and no extra line (decision 0027).
+  await expect(page.getByText("Books you finish this year show up here.")).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "Finished by month" }).getByRole("listitem")).toHaveCount(12);
   await expect(page.getByRole("textbox", { name: "Set a reading goal for this year" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Set goal" })).toBeVisible();
   await expectScreens(page, "F094-stats-empty-year", { mask: [page.getByText(String(year))] });
