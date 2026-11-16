@@ -118,7 +118,7 @@ export function ImportForm({ preview, confirm }: { preview: Action; confirm: Act
                 {adding ? "Adding…" : `Add ${rows.length} ${rows.length === 1 ? "book" : "books"}`}
               </Button>
             )}
-            <Button type="button" variant="outline" onClick={reset} disabled={adding}>
+            <Button type="button" variant="secondary" onClick={reset} disabled={adding}>
               Cancel
             </Button>
           </div>

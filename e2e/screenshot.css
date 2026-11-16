@@ -3,3 +3,9 @@
 nextjs-portal {
   display: none !important;
 }
+
+/* Text that differs every run by design (a per-run test email on /settings): hidden in place, keeping its layout,
+   so a page's baseline is the same pixels every run. Decision 0027. */
+[data-volatile] {
+  visibility: hidden !important;
+}
