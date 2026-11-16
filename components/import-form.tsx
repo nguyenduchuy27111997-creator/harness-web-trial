@@ -42,7 +42,7 @@ export function ImportForm({ preview, confirm }: { preview: Action; confirm: Act
         <Label id={`${id}-label`} htmlFor={`${id}-file`}>
           Import CSV
         </Label>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-3">
           <Input
             id={`${id}-file`}
             className="peer sr-only size-px border-0 p-0"
@@ -69,13 +69,15 @@ export function ImportForm({ preview, confirm }: { preview: Action; confirm: Act
             className={buttonVariants({
               variant: "secondary",
               className:
-                "cursor-pointer peer-focus-visible:ring-3 peer-focus-visible:ring-ring/50 peer-disabled:pointer-events-none peer-disabled:opacity-50",
+                "shrink-0 cursor-pointer peer-focus-visible:ring-3 peer-focus-visible:ring-ring/50 peer-disabled:pointer-events-none peer-disabled:opacity-50",
             })}
           >
             Choose CSV file…
           </label>
           {fileName ? (
-            <span className="min-w-0 break-all text-body">{fileName}</span>
+            <span className="min-w-0 flex-1 truncate text-body" title={fileName}>
+              {fileName}
+            </span>
           ) : (
             <span className="text-body text-muted-foreground">No file selected</span>
           )}

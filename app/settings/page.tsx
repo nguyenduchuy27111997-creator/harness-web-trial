@@ -34,7 +34,9 @@ export default async function SettingsPage() {
         <div className="flex items-center justify-between gap-4">
           <div className="flex min-w-0 flex-1 flex-col">
             <span className="text-footnote text-muted-foreground">Email</span>
-            <span data-volatile className="break-all text-body">{user.email}</span>
+            <span data-volatile className="truncate text-body" title={user.email}>
+              {user.email}
+            </span>
           </div>
           <form action={signOut}>
             <Button type="submit" variant="secondary">
