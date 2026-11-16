@@ -13,7 +13,7 @@ import { EditBookForm } from "@/components/edit-book-form";
 import { EditDatesForm } from "@/components/edit-dates-form";
 import { PastReads } from "@/components/past-reads";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
-import { ProgressForm } from "@/components/progress-form";
+import { ProgressForm, ProgressSummary } from "@/components/progress-form";
 import { ReadAgainButton } from "@/components/read-again-button";
 import { RatingForm } from "@/components/rating-form";
 import { ReadingDates } from "@/components/reading-dates";
@@ -85,32 +85,49 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
             removeAction={removeCoverAction.bind(null, book.id)}
           />
         </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-3 break-words">
-          <h1 className="font-heading text-title-1">{book.title}</h1>
-          <p className="text-muted-foreground">{book.author}</p>
+        <div className="flex w-full min-w-0 flex-1 flex-col gap-4 break-words">
+          <div className="flex flex-col gap-1">
+            <h1 className="font-heading text-title-1">{book.title}</h1>
+            <p className="text-muted-foreground">{book.author}</p>
+          </div>
           <BookStatusForm status={book.status} action={updateStatus.bind(null, book.id)} />
-          <ReadingDates startedOn={book.started_on} finishedOn={book.finished_on} />
-          {book.status === "finished" && <ReadAgainButton action={readBookAgain.bind(null, book.id)} />}
+          {book.status === "reading" && <ProgressSummary totalPages={book.total_pages} currentPage={book.current_page} />}
+          {(book.started_on || book.finished_on) && (
+            <div className="flex flex-col gap-1">
+              <ReadingDates startedOn={book.started_on} finishedOn={book.finished_on} />
+            </div>
+          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {book.status !== "want_to_read" && (
+              <EditDatesForm
+                key={`${book.started_on}\n${book.finished_on}`}
+                startedOn={book.started_on}
+                finishedOn={book.status === "finished" ? book.finished_on : null}
+                action={editDates.bind(null, book.id)}
+              />
+            )}
+            {book.status === "finished" && <ReadAgainButton action={readBookAgain.bind(null, book.id)} />}
+            {book.status === "want_to_read" &&
+              (queued ? (
+                // The link text avoids "Up next": the header's "Up next" link must stay the only link with that name.
+                <p className="text-subheadline text-muted-foreground">
+                  In Up next.{" "}
+                  <Link href="/up-next" className="text-primary underline">
+                    See your queue
+                  </Link>
+                </p>
+              ) : (
+                <form action={addToUpNext.bind(null, book.id)}>
+                  <PendingSubmitButton variant="outline" pendingLabel="Adding…">
+                    Add to Up next
+                  </PendingSubmitButton>
+                </form>
+              ))}
+          </div>
         </div>
       </header>
       <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
         <div className="flex min-w-0 flex-col gap-8 lg:max-w-prose lg:flex-1">
-          {book.status === "want_to_read" &&
-            (queued ? (
-              // The link text avoids "Up next": the header's "Up next" link must stay the only link with that name.
-              <p className="text-subheadline text-muted-foreground">
-                In Up next.{" "}
-                <Link href="/up-next" className="text-primary underline">
-                  See your queue
-                </Link>
-              </p>
-            ) : (
-              <form action={addToUpNext.bind(null, book.id)}>
-                <PendingSubmitButton variant="outline" pendingLabel="Adding…">
-                  Add to Up next
-                </PendingSubmitButton>
-              </form>
-            ))}
           {book.status === "reading" && (
             <ProgressForm
               totalPages={book.total_pages}
@@ -135,18 +152,8 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
           <PastReads reads={pastReads} deleteAction={deletePastRead.bind(null, book.id)} />
         </div>
         <div className="flex min-w-0 flex-col gap-8 lg:w-80 lg:shrink-0">
-          {/* After Quotes in the DOM: e2e/book-save-buttons.spec.ts pins "Save quote" before "Save details". */}
-          <div className="flex flex-wrap items-start gap-2">
-            <EditBookForm key={`${book.title}\n${book.author}`} title={book.title} author={book.author} action={editBook.bind(null, book.id)} />
-            {book.status !== "want_to_read" && (
-              <EditDatesForm
-                key={`${book.started_on}\n${book.finished_on}`}
-                startedOn={book.started_on}
-                finishedOn={book.status === "finished" ? book.finished_on : null}
-                action={editDates.bind(null, book.id)}
-              />
-            )}
-          </div>
+          {/* After Quotes in the DOM: e2e/book-save-buttons.spec.ts pins "Save quote" before "Save details", so Edit cannot join the header. */}
+          <EditBookForm key={`${book.title}\n${book.author}`} title={book.title} author={book.author} action={editBook.bind(null, book.id)} />
           <BookShelves
             shelves={shelves}
             onShelfIds={shelfIds}

@@ -6,6 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { formatProgress, progressPercent, type ProgressFormState } from "@/lib/books";
 
+// The bar and "N of M pages · P%" line; the page shows it in the header, beside the cover.
+export function ProgressSummary({ totalPages, currentPage }: { totalPages: number | null; currentPage: number | null }) {
+  if (totalPages === null || currentPage === null) return null;
+  return (
+    <div className="flex flex-col gap-2">
+      <Progress value={progressPercent(currentPage, totalPages)} aria-label="Reading progress" className="h-2" />
+      {/* One visible line; the "Page N of M (P%)" wording other screens use stays for screen readers. */}
+      <p aria-hidden="true" className="text-subheadline tabular-nums">
+        {currentPage} of {totalPages} pages · {progressPercent(currentPage, totalPages)}%
+      </p>
+      <p className="sr-only">{formatProgress(currentPage, totalPages)}</p>
+    </div>
+  );
+}
+
 type Props = {
   totalPages: number | null;
   currentPage: number | null;
@@ -14,20 +29,9 @@ type Props = {
 
 export function ProgressForm({ totalPages, currentPage, action }: Props) {
   const [state, formAction, pending] = useActionState(action, {} as ProgressFormState);
-  const saved = totalPages !== null && currentPage !== null;
   return (
     <form action={formAction} noValidate className="flex flex-col gap-3">
       <h2 className="font-heading text-title-2 font-semibold">Progress</h2>
-      {saved && (
-        <div className="flex flex-col gap-2">
-          <Progress value={progressPercent(currentPage, totalPages)} aria-label="Reading progress" className="h-2" />
-          {/* One visible line; the "Page N of M (P%)" wording other screens use stays for screen readers. */}
-          <p aria-hidden="true" className="text-subheadline tabular-nums">
-            {currentPage} of {totalPages} pages · {progressPercent(currentPage, totalPages)}%
-          </p>
-          <p className="sr-only">{formatProgress(currentPage, totalPages)}</p>
-        </div>
-      )}
       <FormField
         id="total_pages"
         label="Total pages"
