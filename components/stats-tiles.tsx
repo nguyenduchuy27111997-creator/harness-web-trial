@@ -9,14 +9,33 @@ function StatTile({ label, children }: { label: string; children: React.ReactNod
   );
 }
 
-// The tiles are drawn for the eye; the sentences under sr-only are what a screen reader hears.
-export function StatsTiles({ finished, pagesRead, average }: { finished: number; pagesRead: number; average: number | null }) {
+// On /stats the tiles are drawn for the eye and the "this year" sentences (StatsSentences) are what a
+// screen reader hears. On /stats/[year] the year review says the sentences, so the tiles are read as they are.
+export function StatsSentences({ finished, pagesRead, average }: { finished: number; pagesRead: number; average: number | null }) {
   return (
-    <section aria-label="This year in numbers">
+    <>
       <p className="sr-only">Books finished this year: {finished}</p>
       <p className="sr-only">Average rating: {formatAverage(average)}</p>
       <p className="sr-only">{formatPagesRead(pagesRead)}</p>
-      <div aria-hidden="true" className="grid grid-cols-2 gap-3 md:grid-cols-3">
+    </>
+  );
+}
+
+export function StatsTiles({
+  finished,
+  pagesRead,
+  average,
+  thisYear = true,
+}: {
+  finished: number;
+  pagesRead: number;
+  average: number | null;
+  thisYear?: boolean;
+}) {
+  return (
+    <section aria-label={thisYear ? "This year in numbers" : "The year in numbers"}>
+      {thisYear && <StatsSentences finished={finished} pagesRead={pagesRead} average={average} />}
+      <div aria-hidden={thisYear ? true : undefined} className="grid grid-cols-2 gap-3 md:grid-cols-3">
         <StatTile label="Books finished">
           <span className="text-title-1 tabular-nums">{finished}</span>
         </StatTile>
