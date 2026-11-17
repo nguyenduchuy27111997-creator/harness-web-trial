@@ -1,15 +1,24 @@
 <!-- written by harness/hooks/verifier-evidence.py; do not edit -->
-- Verified at: 2026-11-17T15:09:02 on 7ea4937 plus working tree
-- Architect run: a12ae5f86e380a333
-- Design sha256: 533616c7b76b0d748e42cb05da217f1b9f21344ffcae7c29a62875b748f054f3
+- Verified at: 2026-11-17T16:17:33 on cdcb285 plus working tree
+- Architect run: a96c0a49a3a849e79
+- Design sha256: d3c9c5b30554d012da4306e6201d1ce4bf814b1e27ba57d5a11787a92c01be62
 
-VERDICT: FAIL
+VERDICT: PASS
 DESIGN: M9
 CHECKED:
-- Scope: I reviewed only the new staged section "## Specs that move" in /Users/huynguyen/Desktop/harness-web-trial-loop/F093/docs/design/M9.md, as asked. The rest of the doc already has a PASS.
-- Completeness for /shelves and /tags: I searched e2e/ for `name: "Rename"`, `"Delete"`, `"Share"`, `"Stop sharing"` and `"Copy link"`. Every hit on these two pages is listed: shelves-rename, shelves-delete, F067-tags-page, F083-share-shelf, F084-share-nothing-private (lines 60-61), F087-m8-isolation (lines 99-100) and the `shareShelfLink` helper in e2e/shelves.ts, which F087 and F096 use. The other hits are on book, note, quote, past-read and account screens (F086, F081, F058, delete-book*, notes-delete, quotes-delete, past-reads-delete, F074, F096), so they do not move.
-- No check loosened: the moves keep every check. F030's "one field" check is weaker in the new form, because closing the modal first makes `toHaveCount(1)` trivially true. But a modal makes two open fields impossible, and the doc says so. I accept it.
-- Labels: the menu item names in the list (Rename, Share, "Delete shelf", "Rename tag", "Actions for <name>") match the UI bullet for `/shelves` and `/tags`.
+- Scope: I reviewed only the staged section "## Specs that move" in /Users/huynguyen/Desktop/harness-web-trial-loop/F093/docs/design/M9.md (`git diff --cached`). The rest of the doc already has a PASS.
+- Fixes from the last FAIL: both are in.
+  - The "Baselines only" line now also names shelves-create-end-{light,dark}, F067-tags-empty, F048-quotes, F072-up-next-empty, F089-sidebar-{light,dark} and F089-tab-bar-{light,dark}, each with its spec file.
+  - The F072 entry now says its steps and checks do not change and only its baseline F072-up-next-empty is redrawn.
+- Baselines are complete: I listed every `toHaveScreenshot` and `expectScreens` in e2e/ again and matched each to the page it shoots.
+  - Every baseline of /shelves, /tags, /quotes and /up-next outside F093's own lists-layout spec is now listed: F028, F029, F030, F033, shelves-create-end, shelves-validation-end, F067-tags-taken, F067-tags-empty, F048, F071, F072, and F089 sidebar and tab bar.
+  - The other candidates shoot different pages, so they need no change:
+    - F083-shared-shelf and F084-shared-nothing-private: the anonymous /s/<token> page.
+    - F087-stopped-sharing: the "Shelf not found" 404.
+    - F075-b-empty-shelf and F075-m7-isolation-end: /books.
+    - F065-tags-full and F047-quote-deleted: the book page.
+    - F034-shelf-filter: /books.
+- Controls that move: the set of specs and helpers that reach Rename, Delete, Share, Stop sharing, Copy link, Move up, Move down, Remove and Start reading is unchanged since last round, and all are listed: shelves-rename, shelves-delete, F067, F083, F084, F087, `shareShelfLink` in e2e/shelves.ts, F071 and F072. The new helper e2e/rows.ts is described with its signature.
+- Touches: F093's `touches` in harness/features.json cover only app/shelves, app/tags, app/quotes and e2e/*lists-layout*. The caller reports that the human confirmed (kit 5.47.1) that the specs and helpers this section lists count as F093's touches, and the section says so.
+- Consistency and simplicity: the section only lists the test changes the menu redesign forces, and says every check stays. It adds no new layers and no conflict with earlier designs or decisions.
 PROBLEMS:
-- Specs that move: the list leaves out /up-next. The UI section gives F093 the /up-next screen too, and it moves Move up, Move down and Remove into an "Actions for <title>" menu. e2e/F071-up-next.spec.ts clicks and reads those as inline row buttons at lines 17, 60-67 and 74. Line 17 even finds the rows by `has: button "Remove"`. Since an unlisted spec "stays as it is", F093 would stop for a human. Fix: add an entry for `e2e/F071-up-next.spec.ts` (F071). Move up, Move down and Remove become `rowAction(page, <title>, "Move up" | "Move down" | "Remove")`. The "shown only where it applies" checks (no Move up on the first row, no Move down on the last) become checks on the open menu's `menuitem`s. The row locator on line 17 finds rows another way, for example by the "Actions for" button. Its baseline `F071-up-next` is redrawn. Say that F072's checks for "Start reading <title>" stay as they are, because the later rows' "Start reading" is a menu item and only shows when the menu is open.
-- Specs that move: baselines of unlisted specs taken on /shelves with rows will change but are not named. These are `F028-shelves` in shelves-create.spec.ts and `F029-shelf-name-taken` plus `shelves-validation-end-{light,dark}` in shelves-validation.spec.ts. `F033-deleted` in the listed shelves-delete spec is not called out as redrawn either. F093's `touches` in harness/features.json do not cover these files. Fix: add one line saying shelves-create.spec.ts (F028) and shelves-validation.spec.ts (F029) keep their steps and checks and only have these baselines redrawn, and that `F033-deleted` is redrawn.
