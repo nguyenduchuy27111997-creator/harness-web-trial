@@ -2,12 +2,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { isUuid } from "@/lib/books";
 import type { Database } from "@/lib/database.types";
 
-export type QueuedBook = { bookId: string; title: string; author: string; position: number };
+export type QueuedBook = { bookId: string; title: string; author: string; position: number; coverPath: string | null };
 
 export async function listUpNext(supabase: SupabaseClient<Database>): Promise<QueuedBook[]> {
   const { data, error } = await supabase
     .from("up_next")
-    .select("book_id, position, book:books!inner(title, author, status)")
+    .select("book_id, position, book:books!inner(title, author, status, cover_path)")
     .eq("book.status", "want_to_read")
     .order("position")
     .order("created_at")
@@ -18,6 +18,7 @@ export async function listUpNext(supabase: SupabaseClient<Database>): Promise<Qu
     title: row.book.title,
     author: row.book.author,
     position: row.position,
+    coverPath: row.book.cover_path,
   }));
 }
 

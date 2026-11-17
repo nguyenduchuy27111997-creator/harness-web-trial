@@ -1,5 +1,5 @@
 {
   "status": "blocked",
   "blocked_reason": "failed",
-  "notes": "Row actions menu built for /shelves and /tags (components/row-actions.tsx; Rename/Share dialogs, Delete shelf alert). Specs moved to e2e/rows.ts. Not done: the M9 'Specs that move' section got an architect FAIL (missing F071 /up-next and the redrawn shelves baselines). The proposed text is in docs/plans/F093-specs-that-move.md. Also not done: the /up-next menu, the e2e run (app not reachable on 43214), baselines, the designer's findings and the verifier."
+  "notes": "M9 'Specs that move' has an architect PASS (committed). /up-next row menu built (covers, Start reading on the first row, Actions menu with Start reading/Move up/Move down/Remove); F071 moved and passing; baselines redrawn per the section. check.sh (HARNESS_E2E=feature) red: the e2e-size rule wants every changed spec to end with expectScreens(page, \"<id>-<what>\") — F067-tags-page, F071-up-next, F083-share-shelf, F084-share-nothing-private, F087-m8-isolation, shelves-delete, shelves-rename. F083:51 fails at line 73 on the signed-out /s page (2 buttons = Next dev 'Insight' issues badge, not F093 code). Verifier not run. Designer findings: earlier ones not found on disk; shelf cover alt still uses the shelf name (the locked F093 spec counts the imgs)."
 }
