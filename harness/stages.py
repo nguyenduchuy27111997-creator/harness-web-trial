@@ -319,8 +319,26 @@ class Stages:
             job["stash"] = sha
             self.event(job["id"], f"uncommitted work kept as stash {sha[:10]}; the next session starts from it")
 
+    def keep_attempt(self, job):
+        """A failed build attempt whose code is sound (it only left work uncommitted, or only the test-writer's test
+        was wrong) keeps its commits for the next attempt, which starts from main again. Seen on the web trial: since
+        Nov 10, 16 of 22 retries were one of those two, and each rebuilt the app from scratch (F094 and F096 three
+        times each)."""
+        wt = job["worktree"]
+        head = git("rev-parse", "HEAD", cwd=wt).stdout.strip()
+        if head and head != job.get("base_sha"):
+            git("update-ref", f"refs/harness/unfinished/{job['id']}-{int(time.time())}", head, cwd=wt)
+            job["kept_attempt"] = {"base": job["base_sha"], "head": head, "skip_e2e": job.get("locked_tests") is not None}
+
     def carried_work(self, job):
         kept, sha, out = job.pop("kept", None), job.pop("stash", None), ""
+        attempt = job.pop("kept_attempt", None)
+        if attempt:
+            spec = f"{attempt['base']} {attempt['head']} -- ." + (" ':(exclude)e2e/'" if attempt["skip_e2e"] else "")
+            out += (f"\n\nThe last attempt's code is kept (its commits are {attempt['base'][:10]}..{attempt['head'][:10]}). "
+                    f"Do not write it again: bring it back with `git diff {spec} | git apply --3way`, check it against "
+                    "the acceptance, finish what is missing and commit."
+                    + (" Its e2e test is left out: use the test-writer's new one." if attempt["skip_e2e"] else ""))
         if kept:
             out += (f"\n\nThe last fix round's commits did not finish the feature (cut off, or not verified), so the "
                     f"branch was set back; they are kept at {kept} (`git log HEAD..{kept}`). Start from them: "
@@ -344,6 +362,8 @@ class Stages:
             why = ("the architect still failed the design after 3 rounds: "
                    + proof.read_text().split("PROBLEMS:", 1)[-1].strip()[:1500]) if rejected else \
                 "the session left uncommitted work (stashed)"
+            if not job.get("kind"):
+                self.keep_attempt(job)
             self.stash_work(job, f"loop: uncommitted work from {job['id']}")
             # A feature that committed "needs a human" and left a stray file (a screenshot, say) still needs one:
             # building it again would hit the same wall. Seen for real in a sandboxed web run.
@@ -388,6 +408,7 @@ class Stages:
         if job.get("locked_tests") is not None and (issue := self.handoff(job)[1]).exists():
             job["test_issue"] = issue.read_text()[:1500]  # the next attempt's test-writer reads it
             self.event(job["id"], "the coder found the test wrong; the test-writer writes it again")
+            self.keep_attempt(job)
         return self.retry(job, f.get("notes") or f"ended {f.get('status', 'unknown')}")
 
     def guard(self, job, source, base):

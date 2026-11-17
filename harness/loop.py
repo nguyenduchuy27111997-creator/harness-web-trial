@@ -38,6 +38,7 @@ worktrees in ../<repo>-loop/<id>. CLAUDE_BIN and GH_BIN override the binaries,
 LOOP_POLL the polling interval in seconds.
 """
 
+import fcntl
 import getpass
 import sys
 from pathlib import Path
@@ -966,6 +967,15 @@ def cmd_start(root, a):
         os.dup2(log.fileno(), 1)
         os.dup2(log.fileno(), 2)
         os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
+    # One loop per project: the check on state.json above is not enough when two starts race. Seen on the web trial:
+    # three `answer`s to a stopped loop in one second started two loops, which wrote state.json over each other.
+    global LOCK
+    LOCK = open(home / "loop.lock", "w")
+    try:
+        fcntl.flock(LOCK, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        print("The loop is already running (another start holds loop.lock).")
+        return 0
     loop = Loop(root, a)
     # The lanes' apps and QA's Chrome are for the office to show: without a dashboard there is no office. The kit's own
     # tests run that way, and each session there opened a headless Chrome that nobody could see.
