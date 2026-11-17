@@ -1,9 +1,9 @@
 {
-  "version": "5.47.0",
+  "version": "5.47.1",
   "preset": "nextjs-supabase",
   "files": {
     ".claude/agents/advisor.md": "e7a83e9817e031dfa49a2671940111ea252614b123ef8c48dc15cd3aac0b2c52",
-    ".claude/agents/architect.md": "ce95f019bf650aa85cf7b0e10cd349fcf2718b8c88983cc70daccbac0744bcad",
+    ".claude/agents/architect.md": "b978b97ee7559a25a77560456084394b293218ae0c1bf91dfea1b4e337b9db66",
     ".claude/agents/ci-doctor.md": "25072a21aa0c1083e76a6bd02b7fb2a5804e9c1b5cfbac5523aec24b155b050b",
     ".claude/agents/designer.md": "b5455325fcf4055ff48cbcedca30fb3f3e9c1106bb456ea35ccb8ba3d918e869",
     ".claude/agents/dispatcher.md": "75e490c953a422d371c5681f7bb0bc94ad374695e082af3fe8e6efc0d1d06e76",
@@ -21,7 +21,7 @@
     ".claude/skills/adopt/SKILL.md": "f8eeb0fdad00f583847ed082736f95782141d1b59bb9b62874d968d2dbc6b872",
     ".claude/skills/bug/SKILL.md": "08346da7bce99a29131fe71882c74be570f4b273b453c7e940d56cbb62e03559",
     ".claude/skills/build/SKILL.md": "74bcc503b8563178e77765d38d344c44fa9f1661bb9880de0517b5a7c3fe2e16",
-    ".claude/skills/design/SKILL.md": "01dedb6233fb5e7c8b31949c5aea8652efbb4a81c2f1afc58d67065912b0f9d1",
+    ".claude/skills/design/SKILL.md": "27166e040d71c3c76fc1842c0f3b94ad91d01d1246015b2245ac6b733a153fd7",
     ".claude/skills/feedback/SKILL.md": "d7c349cd41517e675539573b2d50d4ef3b043438c2745c667a3154f342638a44",
     ".claude/skills/garden/SKILL.md": "bc205ce232cce8c384fc2f6c954cd47199622bd705e2565cb9e5a657aea47b64",
     ".claude/skills/interview/SKILL.md": "388a25832c24dae5d9124771eed2340923749501938f09d46d1512b716266764",

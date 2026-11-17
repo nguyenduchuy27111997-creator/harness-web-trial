@@ -47,7 +47,8 @@ the components from components/ui/ it uses (and any to add), and what moves, wit
 <only if this milestone changes a screen that passing features' e2e specs already use (a control moves into a menu,
 a button goes, a form becomes a dialog). Search e2e/ for every spec that clicks or reads what changes, and list each:
 the spec file, the feature that owns it, the feature of this milestone that moves it, and how its steps change
-(through a shared helper in e2e/, say), never what it checks. Baselines it changes are re-taken. A spec not listed
+(through a shared helper in e2e/, say), never what it checks. Baselines it changes are re-taken. The specs and helpers listed count as that feature's
+touches, beside what harness/features.json names. A spec not listed
 here stays as it is, so a feature that needs it moved stops for a human. Or None>
 
 ## Shared scaffold
