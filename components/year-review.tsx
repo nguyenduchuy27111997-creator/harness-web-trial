@@ -1,5 +1,6 @@
 import { StarIcon } from "lucide-react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { formatFinishDate } from "@/lib/books";
 import { type FinishedRead, summarizeYear } from "@/lib/stats";
 
@@ -14,13 +15,26 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
-export function YearReview({ year, reads, hasNextYear }: { year: number; reads: FinishedRead[]; hasNextYear: boolean }) {
+// summary: the tiles and chart (or the empty year), shown under the opening sentence.
+export function YearReview({
+  year,
+  reads,
+  hasNextYear,
+  summary,
+}: {
+  year: number;
+  reads: FinishedRead[];
+  hasNextYear: boolean;
+  summary?: ReactNode;
+}) {
   const { averageRating, highestRated } = summarizeYear(reads);
   return (
     <>
       <h1 className="font-heading text-title-1">{year} in review</h1>
-      <p>{reads.length === 0 ? `You finished no books in ${year}.` : `You finished ${reads.length} ${reads.length === 1 ? "book" : "books"} in ${year}.`}</p>
-      {averageRating !== null && <p>Average rating: {averageRating.toFixed(1)}</p>}
+      {/* The tiles (or the empty state) show these numbers; the sentences stay for screen readers (F061, F062, F063 read them). */}
+      <p className="sr-only">{reads.length === 0 ? `You finished no books in ${year}.` : `You finished ${reads.length} ${reads.length === 1 ? "book" : "books"} in ${year}.`}</p>
+      {summary}
+      {averageRating !== null && <p className="sr-only">Average rating: {averageRating.toFixed(1)}</p>}
       {highestRated.length > 0 && (
         <section className="flex flex-col gap-3">
           <h2 className="font-heading text-title-2 font-semibold">Highest rated</h2>

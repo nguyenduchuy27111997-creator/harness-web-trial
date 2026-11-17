@@ -20,7 +20,7 @@ type AuthFormProps = {
 export function AuthForm({ action, title, description, pendingLabel, passwordAutoComplete, footer, notice }: AuthFormProps) {
   const [state, formAction, pending] = useActionState(action, {} as AuthFormState);
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-sm flex-col gap-6">
       <Card>
         <CardHeader>
           <CardTitle>
@@ -55,10 +55,10 @@ export function AuthForm({ action, title, description, pendingLabel, passwordAut
               autoComplete={passwordAutoComplete}
               error={state.fieldErrors?.password}
             />
-            <Button type="submit" disabled={pending}>
+            <Button type="submit" size="lg" className="w-full" disabled={pending}>
               {pending ? pendingLabel : title}
             </Button>
-            <p className="text-subheadline text-muted-foreground">{footer}</p>
+            <p className="text-center text-subheadline text-muted-foreground">{footer}</p>
           </form>
         </CardContent>
       </Card>
