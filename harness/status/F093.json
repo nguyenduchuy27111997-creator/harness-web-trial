@@ -1,5 +1,5 @@
 {
   "status": "blocked",
-  "blocked_reason": "failed",
-  "notes": "M9 'Specs that move' has an architect PASS (committed). /up-next row menu built (covers, Start reading on the first row, Actions menu with Start reading/Move up/Move down/Remove); F071 moved and passing; baselines redrawn per the section. check.sh (HARNESS_E2E=feature) red: the e2e-size rule wants every changed spec to end with expectScreens(page, \"<id>-<what>\") — F067-tags-page, F071-up-next, F083-share-shelf, F084-share-nothing-private, F087-m8-isolation, shelves-delete, shelves-rename. F083:51 fails at line 73 on the signed-out /s page (2 buttons = Next dev 'Insight' issues badge, not F093 code). Verifier not run. Designer findings: earlier ones not found on disk; shelf cover alt still uses the shelf name (the locked F093 spec counts the imgs)."
+  "blocked_reason": "needs_human",
+  "notes": "e2e-size clean: the 7 moved specs end with expectScreens (decision 0028); F071 queue-order passes 3 runs in a row (waits for the menu and the reordered rows; same assertions). Touch targets fixed (first-row Start reading, share link). HARNESS_E2E=feature check.sh: lint, types, 232 unit tests green; e2e 17/18 pass. Red: F083-share-shelf.spec.ts:51 counts 0 buttons on the signed-out /s page but Next 16.4.2's dev 'Security Insight' badge adds 2 (Open issues overlay, Collapse issues badge) on every page; same on main. Needs a human: upgrade next (next upgrade --agent=security) or rule on that check."
 }
