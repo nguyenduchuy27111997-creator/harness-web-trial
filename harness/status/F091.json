@@ -1,4 +1,5 @@
 {
-  "status": "passing",
-  "notes": "375px overflow fixed: the cover file input is display:none and opened through a ref. Cover is md:w-48 lg:w-56 aspect-2/3 (full width, max-w-60 on a phone). Progress is one line, 'N of M pages · P%', and 'Page N of M (P%)' is sr-only. Cover controls stay buttons, not a dropdown, because F081 pins them."
+  "status": "blocked",
+  "notes": "Verifier FAIL: placeholder initial renders 16px (~7% of cover), not ~30%. The text-cover-initial token (globals.css) is missing from the served CSS; the last baselines may show the small initial. Restart the dev server, check the initial, re-baseline book-page shots.",
+  "blocked_reason": "failed"
 }
