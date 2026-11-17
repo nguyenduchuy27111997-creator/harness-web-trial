@@ -1,4 +1,4 @@
 {
   "status": "passing",
-  "notes": "Placeholder initial is 30% of the cover width (72px on 240px at 375, 67.2px on 224px at 1280). Last round's FAIL came from a stale dev server; code unchanged, book-page baselines re-captured on a fresh server. Verifier PASS."
+  "notes": "Cover controls (Add/Replace, Remove) sit under the cover at size sm; Remove cover is a ghost button with red text, so Delete book is the only red fill. Header row: Edit dates and Read again (filled primary) at size sm, 44px on a phone via ui-base.css. Verifier PASS."
 }

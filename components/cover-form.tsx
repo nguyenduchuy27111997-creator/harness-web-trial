@@ -34,8 +34,9 @@ export function CoverForm({ url, uploadAction, removeAction }: Props) {
   }
 
   // F081's spec pins "Add cover" / "Replace cover" / "Remove cover" as buttons, so no dropdown menu here.
+  // Small, under the cover; Remove is a quiet ghost button so Delete book stays the page's only red fill.
   return (
-    <section aria-label="Cover" className="flex flex-wrap items-center gap-2">
+    <section aria-label="Cover" className="flex flex-wrap items-center justify-center gap-2">
       <form action={submit} className="flex flex-wrap items-center gap-2">
         {/* display:none, so it has no box; the button opens its picker. */}
         <Input
@@ -56,10 +57,10 @@ export function CoverForm({ url, uploadAction, removeAction }: Props) {
         {fileName ? (
           <div className="flex min-w-0 items-center gap-2">
             <p className="max-w-40 min-w-0 truncate text-subheadline text-muted-foreground">{fileName}</p>
-            <PendingSubmitButton pendingLabel="Uploading…">{label}</PendingSubmitButton>
+            <PendingSubmitButton size="sm" pendingLabel="Uploading…">{label}</PendingSubmitButton>
           </div>
         ) : (
-          <Button type="button" variant="outline" onClick={() => input.current?.click()}>
+          <Button type="button" variant="outline" size="sm" onClick={() => input.current?.click()}>
             {label}
           </Button>
         )}
@@ -71,7 +72,7 @@ export function CoverForm({ url, uploadAction, removeAction }: Props) {
       </form>
       {url && (
         <form action={removeAction}>
-          <PendingSubmitButton variant="destructive" pendingLabel="Removing…">
+          <PendingSubmitButton variant="ghost" size="sm" className="text-destructive" pendingLabel="Removing…">
             Remove cover
           </PendingSubmitButton>
         </form>

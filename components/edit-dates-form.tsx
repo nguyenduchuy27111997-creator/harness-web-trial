@@ -15,7 +15,7 @@ export function EditDatesForm(props: Props) {
   const [open, setOpen] = useState(false);
   if (!open) {
     return (
-      <Button type="button" variant="outline" className="self-start" onClick={() => setOpen(true)}>
+      <Button type="button" variant="outline" size="sm" className="self-start" onClick={() => setOpen(true)}>
         Edit dates
       </Button>
     );
