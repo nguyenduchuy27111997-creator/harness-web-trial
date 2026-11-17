@@ -320,12 +320,16 @@ class Stages:
             self.event(job["id"], f"uncommitted work kept as stash {sha[:10]}; the next session starts from it")
 
     def carried_work(self, job):
-        sha = job.pop("stash", None)
-        if not sha:
-            return ""
-        return (f"\n\nThe last session of this feature ended without committing. Its work is kept in git stash {sha} "
-                f"(see it with `git stash show -p {sha}`). Start from it: `git stash apply {sha}`, keep what is right, "
-                "fix the rest, and commit as soon as a step works, so a session cut short keeps its work.")
+        kept, sha, out = job.pop("kept", None), job.pop("stash", None), ""
+        if kept:
+            out += (f"\n\nThe last fix round's commits did not finish the feature (cut off, or not verified), so the "
+                    f"branch was set back; they are kept at {kept} (`git log HEAD..{kept}`). Start from them: "
+                    f"`git merge --ff-only {kept}`, then do what is left.")
+        if sha:
+            out += (f"\n\nThe last session of this feature ended without committing. Its work is kept in git stash {sha} "
+                    f"(see it with `git stash show -p {sha}`). Start from it: `git stash apply {sha}`, keep what is right, "
+                    "fix the rest, and commit as soon as a step works, so a session cut short keeps its work.")
+        return out
 
     def finish_build(self, job, res):
         wt = job["worktree"]
@@ -768,6 +772,13 @@ class Stages:
             return self.set_stage(job, "review", note=f"fix cut off by the run's budget (${job['last_cap']}); "
                                                       "reviewed and fixed again with a full budget")
         if cut or check.returncode != 0 or f.get("status") != "passing":
+            head = git("rev-parse", "HEAD", cwd=wt).stdout.strip()
+            if check.returncode == 0 and head != job["fix_base"] and not job.get("fix_guard_base"):
+                # Work the guard accepts but that is not done yet (cut off, or not verified) is kept for the next round.
+                # Seen on the web trial: F090's fix rounds committed the owner's fixes three times, each failed round
+                # was reset, and the branch stayed at the same head for $21.
+                git("update-ref", f"refs/harness/unfinished/{job['id']}-{int(time.time())}", head, cwd=wt)
+                job["kept"] = head
             git("reset", "-q", "--hard", job["fix_base"], cwd=wt)
             if job.pop("fix_guard_base", None):  # the conflict could not be resolved: build it again from main
                 gh("pr", "close", str(job["pr"]), "--comment", "Could not resolve the conflict with main; the loop "
