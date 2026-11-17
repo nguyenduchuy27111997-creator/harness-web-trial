@@ -6,6 +6,7 @@ import { addAndOpenBook } from "./books";
 import { coverFile } from "./covers";
 import { createShelves, shareShelfLink, shelveOpenBook } from "./shelves";
 import type { Database } from "../lib/database.types";
+import { rowDialog } from "./rows";
 
 // F087: account B cannot reach account A's covers, live book changes or shared shelves.
 const stamp = () => `${process.env.HARNESS_LANE ?? "local"}-${Date.now()}-${Math.floor(Math.random() * 1e4)}`;
@@ -95,7 +96,7 @@ test("after A stops sharing, B and a signed-out visitor get not found on the old
   await page.goto("/shelves");
   const link = await shareShelfLink(page, shelf);
 
-  const row = page.getByRole("listitem").filter({ hasText: shelf });
+  const row = rowDialog(page);
   await row.getByRole("button", { name: "Stop sharing" }).click();
   await expect(row.getByRole("button", { name: "Share" })).toBeVisible();
 

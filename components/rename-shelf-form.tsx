@@ -5,7 +5,9 @@ import { BookCover } from "@/components/book-cover";
 import { DeleteShelfButton } from "@/components/delete-shelf-button";
 import { FormField } from "@/components/form-field";
 import { ShareShelf } from "@/components/share-shelf";
+import { RowActions } from "@/components/row-actions";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { ShelfFormState } from "@/lib/shelves";
 
 type Props = {
@@ -23,53 +25,63 @@ type Row = Pick<Props, "id" | "name" | "action"> & {
   stopSharingAction: () => Promise<void>;
 };
 
-// The list of shelves: at most one rename form is open at a time.
+// The list of shelves. Each row has an actions menu: Rename and Share open a dialog, Delete shelf its confirmation.
 export function RenameShelfList({ shelves }: { shelves: Row[] }) {
-  const [openId, setOpenId] = useState<string | null>(null);
   return (
     <ul className="flex flex-col divide-y">
       {shelves.map((shelf) => (
         <li key={shelf.id} className="py-3">
-          <RenameShelfForm
-            {...shelf}
-            open={openId === shelf.id}
-            onOpen={() => setOpenId(shelf.id)}
-            onClose={() => setOpenId(null)}
-          />
+          <ShelfRow {...shelf} />
         </li>
       ))}
     </ul>
   );
 }
 
-type RowProps = Row & { open: boolean; onOpen: () => void; onClose: () => void };
-
-function RenameShelfForm({ open, onOpen, onClose, count, covers, deleteAction, shareLink, shareAction, stopSharingAction, ...props }: RowProps) {
-  if (!open) {
-    return (
-      <div className="flex flex-col gap-2">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex w-16 shrink-0 -space-x-6" data-testid="shelf-covers">
-            {covers.length === 0 ? (
-              <BookCover title={props.name} url={null} size="sm" />
-            ) : (
-              covers.map((url, i) => <BookCover key={i} title={props.name} url={url} size="sm" className="ring-2 ring-background" />)
-            )}
-          </div>
-          <div className="flex min-w-0 flex-1 flex-col">
-            <span className="text-headline">{props.name}</span>
-            <span className="text-subheadline tabular-nums text-muted-foreground">{count === 1 ? "1 book" : `${count} books`}</span>
-          </div>
-          <Button type="button" variant="outline" size="sm" onClick={onOpen}>
-            Rename
-          </Button>
-          <DeleteShelfButton name={props.name} action={deleteAction} />
-        </div>
-        <ShareShelf link={shareLink} shareAction={shareAction} stopAction={stopSharingAction} />
+function ShelfRow({ count, covers, deleteAction, shareLink, shareAction, stopSharingAction, ...props }: Row) {
+  const [open, setOpen] = useState<"rename" | "share" | "delete" | null>(null);
+  const onOpenChange = (next: boolean) => !next && setOpen(null);
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex w-16 shrink-0 -space-x-6" data-testid="shelf-covers">
+        {covers.length === 0 ? (
+          <BookCover title={props.name} url={null} size="sm" />
+        ) : (
+          covers.map((url, i) => <BookCover key={i} title={props.name} url={url} size="sm" className="ring-2 ring-background" />)
+        )}
       </div>
-    );
-  }
-  return <OpenForm {...props} onClose={onClose} />;
+      <div className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate text-headline">{props.name}</span>
+        <span className="text-subheadline tabular-nums text-muted-foreground">{count === 1 ? "1 book" : `${count} books`}</span>
+      </div>
+      <RowActions
+        name={props.name}
+        items={[
+          { label: "Rename", onSelect: () => setOpen("rename") },
+          { label: "Share", onSelect: () => setOpen("share") },
+          { label: "Delete shelf", onSelect: () => setOpen("delete"), destructive: true },
+        ]}
+      />
+      <Dialog open={open === "rename"} onOpenChange={onOpenChange}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename shelf</DialogTitle>
+          </DialogHeader>
+          {open === "rename" && <OpenForm {...props} onClose={() => setOpen(null)} />}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={open === "share"} onOpenChange={onOpenChange}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Share “{props.name}”</DialogTitle>
+            <DialogDescription>Anyone with the link can read this shelf. Sign-in is not needed.</DialogDescription>
+          </DialogHeader>
+          <ShareShelf link={shareLink} shareAction={shareAction} stopAction={stopSharingAction} />
+        </DialogContent>
+      </Dialog>
+      <DeleteShelfButton name={props.name} action={deleteAction} open={open === "delete"} onOpenChange={onOpenChange} />
+    </div>
+  );
 }
 
 // Mounted only while renaming, so closing drops any error and rejected input.

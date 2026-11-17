@@ -3,32 +3,36 @@
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { FormField } from "@/components/form-field";
+import { RowActions } from "@/components/row-actions";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { TagFormState } from "@/lib/tags";
 
 type Action = (prev: TagFormState, formData: FormData) => Promise<TagFormState>;
 type Row = { id: string; name: string; count: number; action: Action };
 
-// The list of tags: at most one rename form is open at a time.
+// The list of tags. Each row's actions menu has Rename tag, which opens a dialog.
 export function RenameTagList({ tags }: { tags: Row[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
   return (
     <ul className="flex flex-col divide-y">
       {tags.map((tag) => (
         <li key={tag.id} className="py-3">
-          {openId === tag.id ? (
-            <OpenForm {...tag} onClose={() => setOpenId(null)} />
-          ) : (
-            <div className="flex items-center gap-3">
-              <Link href={`/books?tag=${encodeURIComponent(tag.name)}`} className="inline-flex min-h-11 items-center text-headline text-primary hover:underline">
-                {tag.name}
-              </Link>
-              <span className="ml-auto text-subheadline tabular-nums text-muted-foreground">{tag.count === 1 ? "1 book" : `${tag.count} books`}</span>
-              <Button type="button" variant="outline" size="sm" onClick={() => setOpenId(tag.id)}>
-                Rename
-              </Button>
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+            <Link href={`/books?tag=${encodeURIComponent(tag.name)}`} className="inline-flex min-h-11 min-w-0 items-center truncate text-headline text-primary hover:underline">
+              {tag.name}
+            </Link>
+            <span className="ml-auto text-subheadline tabular-nums text-muted-foreground">{tag.count === 1 ? "1 book" : `${tag.count} books`}</span>
+            <RowActions name={tag.name} items={[{ label: "Rename tag", onSelect: () => setOpenId(tag.id) }]} />
+          </div>
+          <Dialog open={openId === tag.id} onOpenChange={(next) => !next && setOpenId(null)}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Rename tag</DialogTitle>
+              </DialogHeader>
+              {openId === tag.id && <OpenForm {...tag} onClose={() => setOpenId(null)} />}
+            </DialogContent>
+          </Dialog>
         </li>
       ))}
     </ul>

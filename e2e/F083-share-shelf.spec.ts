@@ -4,10 +4,10 @@ import { signUpAs } from "./accounts";
 import { addAndOpenBook } from "./books";
 import { coverFile, submitCover } from "./covers";
 import { createShelves, shelveOpenBook } from "./shelves";
+import { rowAction, rowDialog } from "./rows";
 
 const lane = process.env.HARNESS_LANE ?? "local";
-const shelfRow = (page: Page, name: string) => page.getByRole("listitem").filter({ hasText: name });
-const linkText = (page: Page, name: string) => shelfRow(page, name).getByText(/\/s\/[0-9a-f]{48}/);
+const linkText = (page: Page) => rowDialog(page).getByText(/\/s\/[0-9a-f]{48}/);
 
 // A fresh account with a shelf holding one finished, rated book with a cover. Returns the names.
 async function sharedShelfSetup(page: Page, id: string) {
@@ -31,9 +31,10 @@ async function sharedShelfSetup(page: Page, id: string) {
 
 // Shares the shelf and returns the link's address.
 async function share(page: Page, shelf: string) {
-  await shelfRow(page, shelf).getByRole("button", { name: "Share" }).click();
-  await expect(shelfRow(page, shelf).getByRole("button", { name: "Copy link" })).toBeVisible();
-  const text = (await linkText(page, shelf).textContent()) ?? "";
+  await rowAction(page, shelf, "Share");
+  await rowDialog(page).getByRole("button", { name: "Share" }).click();
+  await expect(rowDialog(page).getByRole("button", { name: "Copy link" })).toBeVisible();
+  const text = (await linkText(page).textContent()) ?? "";
   const match = text.match(/(\S*\/s\/[0-9a-f]{48})/);
   expect(match).not.toBeNull();
   return match![1];
@@ -49,8 +50,11 @@ async function visitSignedOut(browser: Browser, url: string) {
 
 test("Share makes a /s/<token> link with Copy link; a signed-out visitor reads the shelf read-only", async ({ page, browser }) => {
   const { shelf, title } = await sharedShelfSetup(page, "view");
-  await expect(shelfRow(page, shelf).getByRole("button", { name: "Share" })).toBeVisible();
-  await expect(shelfRow(page, shelf).getByRole("button", { name: "Copy link" })).toHaveCount(0);
+  await rowAction(page, shelf, "Share");
+  await expect(rowDialog(page).getByRole("button", { name: "Share" })).toBeVisible();
+  await expect(rowDialog(page).getByRole("button", { name: "Copy link" })).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await expect(rowDialog(page)).toHaveCount(0);
   const url = await share(page, shelf);
   expect(url).toMatch(/\/s\/[0-9a-f]{48}$/);
   await expectAccessible(page);
@@ -82,9 +86,11 @@ test("Stop sharing makes the old link not found; sharing again makes a new token
   const { shelf } = await sharedShelfSetup(page, "stop");
   const first = await share(page, shelf);
 
-  await shelfRow(page, shelf).getByRole("button", { name: "Stop sharing" }).click();
-  await expect(shelfRow(page, shelf).getByRole("button", { name: "Share" })).toBeVisible();
-  await expect(shelfRow(page, shelf).getByRole("button", { name: "Stop sharing" })).toHaveCount(0);
+  await rowDialog(page).getByRole("button", { name: "Stop sharing" }).click();
+  await expect(rowDialog(page).getByRole("button", { name: "Share" })).toBeVisible();
+  await expect(rowDialog(page).getByRole("button", { name: "Stop sharing" })).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await expect(rowDialog(page)).toHaveCount(0);
 
   const old = await visitSignedOut(browser, first);
   await expect(old.page.getByRole("heading", { name: shelf })).toHaveCount(0);

@@ -1,4 +1,5 @@
 {
-  "status": "passing",
-  "notes": "Shelf rows (covers, name, count), tag rows with count, quotes in serif, empty states. Kept inline Rename/Delete/Share buttons instead of the design's actions menu so existing specs keep passing. Shelf cover alt text uses the shelf name, not book titles."
+  "status": "blocked",
+  "blocked_reason": "failed",
+  "notes": "Row actions menu built for /shelves and /tags (components/row-actions.tsx; Rename/Share dialogs, Delete shelf alert). Specs moved to e2e/rows.ts. Not done: the M9 'Specs that move' section got an architect FAIL (missing F071 /up-next and the redrawn shelves baselines). The proposed text is in docs/plans/F093-specs-that-move.md. Also not done: the /up-next menu, the e2e run (app not reachable on 43214), baselines, the designer's findings and the verifier."
 }

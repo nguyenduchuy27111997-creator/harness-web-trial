@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { expectAccessible } from "./a11y";
 import { signUpAs } from "./accounts";
 import { addBookOnShelf, createShelves } from "./shelves";
+import { rowAction } from "./rows";
 
 const stamp = () => `${process.env.HARNESS_LANE ?? "local"}-${Date.now()}`;
 
@@ -18,7 +19,7 @@ test("shelves: delete a shelf, keeping its books", async ({ page }) => {
   const travel = page.getByRole("listitem").filter({ hasText: "Travel" });
   const dialog = page.getByRole("alertdialog");
 
-  await travel.getByRole("button", { name: "Delete" }).click();
+  await rowAction(page, "Travel", "Delete shelf");
   await expect(dialog).toContainText("Travel");
   await expect(dialog).toContainText("Its books are kept.");
   await expectAccessible(page);
@@ -26,7 +27,7 @@ test("shelves: delete a shelf, keeping its books", async ({ page }) => {
   await expect(dialog).toHaveCount(0);
   await expect(travel).toBeVisible();
 
-  await travel.getByRole("button", { name: "Delete" }).click();
+  await rowAction(page, "Travel", "Delete shelf");
   await dialog.getByRole("button", { name: "Delete" }).click();
   await expect(travel).toHaveCount(0);
   await expect(page.getByRole("listitem")).toHaveText([/Book club/]);

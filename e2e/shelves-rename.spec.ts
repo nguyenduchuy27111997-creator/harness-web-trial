@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { expectAccessible } from "./a11y";
 import { signUpAs } from "./accounts";
+import { rowAction } from "./rows";
 
 // F030: rename a shelf in place. Each run uses a fresh account (golden principle 7).
 test("shelves: rename a shelf, with validation and cancel", async ({ page }) => {
@@ -17,15 +18,18 @@ test("shelves: rename a shelf, with validation and cancel", async ({ page }) => 
   const row = (name: string) => page.getByRole("listitem").filter({ hasText: name });
   const field = page.getByLabel("New name");
 
-  await row("Travel").getByRole("button", { name: "Rename" }).click();
+  await rowAction(page, "Travel", "Rename");
   await expect(field).toHaveValue("Travel");
   await expect(page.getByRole("button", { name: "Save" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Cancel" })).toBeVisible();
 
-  await row("Book club").getByRole("button", { name: "Rename" }).click();
+  // The rename dialog is modal: close it before opening another row's.
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await rowAction(page, "Book club", "Rename");
   await expect(field).toHaveCount(1);
   await expect(field).toHaveValue("Book club");
-  await row("Travel").getByRole("button", { name: "Rename" }).click();
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await rowAction(page, "Travel", "Rename");
   await expect(field).toHaveValue("Travel");
 
   await field.fill("Trips");
@@ -38,7 +42,7 @@ test("shelves: rename a shelf, with validation and cancel", async ({ page }) => 
   await expect(row("Trips")).toBeVisible();
   await expect(row("Travel")).toHaveCount(0);
 
-  await row("Trips").getByRole("button", { name: "Rename" }).click();
+  await rowAction(page, "Trips", "Rename");
   await field.fill("book club");
   await page.getByRole("button", { name: "Save" }).click();
   await expect(field).toHaveAccessibleDescription("You already have a shelf with that name");
@@ -48,7 +52,7 @@ test("shelves: rename a shelf, with validation and cancel", async ({ page }) => 
   await page.reload();
   await expect(row("Trips")).toBeVisible();
 
-  await row("Trips").getByRole("button", { name: "Rename" }).click();
+  await rowAction(page, "Trips", "Rename");
   await field.fill("");
   await page.getByRole("button", { name: "Save" }).click();
   await expect(field).toHaveAccessibleDescription("Name is required");
