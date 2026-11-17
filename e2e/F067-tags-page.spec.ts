@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
 import { signUpAs } from "./accounts";
 import { addAndOpenBook, addTagsOnBookPage } from "./books";
 import { rowAction } from "./rows";
@@ -65,6 +65,7 @@ test("tags page: lists tags with counts, renames, rejects a taken name", async (
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page.getByText("You already have that tag")).toBeVisible();
   await expect(page).toHaveScreenshot("F067-tags-taken.png", { stylePath: "e2e/hide-dev-overlay.css", fullPage: true });
+  await expectScreens(page, "F067-tags-taken");
 });
 
 test("tags page: empty state", async ({ page }) => {
@@ -76,4 +77,5 @@ test("tags page: empty state", async ({ page }) => {
   await page.mouse.move(0, 0);
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F067-tags-empty.png", { stylePath: "e2e/hide-dev-overlay.css", fullPage: true });
+  await expectScreens(page, "F067-tags-empty");
 });

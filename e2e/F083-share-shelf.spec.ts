@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
 import { signUpAs } from "./accounts";
 import { addAndOpenBook } from "./books";
 import { coverFile, submitCover } from "./covers";
@@ -79,6 +79,7 @@ test("Share makes a /s/<token> link with Copy link; a signed-out visitor reads t
     stylePath: "e2e/hide-dev-overlay.css",
     mask: [anon.getByRole("heading", { level: 1 }), anon.getByRole("listitem")],
   });
+  await expectScreens(anon, "F083-shared-shelf", { mask: [anon.getByRole("heading", { level: 1 }), anon.getByRole("listitem")] });
   await context.close();
 });
 
@@ -106,10 +107,12 @@ test("Stop sharing makes the old link not found; sharing again makes a new token
   const again = await visitSignedOut(browser, first);
   await expect(again.page.getByText(/not found|404/i).first()).toBeVisible();
   await again.context.close();
+  await expectScreens(page, "F083-shared-again", { mask: [rowDialog(page)] });
 });
 
 test("a made-up token is not found", async ({ browser }) => {
   const { page, context } = await visitSignedOut(browser, `/s/${"0".repeat(48)}`);
   await expect(page.getByText(/not found|404/i).first()).toBeVisible();
+  await expectScreens(page, "F083-made-up-token");
   await context.close();
 });

@@ -27,7 +27,7 @@ export function UpNextList({ books, moveUp, moveDown, remove, startFirst }: Prop
           </div>
           {i === 0 && (
             <form action={startFirst.bind(null, book.bookId)}>
-              <PendingSubmitButton className="min-h-11 lg:min-h-9" pendingLabel="Starting…" aria-label={`Start reading ${book.title}`}>
+              <PendingSubmitButton className="h-11 lg:h-9" pendingLabel="Starting…" aria-label={`Start reading ${book.title}`}>
                 Start reading
               </PendingSubmitButton>
             </form>

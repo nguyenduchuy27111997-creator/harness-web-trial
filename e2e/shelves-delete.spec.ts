@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
 import { signUpAs } from "./accounts";
 import { addBookOnShelf, createShelves } from "./shelves";
 import { rowAction } from "./rows";
@@ -46,4 +46,5 @@ test("shelves: delete a shelf, keeping its books", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Remove from Travel" })).toHaveCount(0);
   await expect(onShelves).toHaveCount(0);
   await expect(page.getByText("This book is on no shelves.")).toBeVisible();
+  await expectScreens(page, "F033-book-on-no-shelf", { mask: [page.getByRole("heading", { level: 1 })] });
 });

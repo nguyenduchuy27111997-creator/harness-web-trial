@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
 import { signUpAs } from "./accounts";
 import { rowAction } from "./rows";
 
@@ -62,4 +62,5 @@ test("shelves: rename a shelf, with validation and cancel", async ({ page }) => 
   await expect(field).toHaveCount(0);
   await expect(row("Trips")).toBeVisible();
   await expect(row("Changed")).toHaveCount(0);
+  await expectScreens(page, "F030-rename-cancelled");
 });

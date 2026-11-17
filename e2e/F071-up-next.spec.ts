@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
 import { signUpAs } from "./accounts";
 import { addAndOpenBook, saveStatus } from "./books";
 import { rowAction } from "./rows";
@@ -15,7 +15,7 @@ async function queueNew(page: Page, title: string) {
 }
 
 async function titles(page: Page) {
-  return page.getByRole("main").getByRole("listitem").filter({ has: page.getByRole("button", { name: /^Actions for / }) }).getByRole("link").allTextContents();
+  return page.getByRole("main").getByRole("list").getByRole("listitem").filter({ has: page.getByRole("button", { name: /^Actions for / }) }).getByRole("link").allTextContents();
 }
 
 test("Add to Up next only on Want to read books, and leaving Want to read leaves the queue", async ({ page }) => {
@@ -39,6 +39,7 @@ test("Add to Up next only on Want to read books, and leaving Want to read leaves
   await page.goto("/up-next");
   await expect(page.getByRole("heading", { name: "Up next" })).toBeVisible();
   await expect(page.getByRole("link", { name: title })).toHaveCount(0);
+  await expectScreens(page, "F071-left-queue");
 
   const finished = `Queue Finished ${t}`;
   await addAndOpenBook(page, finished, "Finished");
@@ -57,18 +58,22 @@ test("queue order: new books go last, move up and down, kept after reload", asyn
   await expect(page.getByRole("link", { name: c })).toBeVisible();
   expect(await titles(page)).toEqual([a, b, c]);
 
-  const row = (title: string) => page.getByRole("listitem").filter({ hasText: title });
+  const row = (title: string) => page.getByRole("main").getByRole("list").getByRole("listitem").filter({ hasText: title });
   const menu = async (title: string) => {
     await row(title).getByRole("button", { name: `Actions for ${title}` }).click();
+    await expect(page.getByRole("menu").getByRole("menuitem").first()).toBeVisible();
     return page.getByRole("menu");
   };
   await expect((await menu(a)).getByRole("menuitem", { name: "Move down" })).toBeVisible();
   await expect(page.getByRole("menu").getByRole("menuitem", { name: "Move up" })).toHaveCount(0);
   await page.keyboard.press("Escape");
+  await expect(page.getByRole("menu")).toHaveCount(0);
   await expect((await menu(c)).getByRole("menuitem", { name: "Move up" })).toBeVisible();
   await expect(page.getByRole("menu").getByRole("menuitem", { name: "Move down" })).toHaveCount(0);
   await page.keyboard.press("Escape");
+  await expect(page.getByRole("menu")).toHaveCount(0);
 
+  // Each move is a server action: wait for the reordered rows before the next step.
   await rowAction(page, c, "Move up");
   await expect.poll(() => titles(page)).toEqual([a, c, b]);
   await rowAction(page, a, "Move down");
@@ -87,4 +92,5 @@ test("queue order: new books go last, move up and down, kept after reload", asyn
     stylePath: "e2e/hide-dev-overlay.css",
     mask: [page.getByRole("main").getByRole("listitem")],
   });
+  await expectScreens(page, "F071-up-next", { mask: [page.getByRole("main").getByRole("listitem")] });
 });

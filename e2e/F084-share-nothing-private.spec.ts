@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
 import { signUpAs } from "./accounts";
 import { addAndOpenBook, tagOpenBook } from "./books";
 import { coverFile } from "./covers";
@@ -82,6 +82,7 @@ test("a shared page shows no notes, quotes, review, tags, other shelves, email o
     stylePath: "e2e/hide-dev-overlay.css",
     mask: [anon.getByRole("heading", { level: 1 }), anon.getByRole("listitem")],
   });
+  await expectScreens(anon, "F084-shared-nothing-private", { mask: [anon.getByRole("heading", { level: 1 }), anon.getByRole("listitem")] });
   await context.close();
 });
 
