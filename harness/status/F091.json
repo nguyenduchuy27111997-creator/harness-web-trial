@@ -1,5 +1,4 @@
 {
   "status": "passing",
-  "notes": "Placeholder initial is 30% of the cover width (72px on 240px at 375, 67.2px on 224px at 1280). Last round's FAIL came from a stale dev server; code unchanged, book-page baselines re-captured on a fresh server. Verifier PASS.",
-  "blocked_reason": null
+  "notes": "Placeholder initial is 30% of the cover width (72px on 240px at 375, 67.2px on 224px at 1280). Last round's FAIL came from a stale dev server; code unchanged, book-page baselines re-captured on a fresh server. Verifier PASS."
 }
