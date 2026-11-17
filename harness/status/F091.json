@@ -1,4 +1,4 @@
 {
   "status": "passing",
-  "notes": "Cover controls (Add/Replace, Remove) sit under the cover at size sm; Remove cover is a ghost button with red text, so Delete book is the only red fill. Header row: Edit dates and Read again (filled primary) at size sm, 44px on a phone via ui-base.css. Verifier PASS."
+  "notes": "Cover column is w-60 (240px) at lg, so Replace cover and Remove cover share one row under the cover at 1280. Remove cover is a ghost button with red text; Delete book is the only red fill. Header actions at size sm, Read again primary. Verifier PASS."
 }
