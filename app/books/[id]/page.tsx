@@ -77,13 +77,9 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
         Back to my books
       </Link>
       <header className="flex flex-col items-center gap-4 md:flex-row md:items-start md:gap-6">
-        <div className="flex w-full max-w-60 shrink-0 flex-col items-center gap-3 md:w-48 md:items-start lg:w-56">
-          <BookCover title={book.title} url={coverUrl} size="lg" className="aspect-2/3 h-auto w-full" />
-          <CoverForm
-            url={coverUrl}
-            uploadAction={uploadCoverAction.bind(null, book.id)}
-            removeAction={removeCoverAction.bind(null, book.id)}
-          />
+        {/* The cover column holds only the cover; @container sizes the placeholder initial to the cover's width. */}
+        <div className="@container w-full max-w-60 shrink-0 md:w-48 lg:w-56">
+          <BookCover title={book.title} url={coverUrl} size="lg" className="aspect-2/3 h-auto w-full text-[length:30cqw]!" />
         </div>
         <div className="flex w-full min-w-0 flex-1 flex-col gap-4 break-words">
           <div className="flex flex-col gap-1">
@@ -106,6 +102,11 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
                 action={editDates.bind(null, book.id)}
               />
             )}
+            <CoverForm
+              url={coverUrl}
+              uploadAction={uploadCoverAction.bind(null, book.id)}
+              removeAction={removeCoverAction.bind(null, book.id)}
+            />
             {book.status === "finished" && <ReadAgainButton action={readBookAgain.bind(null, book.id)} />}
             {book.status === "want_to_read" &&
               (queued ? (

@@ -35,8 +35,8 @@ export function CoverForm({ url, uploadAction, removeAction }: Props) {
 
   // F081's spec pins "Add cover" / "Replace cover" / "Remove cover" as buttons, so no dropdown menu here.
   return (
-    <section aria-label="Cover" className="flex w-full flex-col items-center gap-2 md:items-start">
-      <form action={submit} className="flex w-full flex-col items-center gap-2 md:items-start">
+    <section aria-label="Cover" className="flex flex-wrap items-center gap-2">
+      <form action={submit} className="flex flex-wrap items-center gap-2">
         {/* display:none, so it has no box; the button opens its picker. */}
         <Input
           ref={input}
@@ -54,24 +54,24 @@ export function CoverForm({ url, uploadAction, removeAction }: Props) {
           }}
         />
         {fileName ? (
-          <div className="flex w-full min-w-0 items-center gap-2">
-            <p className="min-w-0 flex-1 truncate text-subheadline text-muted-foreground">{fileName}</p>
+          <div className="flex min-w-0 items-center gap-2">
+            <p className="max-w-40 min-w-0 truncate text-subheadline text-muted-foreground">{fileName}</p>
             <PendingSubmitButton pendingLabel="Uploading…">{label}</PendingSubmitButton>
           </div>
         ) : (
-          <Button type="button" variant="outline" className="min-h-11 w-full" onClick={() => input.current?.click()}>
+          <Button type="button" variant="outline" onClick={() => input.current?.click()}>
             {label}
           </Button>
         )}
         {error && (
-          <p role="alert" className="text-center text-subheadline text-destructive md:text-left">
+          <p role="alert" className="basis-full text-subheadline text-destructive">
             {error}
           </p>
         )}
       </form>
       {url && (
-        <form action={removeAction} className="w-full">
-          <PendingSubmitButton variant="destructive" pendingLabel="Removing…" className="min-h-11 w-full">
+        <form action={removeAction}>
+          <PendingSubmitButton variant="destructive" pendingLabel="Removing…">
             Remove cover
           </PendingSubmitButton>
         </form>
