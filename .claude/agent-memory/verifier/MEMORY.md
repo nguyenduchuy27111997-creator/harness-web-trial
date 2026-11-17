@@ -9,3 +9,4 @@
 - [Realtime probes](project_realtime-probes.md) — node channel probe for topic RLS; offline+insert-while-offline for catch-up
 - [Axe sweep in MCP](project_axe-sweep-in-mcp.md) — inject axe-core via addScriptTag to check every page in light/dark + 44px
 - [e2e queue](project_e2e-queue.md) — e2e.sh is serialized across lanes, may wait >10 min; give init.sh a long timeout
+- [init nudge + skeleton delay](project_init-nudge-and-skeleton-delay.md) — rerun init.sh if it exits on Next upgrade nudge; /books skeleton fades in after 300 ms
