@@ -1,5 +1,5 @@
 {
-  "version": "5.47.1",
+  "version": "5.47.2",
   "preset": "nextjs-supabase",
   "files": {
     ".claude/agents/advisor.md": "e7a83e9817e031dfa49a2671940111ea252614b123ef8c48dc15cd3aac0b2c52",
@@ -53,7 +53,7 @@
     "e2e/screenshot.css": "4733579a4815ba825e08701d72f70e443b1498fb3f59654125ea59a3b44e71b6",
     "e2e/styleguide.spec.ts": "232792b8da052b9ea148b95ed9d7cb72d27873884f826b305d2e1d1307e4efbf",
     "harness/PRESET.md": "7ab3a6dd398ae714269201a85a7a46931554c334baf1bb62aae7bb0328f137c2",
-    "harness/agents.py": "35f04f01e9ff26a5e2dcf84cf0617fca2da69b6258c52ad2354f58a519de7c91",
+    "harness/agents.py": "55547b7c1af91bf2b8d391930caca616d085e060286b3f6104d72fa7c15838a5",
     "harness/ask.py": "c87c29c6b7a9e3e84798315053e94f3e541005dfca46c67586e1fb82b2aa57e5",
     "harness/backlog.py": "51afa0f1c90ff902cacb492fa7313f3e30ac2717b23d3de8a0367e54279b5422",
     "harness/cam.mjs": "908c2b458a8f7fdfe7c66158ced48f79ca16957952ccc75123413c99c0097bd9",
