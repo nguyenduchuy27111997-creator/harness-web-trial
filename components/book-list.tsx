@@ -17,7 +17,7 @@ export function BookList({ books, tagsByBook, coverUrls }: { books: ShelfBook[];
             ? progressPercent(book.current_page, book.total_pages)
             : null;
         return (
-          <li key={book.id} className="group relative flex items-center gap-4 py-2 lg:flex-col lg:items-stretch lg:gap-2 lg:py-0">
+          <li key={book.id} className="group relative flex min-w-0 items-center gap-4 py-2 lg:flex-col lg:items-stretch lg:gap-2 lg:py-0">
             <BookCover
               title={book.title}
               author={book.author}
@@ -28,11 +28,11 @@ export function BookList({ books, tagsByBook, coverUrls }: { books: ShelfBook[];
             <div className="flex min-w-0 flex-1 flex-col gap-1 break-words">
               <Link
                 href={`/books/${book.id}`}
-                className="link-target font-heading text-headline font-semibold after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-offset-2 focus-visible:after:ring-offset-background lg:line-clamp-2"
+                className="link-target font-heading text-headline font-semibold [overflow-wrap:anywhere] after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-offset-2 focus-visible:after:ring-offset-background lg:line-clamp-2"
               >
                 {book.title}
               </Link>
-              <span className="text-subheadline text-muted-foreground lg:line-clamp-1">{book.author}</span>
+              <span className="truncate text-subheadline text-muted-foreground lg:line-clamp-1">{book.author}</span>
               {(tagsByBook?.get(book.id)?.length ?? 0) > 0 && (
                 <ul aria-label={`Tags for ${book.title}`} className="flex flex-wrap gap-1">
                   {tagsByBook?.get(book.id)?.map((name) => (
