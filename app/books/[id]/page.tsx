@@ -79,7 +79,7 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
       <header className="flex flex-col items-center gap-4 md:flex-row md:items-start md:gap-6">
         {/* The cover column holds only the cover; @container sizes the placeholder initial to the cover's width. */}
         <div className="@container w-full max-w-60 shrink-0 md:w-48 lg:w-56">
-          <BookCover title={book.title} url={coverUrl} size="lg" className="aspect-2/3 h-auto w-full text-[length:30cqw]!" />
+          <BookCover title={book.title} url={coverUrl} size="lg" className="aspect-2/3 h-auto w-full text-cover-initial!" />
         </div>
         <div className="flex w-full min-w-0 flex-1 flex-col gap-4 break-words">
           <div className="flex flex-col gap-1">
