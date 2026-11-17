@@ -5,6 +5,7 @@ feature, and merges each PR itself once it is green. See DESIGN.md section 10.
   loop.py start [--lanes 4] [--budget 10] [--milestone M1] [--foreground]
   loop.py status [--json]          what is running, PRs, cost, questions waiting
   loop.py answer F012 "text"       answer a question; the feature goes back in the queue (a held PR gets a fix)
+  loop.py answer F012 --accept     take the dispatcher's proposal that status shows under the question
   loop.py drop L-1f2e3d "why"      stop waiting on a job for good (a rule proposal already done, a feature dropped)
   loop.py stop [--now]             stop taking work (finish what runs), or stop at once
   loop.py budget M1 20             set a milestone's budget (spent across runs); also start --milestone-budget M1=20
@@ -131,6 +132,7 @@ class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge, dispa
         if note is not None:
             job["note"] = note
         job["question"] = question
+        job.pop("proposal", None)  # a new stage is a new situation: the dispatcher's earlier proposal is stale
         self.event(job["id"], f"{stage}" + (f": {note}" if note else ""))
         self.outcome(job, stage, note)  # what came of the dispatcher's advice, if it was asked
         self.consult(job, stage)  # and its advice on this stage, if it is one it is asked about
@@ -1008,6 +1010,10 @@ def cmd_status(root, a):
         print("\nWaiting on you:")
         for job in questions:
             print(f"  {job['id']}: {job['question']}")
+            if job.get("proposal"):
+                p = job["proposal"]
+                print(f"    dispatcher suggests {p['action']} ({p['confidence']}): {p['text'][:300]}\n"
+                      f"    accept it: loop.py answer {job['id']} --accept")
     return 0
 
 
@@ -1020,8 +1026,19 @@ def cmd_drop(root, a):
 
 def cmd_answer(root, a):
     home = home_of(root)
-    write_answer(home, a.feature, a.text)
     state = json.loads((home / "state.json").read_text()) if (home / "state.json").exists() else {}
+    text = a.text
+    if a.accept:
+        proposal = (state.get("jobs", {}).get(a.feature) or {}).get("proposal")
+        if not proposal:
+            print(f"{a.feature} has no dispatcher proposal to accept (see loop.py status).", file=sys.stderr)
+            return 1
+        text = f"The owner accepted the dispatcher's suggestion ({proposal['action']}): {proposal['text']}" + (
+            f"\nThe owner adds: {a.text}" if a.text else "")
+    if not text:
+        print("answer needs a text, or --accept", file=sys.stderr)
+        return 2
+    write_answer(home, a.feature, text)
     if (state.get("running") and alive(state.get("pid"))) or not ANSWER_STARTS:
         print(f"Answer for {a.feature} recorded; the loop picks it up on its next tick.")
         return 0
@@ -1294,7 +1311,8 @@ def main():
     dr.add_argument("why")
     an = sub.add_parser("answer")
     an.add_argument("feature")
-    an.add_argument("text")
+    an.add_argument("text", nargs="?", default="")
+    an.add_argument("--accept", action="store_true", help="take the dispatcher's proposal shown in status")
     sp = sub.add_parser("stop")
     sp.add_argument("--now", action="store_true")
     bu = sub.add_parser("budget")

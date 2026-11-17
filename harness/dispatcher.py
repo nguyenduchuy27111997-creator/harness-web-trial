@@ -149,18 +149,19 @@ class Dispatcher:
             sure = float(advice.get("confidence") or 0)
         except (TypeError, ValueError):
             sure = 0.0
-        if (MODE != "decide" or event == "milestone" or action not in ACTS or sure < SURE
-                or job["stage"] not in WAITING_HUMAN or job["stage"] == "reverted"
-                or job.get("decided", 0) >= MAX_DECISIONS
-                or job.get("budget_held")  # past three times its budget: only the owner gives more
-                or (action == "rebuild" and job.get("pr"))):  # an open PR's answer fixes the branch, never rebuilds it
-            return False
         detail, why = (advice.get("detail") or "").strip(), (advice.get("why") or "").strip()
         text = {"retry": "Retry it as it is.", "retry_large": f"Retry it on the large model. {detail}",
                 "answer": detail, "rebuild": f"Rebuild it from main: {detail}",
                 "split": "Build it in these parts, one after another in this branch, keeping every acceptance "
-                         f"criterion as it is:\n{detail}"}[action].strip()
-        if not text:
+                         f"criterion as it is:\n{detail}"}.get(action, "").strip()
+        if (MODE != "decide" or event == "milestone" or action not in ACTS or sure < SURE
+                or job["stage"] not in WAITING_HUMAN or job["stage"] == "reverted"
+                or job.get("decided", 0) >= MAX_DECISIONS
+                or job.get("budget_held")  # past three times its budget: only the owner gives more
+                or (action == "rebuild" and job.get("pr"))  # an open PR's answer fixes the branch, never rebuilds it
+                or not text):
+            if not (action == "rebuild" and job.get("pr")):
+                self.propose(job, action, text, sure, why)
             return False
         job["decided"] = job.get("decided", 0) + 1
         if action == "retry_large":
@@ -171,6 +172,17 @@ class Dispatcher:
         self.event(job["id"], f"dispatcher decided: {said}")
         self.push(f"decided:{key}", lang.say("Dispatcher decided"), f"{job['id']}: {said}")
         return True
+
+    def propose(self, job, action, text, sure, why):
+        """Advice it may not act on alone becomes a proposal the owner takes with `loop.py answer <id> --accept`:
+        status shows it under the question, and the owner is told. Seen on the web trial: F090 and F091 had used their
+        two decisions; the third advice, as sound as the first two, sat in the event log as 'would: answer' while
+        both waited 10 hours, and status only said 'What should change?'."""
+        if action not in ACTS or not text or job["stage"] not in WAITING_HUMAN:
+            return
+        job["proposal"] = {"action": action, "text": text, "confidence": round(sure, 2)}
+        self.push(f"proposal:{job['id']}:{len(job.get('answers', []))}", lang.say("Dispatcher suggests"),
+                  f"{job['id']}: {action} ({sure:.2f}) {why[:120]}. Accept: loop.py answer {job['id']} --accept")
 
     def plan_milestone(self, job, advice, key):
         """Decide mode, a milestone's start: take the dispatcher's `touches` for its features not started yet, in place
