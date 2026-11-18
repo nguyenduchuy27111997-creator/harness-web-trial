@@ -37,7 +37,7 @@ export default async function QuotesPage({ searchParams }: { searchParams: Promi
             <li key={quote.id} className="flex flex-col gap-1 py-4">
               <blockquote className="max-w-prose whitespace-pre-wrap break-words font-heading text-body italic">{quote.body}</blockquote>
               <p className="text-subheadline text-muted-foreground">
-                <Link href={`/books/${quote.book.id}`} className="font-heading font-semibold text-primary hover:underline">
+                <Link href={`/books/${quote.book.id}`} className="inline-flex min-h-11 items-center font-heading font-semibold text-primary hover:underline lg:min-h-0">
                   {quote.book.title}
                 </Link>
                 {quote.page !== null && <> · Page {quote.page}</>}

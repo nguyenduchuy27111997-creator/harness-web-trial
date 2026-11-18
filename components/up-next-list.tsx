@@ -20,7 +20,7 @@ export function UpNextList({ books, moveUp, moveDown, remove, startFirst }: Prop
         <li key={book.bookId} className="flex items-center gap-3 py-3">
           <BookCover title={book.title} url={book.coverUrl} size="sm" />
           <div className="flex min-w-0 flex-1 flex-col break-words">
-            <Link href={`/books/${book.bookId}`} className="font-heading text-headline font-semibold hover:underline">
+            <Link href={`/books/${book.bookId}`} className="flex min-h-11 items-center font-heading text-headline font-semibold hover:underline lg:min-h-0">
               {book.title}
             </Link>
             <span className="text-subheadline text-muted-foreground">{book.author}</span>

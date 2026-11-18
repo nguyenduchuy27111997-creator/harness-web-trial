@@ -74,7 +74,8 @@ test("Share makes a /s/<token> link with Copy link; a signed-out visitor reads t
 
   // Read-only: no link to a book page, no form controls, no header links to anyone's pages.
   await expect(anon.locator('a[href^="/books"]')).toHaveCount(0);
-  await expect(anon.getByRole("button")).toHaveCount(0);
+  // Next's dev overlay (<nextjs-portal>, e.g. its "Security Insight" badge, mounted in a body <script>) is not the page; count the app's buttons only.
+  await expect(anon.locator("body > :not(script, nextjs-portal)").getByRole("button")).toHaveCount(0);
   await expect(anon.getByRole("textbox")).toHaveCount(0);
   await expect(anon.getByRole("link", { name: /^(Books|Stats|Shelves|Tags|Quotes|Up next)$/ })).toHaveCount(0);
 

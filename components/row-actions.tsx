@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 
 type Item = { label: string; onSelect: () => void; destructive?: boolean };
 
-// A row's trailing "Actions for <name>" menu. A destructive item sits after a separator.
+// A row's trailing "Actions for <name>" menu. A destructive item sits after a separator (unless it is the only item).
 export function RowActions({ name, items }: { name: string; items: Item[] }) {
   return (
     <DropdownMenu>
@@ -17,10 +17,10 @@ export function RowActions({ name, items }: { name: string; items: Item[] }) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        {items.map((item) => (
+        {items.map((item, i) => (
           <Fragment key={item.label}>
-            {item.destructive && <DropdownMenuSeparator />}
-            <DropdownMenuItem onSelect={item.onSelect} className={item.destructive ? "text-destructive focus:text-destructive" : undefined}>
+            {item.destructive && i > 0 && <DropdownMenuSeparator />}
+            <DropdownMenuItem onSelect={item.onSelect} className={`min-h-11 lg:min-h-0 ${item.destructive ? "text-destructive focus:text-destructive" : ""}`}>
               {item.label}
             </DropdownMenuItem>
           </Fragment>
