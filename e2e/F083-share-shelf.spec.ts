@@ -33,7 +33,9 @@ async function sharedShelfSetup(page: Page, id: string) {
 async function share(page: Page, shelf: string) {
   await rowAction(page, shelf, "Share");
   await rowDialog(page).getByRole("button", { name: "Share" }).click();
+  await expect(rowDialog(page)).toBeVisible();
   await expect(rowDialog(page).getByRole("button", { name: "Copy link" })).toBeVisible();
+  await expect(linkText(page)).toBeVisible();
   const text = (await linkText(page).textContent()) ?? "";
   const match = text.match(/(\S*\/s\/[0-9a-f]{48})/);
   expect(match).not.toBeNull();
@@ -58,6 +60,8 @@ test("Share makes a /s/<token> link with Copy link; a signed-out visitor reads t
   const url = await share(page, shelf);
   expect(url).toMatch(/\/s\/[0-9a-f]{48}$/);
   await expectAccessible(page);
+  await page.keyboard.press("Escape");
+  await expect(rowDialog(page)).toHaveCount(0);
 
   const { page: anon, context } = await visitSignedOut(browser, url);
   await expect(anon.getByRole("heading", { level: 1, name: shelf })).toBeVisible();
