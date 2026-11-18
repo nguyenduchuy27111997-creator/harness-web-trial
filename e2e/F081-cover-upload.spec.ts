@@ -81,6 +81,6 @@ test("a refused replacement keeps the current cover", async ({ page }) => {
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F081-cover-upload.png", {
     stylePath: "e2e/hide-dev-overlay.css",
-    mask: [page.getByRole("heading", { level: 1 }), cover, page.locator("time")],
+    mask: [page.getByRole("heading", { level: 1 }), cover, page.locator("p", { has: page.locator("time") })],
   });
 });

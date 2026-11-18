@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "F081 cover screenshot now masks the whole 'Started on' paragraph (p containing time), so a date of any width no longer moves the mask. Baseline regenerated. Verifier PASS (failure reproduced with a pinned date; passes pinned and with today's date)."
+}
