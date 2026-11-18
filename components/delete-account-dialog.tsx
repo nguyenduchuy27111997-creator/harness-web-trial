@@ -18,7 +18,7 @@ export function DeleteAccountDialog({ action }: Props) {
   return (
     <Dialog onOpenChange={() => setValue("")}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="self-start">
+        <Button variant="destructive" className="self-start dark:bg-destructive/10 dark:hover:bg-destructive/20">
           Delete account
         </Button>
       </DialogTrigger>
@@ -47,7 +47,7 @@ export function DeleteAccountDialog({ action }: Props) {
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="outline">
+              <Button type="button" variant="secondary">
                 Cancel
               </Button>
             </DialogClose>

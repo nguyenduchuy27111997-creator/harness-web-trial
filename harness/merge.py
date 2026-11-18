@@ -44,6 +44,23 @@ class Merge:
             return "fail"
         return "pass" if all(b in ("pass", "skipping") for b in buckets) else "pending"
 
+    def e2e_packet(self, job):
+        """The failed runs' Playwright artifacts (test-results/, playwright-report/ with the dev server's log),
+        downloaded and packed small: before, the doctor and the fixer saw 120 lines of text log and nothing of the
+        page, its console or its requests."""
+        import e2e_packet
+        dest = self.home / "ci-artifacts" / job["id"]
+        dirs = []
+        for rid in job.get("ci_runs", []):
+            d = dest / str(rid)
+            if not d.exists():
+                gh("run", "download", str(rid), "-D", str(d), "-p", "playwright-report*", cwd=self.root, check=False)
+            dirs.append(str(d))
+        try:
+            return e2e_packet.packet(dirs)
+        except Exception as e:  # a packet is extra help; a fix still starts without it
+            return f"(the e2e packet could not be made: {e!r})"[:300]
+
     def not_started(self, run_ids):
         """True when a failed run's jobs never started (no runner, no steps): GitHub refused to run them,
         for example for billing. A real run saw it as a failure and reverted a good feature."""
@@ -97,6 +114,11 @@ class Merge:
         return gh("pr", "view", str(job["pr"]), "--json", "headRefOid", "--jq", ".headRefOid", cwd=self.root,
                   check=False).stdout.strip()
 
+    def conflicts_with_main(self, job):
+        with GIT_LOCK:
+            git("fetch", "-q", "origin", cwd=job["worktree"], check=False)
+        return git("merge-tree", "--write-tree", "origin/main", "HEAD", cwd=job["worktree"], check=False).returncode == 1
+
     def advance_ci(self, job):
         # The head before its checks: a push in between gets checks of its own (pending), and a merge of
         # this older head is refused, so what merges is always a commit CI passed.
@@ -104,6 +126,13 @@ class Merge:
         result = self.pr_checks(job)
         if result == "none":
             if any((Path(job["worktree"]) / ".github/workflows").glob("*.y*ml")):
+                # GitHub runs no pull_request checks on a PR that conflicts with its base. Seen on the web trial:
+                # F091 sat in ci for 16 hours with "no checks reported", conflicting with main on a baseline PNG.
+                if job["base"] == "main" and self.conflicts_with_main(job):
+                    if not job.get("resolve_waits"):
+                        self.event(job["id"], "conflicts with main, so GitHub runs no checks on it; rebasing")
+                    if self.rebase(job, "origin/main"):
+                        self.set_stage(job, "ci", note="rebased: it conflicted with main")
                 return  # GitHub has not registered this push's checks yet (F083 merged red on a count of 5 old looks)
             # A repo without workflows: give GitHub a moment, counted for this head only.
             seen = job.get("no_checks")
@@ -157,9 +186,12 @@ class Merge:
             monitor.note_ci_failures(self.state, job["id"], log)  # a test failing on many PRs is shared (A7)
             excerpt = ci_log.trim(log) if log.strip() else ""
             job["ci_log"] = excerpt  # the CI doctor reads it before the fix session (stages.work_fix)
+            job["ci_packet"] = self.e2e_packet(job)  # and what the failed e2e tests left: trace, console, requests
             return self.start_fix(job, f"CI failed on the PR ({job['pr_url']}). Run ./scripts/check.sh, find the failure "
                                        "and fix it." + (f"\n\nThe failed steps' log (last lines):\n```\n{excerpt}\n```"
-                                                        if excerpt else ""))
+                                                        if excerpt else "")
+                                  + (f"\n\nWhat the failed e2e tests left (harness/e2e_packet.py):\n```\n"
+                                     f"{job['ci_packet']}\n```" if job["ci_packet"] else ""))
         job.pop("infra", None)
         job["ci_sha"] = head or git("rev-parse", "HEAD", cwd=job["worktree"]).stdout.strip()  # what CI passed
         if job["base"] != "main":

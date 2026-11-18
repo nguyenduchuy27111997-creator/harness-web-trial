@@ -15,8 +15,16 @@ For a failed feature, a held PR or a red main, reply with one JSON object and no
 {"action": "retry" | "retry_large" | "split" | "answer" | "rebuild" | "drop" | "ask_owner",
  "detail": "<for answer: the answer you would give the coder; for split: the smaller features, one per line; else what to do>",
  "why": "<one or two sentences: the cause you found>",
- "confidence": <0.0 to 1.0>}
+ "confidence": <0.0 to 1.0>,
+ "evidence": ["<what shows the cause: a log line, a commit, a file:line, a finding>", ...],
+ "unknowns": ["<what you could not see that would change the advice>", ...],
+ "summary": "<one line, at most 120 characters: what is wrong, for the owner's dashboard>",
+ "options": [{"label": "<2 to 6 words>", "answer": "<the whole answer the owner would give, as you would write detail>"}, ...]}
 ```
+
+`evidence` is what you read, quoted short; `why` is your reading of it. Put in `unknowns` what you did not or could not check instead of guessing it; lower the confidence for each one that matters.
+
+`options` are 2 to 4 answers the owner can pick from on the dashboard, yours first: each one complete on its own and different in what it does (fix on this branch, rebuild, retry, accept the gap as a follow-up, …). Leave them out only when there is nothing to choose.
 
 - `retry`: the cause was the machine or a flake; build it again as it is.
 - `retry_large`: the code is fine in approach but needs a stronger model.

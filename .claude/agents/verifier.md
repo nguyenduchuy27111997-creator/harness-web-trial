@@ -28,4 +28,8 @@ EVIDENCE:
 - <step>: <what you saw> (<screenshot path, if any>)
 PROBLEMS:
 - <problem, where, how to reproduce>   (empty if PASS)
+NOT CHECKED:
+- <what you could not see or try, and why>   (empty if nothing)
 ```
+
+A criterion is PASS only on what you observed as a user (a screenshot, a response, the output). What you could not try (a second account, an email, a slow network, a width) goes under NOT CHECKED, never into a PASS.

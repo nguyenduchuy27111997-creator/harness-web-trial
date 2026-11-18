@@ -40,14 +40,17 @@ class Dispatcher:
         # of its first (same attempt, same fix round) and was never asked about.
         key = f"{job['id']}:{event}:{job.get('attempts', 0)}:{job.get('fix_rounds', 0)}:{len(job.get('answers', []))}"
         asked = self.state.setdefault("consulted", [])
-        if key in asked:
+        # Asked already, but before it wrote the owner's options (kit < 5.50): asked once more for them.
+        unpicked = stage in WAITING_HUMAN and not job.get("choices") and job.get("options_asked") != key
+        if key in asked and not unpicked:
             return
-        asked[:] = asked[-199:] + [key]
+        asked[:] = [k for k in asked if k != key][-199:] + [key]
+        job["options_asked"] = key
         wt = job.get("worktree")
         probe = {**job, "id": f"{job['id']}-dispatcher",
                  "worktree": wt if wt and Path(wt).exists() else str(self.root)}  # its port, model, telemetry go here
         prompt = self.brief(job, event)
-        box = {"began": time.time()}
+        box = {"began": time.time(), "prompt": prompt}
         self.caps[probe["id"]] = CAP  # the run's budget counts it while it runs
 
         def ask():
@@ -85,7 +88,11 @@ class Dispatcher:
                  "question to the owner": job.get("question"), "attempts": job.get("attempts", 0),
                  "fix rounds": job.get("fix_rounds", 0), "last failure": job.get("last_failure"),
                  "review findings": job.get("last_bugs") or job.get("findings"), "branch": job.get("branch"),
-                 "pr": job.get("pr_url"), "cost so far": round(job.get("cost", 0), 2)}
+                 "pr": job.get("pr_url"), "cost so far": round(job.get("cost", 0), 2),
+                 "work kept for the next session (it starts from this, so nothing was lost)":
+                     {k: v for k, v in {"commits from the last failed fix round": job.get("kept"),
+                                        "code from the last build attempt": job.get("kept_attempt"),
+                                        "uncommitted work stashed": job.get("stash")}.items() if v}}
         return (f"Event: {event}. The job, as data:\n```json\n{json.dumps({k: v for k, v in facts.items() if v}, indent=1)[:8000]}\n```\n"
                 "Its recent events:\n```\n" + "\n".join(mine) + "\n```")
 
@@ -96,7 +103,8 @@ class Dispatcher:
             self.swept = True
             day = time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(time.time() - 86400))
             for job in list(self.state["jobs"].values()):
-                if job["stage"] in EVENTS and job.get("updated", "") >= day:  # not every old failure: the last day's
+                if job["stage"] in EVENTS and (job.get("updated", "") >= day  # not every old failure: the last day's
+                                               or (job["stage"] in WAITING_HUMAN and not job.get("choices"))):
                     self.consult(job, job["stage"])
         for key, (t, box, fid, event, probe) in list(getattr(self, "advice", {}).items()):
             if t.is_alive():
@@ -130,6 +138,10 @@ class Dispatcher:
                              "cost": round(cost, 4), **({"error": error} if failed else {})})
             if job is not None and event != "milestone":
                 job["advice"] = key  # what happens to the job next is written beside it (outcome)
+                if not failed and job["stage"] in WAITING_HUMAN:
+                    job["choices"] = choices(advice)
+                    # Kept for `eval.py agents`: graded later on what the owner did with this situation.
+                    job["dispatcher_case"] = self.record_input("dispatcher", job, box["prompt"], text or "")
             if failed:
                 self.event(fid, f"dispatcher could not answer: {error[:160]}")
                 continue
@@ -149,18 +161,19 @@ class Dispatcher:
             sure = float(advice.get("confidence") or 0)
         except (TypeError, ValueError):
             sure = 0.0
-        if (MODE != "decide" or event == "milestone" or action not in ACTS or sure < SURE
-                or job["stage"] not in WAITING_HUMAN or job["stage"] == "reverted"
-                or job.get("decided", 0) >= MAX_DECISIONS
-                or job.get("budget_held")  # past three times its budget: only the owner gives more
-                or (action == "rebuild" and job.get("pr"))):  # an open PR's answer fixes the branch, never rebuilds it
-            return False
         detail, why = (advice.get("detail") or "").strip(), (advice.get("why") or "").strip()
         text = {"retry": "Retry it as it is.", "retry_large": f"Retry it on the large model. {detail}",
                 "answer": detail, "rebuild": f"Rebuild it from main: {detail}",
                 "split": "Build it in these parts, one after another in this branch, keeping every acceptance "
-                         f"criterion as it is:\n{detail}"}[action].strip()
-        if not text:
+                         f"criterion as it is:\n{detail}"}.get(action, "").strip()
+        if (MODE != "decide" or event == "milestone" or action not in ACTS or sure < SURE
+                or job["stage"] not in WAITING_HUMAN or job["stage"] == "reverted"
+                or job.get("decided", 0) >= MAX_DECISIONS
+                or job.get("budget_held")  # past three times its budget: only the owner gives more
+                or (action == "rebuild" and job.get("pr"))  # an open PR's answer fixes the branch, never rebuilds it
+                or not text):
+            if not (action == "rebuild" and job.get("pr")):
+                self.propose(job, action, text, sure, why)
             return False
         job["decided"] = job.get("decided", 0) + 1
         if action == "retry_large":
@@ -171,6 +184,17 @@ class Dispatcher:
         self.event(job["id"], f"dispatcher decided: {said}")
         self.push(f"decided:{key}", lang.say("Dispatcher decided"), f"{job['id']}: {said}")
         return True
+
+    def propose(self, job, action, text, sure, why):
+        """Advice it may not act on alone becomes a proposal the owner takes with `loop.py answer <id> --accept`:
+        status shows it under the question, and the owner is told. Seen on the web trial: F090 and F091 had used their
+        two decisions; the third advice, as sound as the first two, sat in the event log as 'would: answer' while
+        both waited 10 hours, and status only said 'What should change?'."""
+        if action not in ACTS or not text or job["stage"] not in WAITING_HUMAN:
+            return
+        job["proposal"] = {"action": action, "text": text, "confidence": round(sure, 2)}
+        self.push(f"proposal:{job['id']}:{len(job.get('answers', []))}", lang.say("Dispatcher suggests"),
+                  f"{job['id']}: {action} ({sure:.2f}) {why[:120]}. Accept: loop.py answer {job['id']} --accept")
 
     def plan_milestone(self, job, advice, key):
         """Decide mode, a milestone's start: take the dispatcher's `touches` for its features not started yet, in place
@@ -210,12 +234,23 @@ class Dispatcher:
         if not key or stage in WAITING_HUMAN:
             return
         job.pop("advice")
+        if job.get("dispatcher_case"):
+            self.record_outcome(job.pop("dispatcher_case"), {"stage": stage, "answer": (job.get("answers") or [""])[-1][:4000]})
         self.decide_log({"key": key, "at": now(), "job": job["id"], "actual": {
             "stage": stage, "note": note, **({"answer": job["answers"][-1]} if job.get("answers") else {})}})
 
     def decide_log(self, row):
         with (self.home / "decisions.jsonl").open("a") as f:
             f.write(json.dumps(row) + "\n")
+
+
+def choices(advice):
+    """The one-line summary and the answers the owner can pick from on the dashboard (it copies `loop.py answer`)."""
+    opts = [{"label": str(o["label"])[:60], "answer": str(o["answer"])} for o in advice.get("options") or []
+            if isinstance(o, dict) and o.get("label") and o.get("answer")][:4]
+    listed = lambda k: [str(x)[:300] for x in advice.get(k) or [] if x][:5]  # noqa: E731
+    return {"summary": str(advice.get("summary") or advice.get("why") or "")[:200], "options": opts,
+            "evidence": listed("evidence"), "unknowns": listed("unknowns")}
 
 
 def parse(text):

@@ -1,8 +1,9 @@
 "use client";
 
 import { useActionState, useEffect, useId, useRef, useState } from "react";
-import { FormField } from "@/components/form-field";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import type { GoalFormState } from "@/lib/goals";
 
 type Props = {
@@ -10,23 +11,34 @@ type Props = {
   submitLabel: string;
   action: (prev: GoalFormState, formData: FormData) => Promise<GoalFormState>;
   onCancel?: () => void;
+  // The id of a prompt sentence on the page that labels the field; without it the field shows "Reading goal".
+  labelledBy?: string;
+  // "outline" when another button on the page is the primary one (the empty year's "Go to my books").
+  submitVariant?: "default" | "outline";
 };
 
-export function GoalForm({ goal, submitLabel, action, onCancel }: Props) {
+// The short number field and its buttons sit on one row, the error under them.
+export function GoalForm({ goal, submitLabel, action, onCancel, labelledBy, submitVariant }: Props) {
   const id = useId();
   const [state, formAction, pending] = useActionState(action, {} as GoalFormState);
+  const inputId = `${id}-goal`;
+  const errorId = `${inputId}-error`;
+  const error = state.fieldErrors?.goal ?? state.formError;
   return (
     <form action={formAction} noValidate className="flex flex-col gap-2">
-      <FormField
-        id={`${id}-goal`}
-        name="goal"
-        label="Reading goal"
-        inputMode="numeric"
-        defaultValue={state.values?.goal ?? goal ?? ""}
-        error={state.fieldErrors?.goal ?? state.formError}
-      />
-      <div className="flex gap-2">
-        <Button type="submit" disabled={pending}>
+      {!labelledBy && <Label htmlFor={inputId}>Reading goal</Label>}
+      <div className="flex items-center gap-2">
+        <Input
+          id={inputId}
+          name="goal"
+          inputMode="numeric"
+          className="w-24"
+          aria-labelledby={labelledBy}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
+          defaultValue={state.values?.goal ?? goal ?? ""}
+        />
+        <Button type="submit" variant={submitVariant} disabled={pending}>
           {pending ? "Saving…" : submitLabel}
         </Button>
         {onCancel && (
@@ -35,6 +47,11 @@ export function GoalForm({ goal, submitLabel, action, onCancel }: Props) {
           </Button>
         )}
       </div>
+      {error && (
+        <p id={errorId} className="text-subheadline text-destructive">
+          {error}
+        </p>
+      )}
     </form>
   );
 }

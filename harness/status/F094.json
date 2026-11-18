@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Stats tiles (components/stats-tiles.tsx, 2 per row on a phone, 3 from md; the old sentences stay as sr-only, the tiles are aria-hidden), SVG goal ring (components/stats-goal-ring.tsx, progressbar 'Reading goal progress'), MonthlyChart rows under md and columns from md in bg-chart-1, skeleton loading. Older stats baselines updated (stats, F058, F059, F060, reading/change/cancel-goal). Empty year (decision 0027, design M9 updated with architect PASS): EmptyYear block in components/empty-year.tsx; chart stays with 12 zero months on /stats; 'Year in review' in the header row; 'Reading goal' h2. Verifier PASS."
+}
