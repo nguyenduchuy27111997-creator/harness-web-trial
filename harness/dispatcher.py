@@ -50,7 +50,7 @@ class Dispatcher:
         probe = {**job, "id": f"{job['id']}-dispatcher",
                  "worktree": wt if wt and Path(wt).exists() else str(self.root)}  # its port, model, telemetry go here
         prompt = self.brief(job, event)
-        box = {"began": time.time()}
+        box = {"began": time.time(), "prompt": prompt}
         self.caps[probe["id"]] = CAP  # the run's budget counts it while it runs
 
         def ask():
@@ -140,6 +140,8 @@ class Dispatcher:
                 job["advice"] = key  # what happens to the job next is written beside it (outcome)
                 if not failed and job["stage"] in WAITING_HUMAN:
                     job["choices"] = choices(advice)
+                    # Kept for `eval.py agents`: graded later on what the owner did with this situation.
+                    job["dispatcher_case"] = self.record_input("dispatcher", job, box["prompt"], text or "")
             if failed:
                 self.event(fid, f"dispatcher could not answer: {error[:160]}")
                 continue
@@ -232,6 +234,8 @@ class Dispatcher:
         if not key or stage in WAITING_HUMAN:
             return
         job.pop("advice")
+        if job.get("dispatcher_case"):
+            self.record_outcome(job.pop("dispatcher_case"), {"stage": stage, "answer": (job.get("answers") or [""])[-1][:4000]})
         self.decide_log({"key": key, "at": now(), "job": job["id"], "actual": {
             "stage": stage, "note": note, **({"answer": job["answers"][-1]} if job.get("answers") else {})}})
 

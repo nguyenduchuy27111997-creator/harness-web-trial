@@ -727,15 +727,17 @@ class Stages:
         problems, extra = job["fix_with"], 0.0
         if job.get("ci_log"):  # a cheap look at the red log first: the fix starts from the cause, not the noise
             packet = job.pop("ci_packet", "")
+            doctor_prompt = (f"CI failed on feature {job['id']}'s PR. The failed steps' log:\n```\n{job.pop('ci_log')}\n```\n"
+                             + (f"What the failed e2e tests left (trace, console, failed requests, dev server):\n```\n"
+                                f"{packet}\n```\n" if packet else "")
+                             + "Find the cause in the code. Do not edit anything.")
             extra, subtype, text = self.claude(
-                job, f"CI failed on feature {job['id']}'s PR. The failed steps' log:\n```\n{job.pop('ci_log')}\n```\n"
-                     + (f"What the failed e2e tests left (trace, console, failed requests, dev server):\n```\n{packet}\n```\n"
-                        if packet else "")
-                     + "Find the cause in the code. Do not edit anything.", DOCTOR_MODEL, turns=30, lane_note=False,
+                job, doctor_prompt, DOCTOR_MODEL, turns=30, lane_note=False,
                 agent="ci-doctor", cap=min(0.3, self.caps[job["id"]]))
             self.merge_telemetry(job)
             if subtype == "success" and text.strip():
                 problems += f"\n\nThe CI doctor's diagnosis (check it, it may be wrong):\n{text.strip()}"
+                job["doctor_case"] = self.record_input("ci-doctor", job, doctor_prompt, text.strip())
         review = problems.startswith("The reviewer found")
         prompt = (f"You are continuing feature {job['id']} ({job['title']}) on this branch. Fix only these problems:\n"
                   f"{problems}\n\n"
@@ -767,6 +769,21 @@ class Stages:
             stats["off"] = True
             self.event("loop", f"first fixes on {self.opts.model}: {stats['ok']}/{stats['tries']} held; back to "
                                f"{self.opts.large_model} for all fixes")
+
+    def record_input(self, agent, job, prompt, reply):
+        """An agent's input and reply, kept for `eval.py agents harvest`: once the outcome is known (what the fix
+        changed, what the owner answered), it becomes a case that later kit versions are graded on. Returns its id."""
+        case = f"{agent}:{job['id']}:{int(time.time())}"
+        sha = git("rev-parse", "HEAD", cwd=job.get("worktree") or self.root, check=False).stdout.strip()
+        (self.home / "eval").mkdir(exist_ok=True)
+        with (self.home / "eval/agent-inputs.jsonl").open("a") as f:
+            f.write(json.dumps({"case": case, "agent": agent, "job": job["id"], "sha": sha, "at": now(),
+                                "prompt": prompt[:20000], "reply": reply[:4000]}) + "\n")
+        return case
+
+    def record_outcome(self, case, outcome):
+        with (self.home / "eval/agent-inputs.jsonl").open("a") as f:
+            f.write(json.dumps({"case": case, "outcome": outcome, "at": now()}) + "\n")
 
     def finish_fix(self, job, res):
         wt = job["worktree"]
@@ -814,6 +831,9 @@ class Stages:
                    or f.get("notes") or "the fix did not keep the feature passing")
             return self.set_stage(job, "held", note="fix failed",
                                   question=f"{job['id']}: the automatic fix failed ({why[:300]}). What should change?")
+        if job.get("doctor_case"):  # what the fix really changed: the answer the CI doctor's eval case is graded on
+            files = git("diff", "--name-only", job["fix_base"], "HEAD", cwd=wt, check=False).stdout.split()
+            self.record_outcome(job.pop("doctor_case"), {"fixed_files": files})
         if git("rev-parse", "HEAD", cwd=wt).stdout.strip() == job["fix_base"]:
             # Nothing to fix: CI's failure was the machine, not the code. Seen for real: a docs-only design PR failed
             # e2e at load 61, both fix sessions changed nothing, and the loop read the same failed run twice.
