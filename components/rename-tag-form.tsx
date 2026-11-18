@@ -19,7 +19,7 @@ export function RenameTagList({ tags }: { tags: Row[] }) {
       {tags.map((tag) => (
         <li key={tag.id} className="py-3">
           <div className="flex items-center gap-3">
-            <Link href={`/books?tag=${encodeURIComponent(tag.name)}`} className="inline-flex min-h-11 min-w-0 items-center truncate text-headline text-primary hover:underline">
+            <Link href={`/books?tag=${encodeURIComponent(tag.name)}`} className="flex min-h-11 min-w-0 flex-1 items-center truncate text-headline text-primary hover:underline">
               {tag.name}
             </Link>
             <span className="ml-auto text-subheadline tabular-nums text-muted-foreground">{tag.count === 1 ? "1 book" : `${tag.count} books`}</span>
