@@ -97,6 +97,11 @@ class Merge:
         return gh("pr", "view", str(job["pr"]), "--json", "headRefOid", "--jq", ".headRefOid", cwd=self.root,
                   check=False).stdout.strip()
 
+    def conflicts_with_main(self, job):
+        with GIT_LOCK:
+            git("fetch", "-q", "origin", cwd=job["worktree"], check=False)
+        return git("merge-tree", "--write-tree", "origin/main", "HEAD", cwd=job["worktree"], check=False).returncode == 1
+
     def advance_ci(self, job):
         # The head before its checks: a push in between gets checks of its own (pending), and a merge of
         # this older head is refused, so what merges is always a commit CI passed.
@@ -104,6 +109,13 @@ class Merge:
         result = self.pr_checks(job)
         if result == "none":
             if any((Path(job["worktree"]) / ".github/workflows").glob("*.y*ml")):
+                # GitHub runs no pull_request checks on a PR that conflicts with its base. Seen on the web trial:
+                # F091 sat in ci for 16 hours with "no checks reported", conflicting with main on a baseline PNG.
+                if job["base"] == "main" and self.conflicts_with_main(job):
+                    if not job.get("resolve_waits"):
+                        self.event(job["id"], "conflicts with main, so GitHub runs no checks on it; rebasing")
+                    if self.rebase(job, "origin/main"):
+                        self.set_stage(job, "ci", note="rebased: it conflicted with main")
                 return  # GitHub has not registered this push's checks yet (F083 merged red on a count of 5 old looks)
             # A repo without workflows: give GitHub a moment, counted for this head only.
             seen = job.get("no_checks")
