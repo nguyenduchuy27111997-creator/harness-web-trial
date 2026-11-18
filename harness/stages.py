@@ -319,13 +319,35 @@ class Stages:
             job["stash"] = sha
             self.event(job["id"], f"uncommitted work kept as stash {sha[:10]}; the next session starts from it")
 
+    def keep_attempt(self, job):
+        """A failed build attempt whose code is sound (it only left work uncommitted, or only the test-writer's test
+        was wrong) keeps its commits for the next attempt, which starts from main again. Seen on the web trial: since
+        Nov 10, 16 of 22 retries were one of those two, and each rebuilt the app from scratch (F094 and F096 three
+        times each)."""
+        wt = job["worktree"]
+        head = git("rev-parse", "HEAD", cwd=wt).stdout.strip()
+        if head and head != job.get("base_sha"):
+            git("update-ref", f"refs/harness/unfinished/{job['id']}-{int(time.time())}", head, cwd=wt)
+            job["kept_attempt"] = {"base": job["base_sha"], "head": head, "skip_e2e": job.get("locked_tests") is not None}
+
     def carried_work(self, job):
-        sha = job.pop("stash", None)
-        if not sha:
-            return ""
-        return (f"\n\nThe last session of this feature ended without committing. Its work is kept in git stash {sha} "
-                f"(see it with `git stash show -p {sha}`). Start from it: `git stash apply {sha}`, keep what is right, "
-                "fix the rest, and commit as soon as a step works, so a session cut short keeps its work.")
+        kept, sha, out = job.pop("kept", None), job.pop("stash", None), ""
+        attempt = job.pop("kept_attempt", None)
+        if attempt:
+            spec = f"{attempt['base']} {attempt['head']} -- ." + (" ':(exclude)e2e/'" if attempt["skip_e2e"] else "")
+            out += (f"\n\nThe last attempt's code is kept (its commits are {attempt['base'][:10]}..{attempt['head'][:10]}). "
+                    f"Do not write it again: bring it back with `git diff {spec} | git apply --3way`, check it against "
+                    "the acceptance, finish what is missing and commit."
+                    + (" Its e2e test is left out: use the test-writer's new one." if attempt["skip_e2e"] else ""))
+        if kept:
+            out += (f"\n\nThe last fix round's commits did not finish the feature (cut off, or not verified), so the "
+                    f"branch was set back; they are kept at {kept} (`git log HEAD..{kept}`). Start from them: "
+                    f"`git merge --ff-only {kept}`, then do what is left.")
+        if sha:
+            out += (f"\n\nThe last session of this feature ended without committing. Its work is kept in git stash {sha} "
+                    f"(see it with `git stash show -p {sha}`). Start from it: `git stash apply {sha}`, keep what is right, "
+                    "fix the rest, and commit as soon as a step works, so a session cut short keeps its work.")
+        return out
 
     def finish_build(self, job, res):
         wt = job["worktree"]
@@ -340,6 +362,8 @@ class Stages:
             why = ("the architect still failed the design after 3 rounds: "
                    + proof.read_text().split("PROBLEMS:", 1)[-1].strip()[:1500]) if rejected else \
                 "the session left uncommitted work (stashed)"
+            if not job.get("kind"):
+                self.keep_attempt(job)
             self.stash_work(job, f"loop: uncommitted work from {job['id']}")
             # A feature that committed "needs a human" and left a stray file (a screenshot, say) still needs one:
             # building it again would hit the same wall. Seen for real in a sandboxed web run.
@@ -384,6 +408,7 @@ class Stages:
         if job.get("locked_tests") is not None and (issue := self.handoff(job)[1]).exists():
             job["test_issue"] = issue.read_text()[:1500]  # the next attempt's test-writer reads it
             self.event(job["id"], "the coder found the test wrong; the test-writer writes it again")
+            self.keep_attempt(job)
         return self.retry(job, f.get("notes") or f"ended {f.get('status', 'unknown')}")
 
     def guard(self, job, source, base):
@@ -573,7 +598,9 @@ class Stages:
         listing = "\n".join(f"{n}. {lines[i]}" for n, i in enumerate(bugs, 1))
         cost, subtype, text = self.claude(
             job, f"Diff: `git diff {span}` (feature {job['id']}). Findings:\n{listing}\n\nFor each finding, reply one "
-                 "line `N: KEEP` if it is a real bug in this diff, or `N: DROP — <why not>`. Nothing else.",
+                 "line `N: KEEP` if it is a real bug in this diff, or `N: DROP — <why not>`. A finding with no "
+                 "`Evidence:`, or only `(inferred)` evidence, is DROP unless you find the failing case yourself. "
+                 "Nothing else.",
             SKEPTIC_MODEL, turns=40, lane_note=False, agent="skeptic")
         self.merge_telemetry(job)
         if subtype != "success":
@@ -699,18 +726,33 @@ class Stages:
             return {"cost": cost, "subtype": subtype}
         problems, extra = job["fix_with"], 0.0
         if job.get("ci_log"):  # a cheap look at the red log first: the fix starts from the cause, not the noise
+            packet = job.pop("ci_packet", "")
+            doctor_prompt = (f"CI failed on feature {job['id']}'s PR. The failed steps' log:\n```\n{job.pop('ci_log')}\n```\n"
+                             + (f"What the failed e2e tests left (trace, console, failed requests, dev server):\n```\n"
+                                f"{packet}\n```\n" if packet else "")
+                             + "Find the cause in the code. Do not edit anything.")
             extra, subtype, text = self.claude(
-                job, f"CI failed on feature {job['id']}'s PR. The failed steps' log:\n```\n{job.pop('ci_log')}\n```\n"
-                     "Find the cause in the code. Do not edit anything.", DOCTOR_MODEL, turns=30, lane_note=False,
-                agent="ci-doctor", cap=min(0.3, self.caps[job["id"]]))
+                job, doctor_prompt, DOCTOR_MODEL, turns=30, lane_note=False,
+                agent="ci-doctor", cap=min(0.6 if packet else 0.3, self.caps[job["id"]]))  # a packet is more to read
             self.merge_telemetry(job)
             if subtype == "success" and text.strip():
                 problems += f"\n\nThe CI doctor's diagnosis (check it, it may be wrong):\n{text.strip()}"
+                job["doctor_case"] = self.record_input("ci-doctor", job, doctor_prompt, text.strip())
+            else:  # seen on the web trial: F090's red CI left no diagnosis and nothing said so
+                self.event(job["id"], f"ci doctor gave no diagnosis ({subtype}); the fix starts from the log alone")
         review = problems.startswith("The reviewer found")
         prompt = (f"You are continuing feature {job['id']} ({job['title']}) on this branch. Fix only these problems:\n"
                   f"{problems}\n\n"
                   + ("Fix each finding, or, if one is not a real bug, leave it and say why. End your reply with one "
                      "line per finding: `FIXED: <finding>` or `REJECTED: <finding> — <why>`.\n\n" if review else "")
+                  + "Commit after each problem you fix (a work-in-progress commit is fine; the last one must pass the "
+                    "gate), so a round cut off by time or budget keeps what it did: on the web trial, F091's rounds timed "
+                    "out with their work uncommitted, round after round.\n\n"
+                  + "If a passing feature's e2e spec stands in the way because the milestone design moves what it clicks "
+                    "(a control into a menu, a form into a dialog), you may amend the design yourself: add the spec to "
+                    "`## Specs that move` in docs/design/<M>.md (the spec, the feature that owns it, this feature, how its "
+                    "steps change, never what it checks), spawn the architect subagent on <M> for a fresh PASS, then move "
+                    "only its steps. Seen on the web trial: F093 waited on a human through four fix rounds for exactly this.\n\n"
                   + f"Then run ./scripts/check.sh, spawn the verifier subagent for {job['id']} again, "
                   f"keep harness/status/{job['id']}.json passing only if the verifier passes (set it blocked with "
                   f"blocked_reason failed otherwise), add a short entry at the top of harness/log/{job['id']}.md, "
@@ -737,6 +779,21 @@ class Stages:
             stats["off"] = True
             self.event("loop", f"first fixes on {self.opts.model}: {stats['ok']}/{stats['tries']} held; back to "
                                f"{self.opts.large_model} for all fixes")
+
+    def record_input(self, agent, job, prompt, reply):
+        """An agent's input and reply, kept for `eval.py agents harvest`: once the outcome is known (what the fix
+        changed, what the owner answered), it becomes a case that later kit versions are graded on. Returns its id."""
+        case = f"{agent}:{job['id']}:{int(time.time())}"
+        sha = git("rev-parse", "HEAD", cwd=job.get("worktree") or self.root, check=False).stdout.strip()
+        (self.home / "eval").mkdir(exist_ok=True)
+        with (self.home / "eval/agent-inputs.jsonl").open("a") as f:
+            f.write(json.dumps({"case": case, "agent": agent, "job": job["id"], "sha": sha, "at": now(),
+                                "prompt": prompt[:20000], "reply": reply[:4000]}) + "\n")
+        return case
+
+    def record_outcome(self, case, outcome):
+        with (self.home / "eval/agent-inputs.jsonl").open("a") as f:
+            f.write(json.dumps({"case": case, "outcome": outcome, "at": now()}) + "\n")
 
     def finish_fix(self, job, res):
         wt = job["worktree"]
@@ -768,6 +825,13 @@ class Stages:
             return self.set_stage(job, "review", note=f"fix cut off by the run's budget (${job['last_cap']}); "
                                                       "reviewed and fixed again with a full budget")
         if cut or check.returncode != 0 or f.get("status") != "passing":
+            head = git("rev-parse", "HEAD", cwd=wt).stdout.strip()
+            if check.returncode == 0 and head != job["fix_base"] and not job.get("fix_guard_base"):
+                # Work the guard accepts but that is not done yet (cut off, or not verified) is kept for the next round.
+                # Seen on the web trial: F090's fix rounds committed the owner's fixes three times, each failed round
+                # was reset, and the branch stayed at the same head for $21.
+                git("update-ref", f"refs/harness/unfinished/{job['id']}-{int(time.time())}", head, cwd=wt)
+                job["kept"] = head
             git("reset", "-q", "--hard", job["fix_base"], cwd=wt)
             if job.pop("fix_guard_base", None):  # the conflict could not be resolved: build it again from main
                 gh("pr", "close", str(job["pr"]), "--comment", "Could not resolve the conflict with main; the loop "
@@ -777,6 +841,9 @@ class Stages:
                    or f.get("notes") or "the fix did not keep the feature passing")
             return self.set_stage(job, "held", note="fix failed",
                                   question=f"{job['id']}: the automatic fix failed ({why[:300]}). What should change?")
+        if job.get("doctor_case"):  # what the fix really changed: the answer the CI doctor's eval case is graded on
+            files = git("diff", "--name-only", job["fix_base"], "HEAD", cwd=wt, check=False).stdout.split()
+            self.record_outcome(job.pop("doctor_case"), {"fixed_files": files})
         if git("rev-parse", "HEAD", cwd=wt).stdout.strip() == job["fix_base"]:
             # Nothing to fix: CI's failure was the machine, not the code. Seen for real: a docs-only design PR failed
             # e2e at load 61, both fix sessions changed nothing, and the loop read the same failed run twice.

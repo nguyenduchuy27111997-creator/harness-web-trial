@@ -40,4 +40,6 @@ export PW_WS
 # (load 25-45 on 12 CPUs) F057's and F058's fixes each lost two rounds to 30 s timeouts in unrelated specs,
 # different ones each run, that passed run on their own. A real failure fails again and is what gets reported.
 python3 scripts/one-at-a-time.py e2e bash -c 'npx playwright test "$@" || {
-  echo "e2e: rerunning only the failed tests, one worker"; npx playwright test --last-failed --workers=1; }' e2e ${args[@]+"${args[@]}"}
+  echo "e2e: rerunning only the failed tests, one worker, with a trace"
+  npx playwright test --last-failed --workers=1 --trace=retain-on-failure || {
+    python3 harness/e2e_packet.py test-results playwright-report >&2 || true; exit 1; }; }' e2e ${args[@]+"${args[@]}"}

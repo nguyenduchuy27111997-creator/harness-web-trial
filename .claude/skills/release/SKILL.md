@@ -18,6 +18,7 @@ Milestone: $ARGUMENTS
 5. Write `docs/releases/<milestone>.md`: what users can now do (from feature titles), known limitations, blocked or deferred items, security notes. List a limitation only if you or a verifier reproduced it; put an impression from a screenshot under "Unconfirmed" (in the web trial, two such impressions failed to reproduce in `/bug`).
 6. Commit, then tag: `git tag <milestone>-rc`, and push both: `git push origin HEAD <milestone>-rc`.
 7. If `scripts/deploy-staging.sh` exists, run it and report the URL it prints. If it does not exist, say so and suggest what it should contain for this stack. Do not create production deploy steps.
+   - Exposure: if `scripts/exposure.py` exists, build the app and run `python3 scripts/exposure.py --build .next --url <the staging URL>`. It checks what any visitor can reach: security headers, source maps served, credentials or a service-role key in the scripts, API routes that answer with data to a visitor who is not signed in. An `exposed` high is a release blocker: fix it, redeploy and run it again. List every `unknown` in the release notes for the human to judge; never call the app secure because nothing was `exposed`.
 8. Add a progress entry (feature id: `release-<milestone>`).
 9. Stop any dev server you started; it holds its port for the next session.
 

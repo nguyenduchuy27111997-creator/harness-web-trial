@@ -87,6 +87,9 @@ jobs:
         run: python3 harness/quiet.py
       - name: Performance budget
         run: ./scripts/perf.sh
+      # perf.sh built the app: what the bundle hands every visitor (source maps, credentials, a service-role key).
+      - name: Exposure of the built app
+        run: python3 scripts/exposure.py --build .next
       # Servers this job started (next dev for e2e, next start for Lighthouse) must not outlive it: on a
       # self-hosted runner one held port 3300 for 14 hours and failed every later run.
       - name: Stop servers this job started

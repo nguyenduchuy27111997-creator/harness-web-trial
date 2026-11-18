@@ -14,8 +14,9 @@ Input: a feature id.
 2. Make sure the app is running (`./init.sh` in the background if not) and use the URL it prints: `http://localhost:$PORT` when `$PORT` is set. Never test port 3000 or any other port unless init.sh printed it.
 3. Perform every acceptance step as a user: use the Playwright MCP for UI, real HTTP calls for APIs, the real CLI for CLIs. Unit tests and reading code do not count as verification.
 4. For UI steps, take a screenshot after each acceptance step with `browser_take_screenshot`, `filename: harness/evidence/<id>/step-<NN>.png` (NN = acceptance step number, two digits). After the last step, also take that final state three more ways for the designer: resize the browser to 1440x900 and take `harness/evidence/<id>/step-<NN>-wide.png`; resize to 375x812 and take `step-<NN>-mobile.png`; resize back, switch to the dark color scheme (`browser_emulate_media` with `colorScheme: "dark"`, or the browser's equivalent) and take `step-<NN>-dark.png`, then switch back to light. Use exactly these names, so a later run replaces the earlier screenshots instead of adding new ones; the `designer` subagent reviews them. For API or CLI steps, quote the key output in EVIDENCE instead.
-5. Also check: console or server errors during the flow, an obvious edge case (empty input, refresh, back button), and that the feature has a test covering it.
-6. Do not edit any file. Do not fix anything. You have no file-editing tools; do not work around that with Bash.
+5. Next's dev overlay (a "1 Issue" / "1 Insight" badge in a corner, `<nextjs-portal>`) is not the product: leave it out of what you judge, and report its issue only when it names an error in this feature's code.
+6. Also check: console or server errors during the flow, an obvious edge case (empty input, refresh, back button), and that the feature has a test covering it.
+7. Do not edit any file. Do not fix anything. You have no file-editing tools; do not work around that with Bash.
 
 Your final message is saved as `harness/evidence/<id>.md` by a hook, and the feature cannot be marked passing without it. Under CRITERIA, write one line for each item of `acceptance`, in its order and numbered from 1 as in the list: PASS only when you saw that item work as a user would. The verdict is PASS only when every criterion is. Return exactly:
 
@@ -28,4 +29,8 @@ EVIDENCE:
 - <step>: <what you saw> (<screenshot path, if any>)
 PROBLEMS:
 - <problem, where, how to reproduce>   (empty if PASS)
+NOT CHECKED:
+- <what you could not see or try, and why>   (empty if nothing)
 ```
+
+A criterion is PASS only on what you observed as a user (a screenshot, a response, the output). What you could not try (a second account, an email, a slow network, a width) goes under NOT CHECKED, never into a PASS.

@@ -21,7 +21,9 @@ You review code written by another agent. Be specific and terse. No praise.
 Return one line per finding, most severe first:
 
 ```
-<path>:<line> [bug|principle-N|duplicate|test|dead|note] <problem>. Fix: <fix>.
+<path>:<line> [bug|principle-N|duplicate|test|dead|note] <problem>. Evidence: <what shows it>. (observed|inferred) Fix: <fix>.
 ```
+
+Evidence is what someone can check: the code at that line and what it does with a concrete input, the test that fails, the output you ran. `observed` means you saw it go wrong (you ran it, or the code plainly does it on an input you name); `inferred` means you reason it could. A `[bug]` needs evidence: one you can only infer, with no input that makes it fail, is a `[note]`. Say what you did not check rather than guessing (`not checked: <what>` at the end of the line).
 
 End with `REPEATED: <finding type> x<count>` for any type that appears 3 or more times, so it can be turned into a lint rule.

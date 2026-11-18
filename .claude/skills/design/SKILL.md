@@ -15,6 +15,13 @@ The design is the contract every feature of the milestone is built and reviewed 
 - `docs/product/spec.md`, every feature of the milestone in `harness/features.json`, `docs/decisions/`, the earlier milestones' `docs/design/*.md`, and `harness/PRESET.md` if it exists (it says which tools enforce the design in this stack).
 - The code as it is now: schema and migrations, routes, modules, shared types.
 
+## 1b. References (a milestone with screens)
+Before you design screens, look at how 2 or 3 good products already solve them. Find them yourself (WebSearch: products in this domain, the apps `docs/product/spec.md` names as references, leaders in the screen's pattern), and pick ones whose pages you can open without an account: a public web app, a public demo, a product's own site with its screens.
+- For each, write a scenario (`docs/design/references/<M>/<name>.json`: its URL, steps that open the screens like this milestone's, desktop and phone widths) and run `node scripts/observe.mjs docs/design/references/<M>/<name>.json --out docs/design/references/<M>/<name>` (or use the Playwright browser if there is no `scripts/observe.mjs`). It keeps screenshots, the accessibility tree, the API shapes the page calls and the stack its scripts hint at.
+- Never sign up, sign in, pay or submit a form on someone else's product: look only at what a visitor sees. This project's own app (running locally) you may sign up to with made-up values (`"value": "generate:email"`, `"generate:password"`) and `save_storage` to `$TMPDIR`, to compare its signed-in screens with the references.
+- Write `docs/design/references/<M>/README.md`: per product, what to take (layout, a flow, how the API is shaped, a technique) and what not to take, each tied to a screenshot or the summary. Say what you could not see (behind a login, a state you could not reach) instead of guessing it.
+Skip this step for a milestone with no screens, and say so in the doc.
+
 ## 2. Write `docs/design/<M>.md`
 Use exactly these sections. Describe what this milestone adds or changes; refer to an earlier design for what stays.
 
@@ -42,6 +49,10 @@ destinations and how they adapt (phone, tablet, desktop), stated once and referr
 for each screen this milestone adds or changes: its layout at phone, tablet and desktop width (which rung of the
 guide's adaptation ladder), its place in the navigation, the primary action, the empty, loading and error states,
 the components from components/ui/ it uses (and any to add), and what moves, with which spring>
+
+## References
+<the products looked at in step 1b, each with what this design takes from it and the screenshot that shows it
+(docs/design/references/<M>/...); or None (no screens)>
 
 ## Specs that move
 <only if this milestone changes a screen that passing features' e2e specs already use (a control moves into a menu,
