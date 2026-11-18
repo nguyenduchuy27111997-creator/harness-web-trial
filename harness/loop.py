@@ -134,6 +134,7 @@ class Loop(scheduler.Scheduler, agents.Agents, stages.Stages, merge.Merge, dispa
             job["note"] = note
         job["question"] = question
         job.pop("proposal", None)  # a new stage is a new situation: the dispatcher's earlier proposal is stale
+        job.pop("choices", None)
         self.event(job["id"], f"{stage}" + (f": {note}" if note else ""))
         self.outcome(job, stage, note)  # what came of the dispatcher's advice, if it was asked
         self.consult(job, stage)  # and its advice on this stage, if it is one it is asked about
@@ -567,7 +568,7 @@ class QuietServer(http.server.ThreadingHTTPServer):
 
 
 def serve_dashboard(home, root):
-    page = Path(__file__).resolve().parent / "dashboard.html"
+    dash = Path(__file__).resolve().parent / "dashboard"  # built from the kit's dashboard/ (React)
     office = Path(__file__).resolve().parent / "office"  # the 3D view, built from the kit's viewer/
 
     class Handler(http.server.BaseHTTPRequestHandler):
@@ -590,8 +591,13 @@ def serve_dashboard(home, root):
                 with preview.PREVIEW.watch(path.split("/")[2], view):
                     self.frames(path.split("/")[2], view)
                 return
-            if path == "/":
-                body, kind = page.read_bytes(), "text/html; charset=utf-8"
+            if path == "/" or re.fullmatch(r"/dashboard/assets/[\w.-]+\.(esm|css)", path):
+                f = dash / ("index.html" if path == "/" else path[len("/dashboard/"):])
+                if not f.exists():
+                    self.send_error(404)
+                    return
+                body = f.read_bytes()
+                kind = {".html": "text/html; charset=utf-8", ".esm": "text/javascript", ".css": "text/css"}[f.suffix]
             elif path == "/state.json":
                 f = home / "state.json"
                 body, kind = (f.read_bytes() if f.exists() else b"{}"), "application/json"
@@ -730,9 +736,21 @@ def serve_dashboard(home, root):
                     self.send_error(404)
                     return
                 body, kind = f.read_bytes(), "image/jpeg"
-            elif path == "/events":
+            elif path == "/events":  # ?n=<lines>: the dashboard's Activity and Metrics read up to 20000
                 f = home / "events.log"
-                body, kind = ("\n".join(f.read_text().splitlines()[-60:]).encode() if f.exists() else b""), "text/plain"
+                n = re.search(r"[?&]n=(\d+)", self.path)
+                n = min(int(n.group(1)), 20000) if n else 60
+                body, kind = ("\n".join(f.read_text().splitlines()[-n:]).encode() if f.exists() else b""), "text/plain"
+            elif re.fullmatch(r"/evidence/[A-Za-z0-9_-]+\.md", path):  # the verifier's evidence, linked from a feature
+                fid = path.split("/")[2][:-3]
+                state = json.loads((home / "state.json").read_text())
+                wt = Path(state["jobs"].get(fid, {}).get("worktree", root))
+                f = next((p for p in (wt / f"harness/evidence/{fid}.md", Path(root) / f"harness/evidence/{fid}.md")
+                          if p.exists()), None)
+                if not f:
+                    self.send_error(404)
+                    return
+                body, kind = f.read_bytes(), "text/plain; charset=utf-8"
             elif re.fullmatch(r"/evidence/[A-Za-z0-9_-]+/[A-Za-z0-9_.-]+\.png", path):
                 fid, name = path.split("/")[2:4]
                 state = json.loads((home / "state.json").read_text())

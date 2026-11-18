@@ -40,9 +40,12 @@ class Dispatcher:
         # of its first (same attempt, same fix round) and was never asked about.
         key = f"{job['id']}:{event}:{job.get('attempts', 0)}:{job.get('fix_rounds', 0)}:{len(job.get('answers', []))}"
         asked = self.state.setdefault("consulted", [])
-        if key in asked:
+        # Asked already, but before it wrote the owner's options (kit < 5.50): asked once more for them.
+        unpicked = stage in WAITING_HUMAN and not job.get("choices") and job.get("options_asked") != key
+        if key in asked and not unpicked:
             return
-        asked[:] = asked[-199:] + [key]
+        asked[:] = [k for k in asked if k != key][-199:] + [key]
+        job["options_asked"] = key
         wt = job.get("worktree")
         probe = {**job, "id": f"{job['id']}-dispatcher",
                  "worktree": wt if wt and Path(wt).exists() else str(self.root)}  # its port, model, telemetry go here
@@ -100,7 +103,8 @@ class Dispatcher:
             self.swept = True
             day = time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(time.time() - 86400))
             for job in list(self.state["jobs"].values()):
-                if job["stage"] in EVENTS and job.get("updated", "") >= day:  # not every old failure: the last day's
+                if job["stage"] in EVENTS and (job.get("updated", "") >= day  # not every old failure: the last day's
+                                               or (job["stage"] in WAITING_HUMAN and not job.get("choices"))):
                     self.consult(job, job["stage"])
         for key, (t, box, fid, event, probe) in list(getattr(self, "advice", {}).items()):
             if t.is_alive():
@@ -134,6 +138,8 @@ class Dispatcher:
                              "cost": round(cost, 4), **({"error": error} if failed else {})})
             if job is not None and event != "milestone":
                 job["advice"] = key  # what happens to the job next is written beside it (outcome)
+                if not failed and job["stage"] in WAITING_HUMAN:
+                    job["choices"] = choices(advice)
             if failed:
                 self.event(fid, f"dispatcher could not answer: {error[:160]}")
                 continue
@@ -232,6 +238,15 @@ class Dispatcher:
     def decide_log(self, row):
         with (self.home / "decisions.jsonl").open("a") as f:
             f.write(json.dumps(row) + "\n")
+
+
+def choices(advice):
+    """The one-line summary and the answers the owner can pick from on the dashboard (it copies `loop.py answer`)."""
+    opts = [{"label": str(o["label"])[:60], "answer": str(o["answer"])} for o in advice.get("options") or []
+            if isinstance(o, dict) and o.get("label") and o.get("answer")][:4]
+    listed = lambda k: [str(x)[:300] for x in advice.get(k) or [] if x][:5]  # noqa: E731
+    return {"summary": str(advice.get("summary") or advice.get("why") or "")[:200], "options": opts,
+            "evidence": listed("evidence"), "unknowns": listed("unknowns")}
 
 
 def parse(text):

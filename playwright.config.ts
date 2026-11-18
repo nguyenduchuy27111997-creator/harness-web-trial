@@ -40,12 +40,18 @@ export default defineConfig({
   // Playwright's tunnel. Without it: locally the installed Google Chrome, on CI the installed Chromium.
   use: {
     baseURL: `http://localhost:${port}`,
+    // What a failure leaves for the CI doctor and the fixer (harness/e2e_packet.py reads it): a trace (each step,
+    // the DOM, every request and response, the console) and a screenshot. On CI the trace is recorded on the
+    // retry, so a passing run pays nothing; locally scripts/e2e.sh records it when it reruns the failed tests.
+    trace: process.env.CI ? "on-first-retry" : "off",
+    screenshot: "only-on-failure",
     ...(ws
       ? { connectOptions: { wsEndpoint: ws, exposeNetwork: "<loopback>" } }
       : { channel: process.env.CI ? undefined : "chrome" }),
   },
   webServer: {
-    command: `npx next dev --port ${port}`,
+    // The dev server's own log, for a failure's packet: kept with the report (uploaded when CI fails).
+    command: `mkdir -p playwright-report && npx next dev --port ${port} > playwright-report/server.log 2>&1`,
     // This app's own route: another app on the same port answers 404, so
     // Playwright never mistakes it for this one and fails instead of testing it.
     url: `http://localhost:${port}/api/harness-health`,

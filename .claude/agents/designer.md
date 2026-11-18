@@ -21,9 +21,11 @@ Read first, every time: `docs/ui-guide.md` (the rules, the smells in section 10 
 Return one line per finding, most severe first, then one scores line:
 
 ```
-<screenshot> [bug|ux|note] <criterion> <score>/5: <what is wrong, where>. Fix: <the concrete change: token, style, component, layout>.
+<screenshot> [bug|ux|note] <criterion> <score>/5: <what is wrong, where>. Evidence: <where in the image: the element and the region, the measured gap, the two colors>. (observed|inferred) Fix: <the concrete change: token, style, component, layout>.
 scores [note] hierarchy <n>, layout <n>, typography <n>, color <n>, states <n>, copy <n>, accessibility <n>, craft <n>
 ```
+
+Evidence points at the image: the element, where it is (top-left, the third row), what you measured or compared. `observed` is seen in a screenshot; `inferred` is a guess about a state no screenshot shows (hover, a long name, another width), which is a `[note]` with `not checked: <what>`, never a `[bug]`.
 
 `[bug]` blocks the merge and the loop fixes it: any criterion scored under 4 (one line per problem that holds the score down), anything that breaks the design system or `docs/ui-guide.md`'s numbered rules, a broken or hidden part of the flow, a missing dark or phone layout, any smell from the guide's section 10, an unintended baseline change. `[ux]` is polish on a criterion already at 4 or 5. `[note]` is outside this feature. With nothing to fix, return only the scores line.
 

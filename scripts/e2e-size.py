@@ -7,7 +7,8 @@
     `expectAccessible(page)` from e2e/a11y.ts;
   - golden principle 8: such a spec, if this branch adds or changes it (compared with
     origin/main), also leaves a visual baseline (`toHaveScreenshot`). In a real run the reviewer
-    sent two features back for a missing one, round after round.
+    sent two features back for a missing one, round after round. A change only to the options of an existing
+    toHaveScreenshot call (a mask) keeps the spec's steps and checks, so it passes as it is.
 """
 import re
 import subprocess
@@ -42,6 +43,39 @@ def changed(root):
     return {(Path(top[0]) / x).resolve() for x in paths}
 
 
+def shot_lines(text):
+    """The lines (from 1) inside the spec's toHaveScreenshot(...) calls."""
+    out = set()
+    for m in re.finditer(r"toHaveScreenshot\(", text):
+        depth, end = 0, len(text)
+        for j in range(m.end() - 1, len(text)):
+            depth += {"(": 1, ")": -1}.get(text[j], 0)
+            if depth == 0:
+                end = j
+                break
+        out.update(range(text.count("\n", 0, m.start()) + 1, text.count("\n", 0, end) + 2))
+    return out
+
+
+def options_only(path):
+    """True when the branch changed only the options of the spec's existing toHaveScreenshot calls (a mask, a
+    threshold): the steps and what the test checks are main's, so it needs no new baseline call. Seen on the web
+    trial: F097 widened a date mask in F081's spec, and its acceptance forbade adding a step."""
+    p = path.resolve()
+    top = subprocess.run(["git", "rev-parse", "--show-toplevel"], cwd=p.parent, capture_output=True, text=True).stdout.strip()
+    if not top:
+        return False
+    rel = str(p.relative_to(Path(top).resolve()))
+    old = subprocess.run(["git", "show", f"origin/main:{rel}"], cwd=top, capture_output=True, text=True)
+    diff = subprocess.run(["git", "diff", "-U0", "origin/main", "--", rel], cwd=top, capture_output=True, text=True).stdout
+    hunks = re.findall(r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@", diff, re.M)
+    if old.returncode or not hunks:
+        return False
+    was, now = shot_lines(old.stdout), shot_lines(p.read_text())
+    return all(set(range(int(a), int(a) + int(b or 1))) <= was and set(range(int(c), int(c) + int(d or 1))) <= now
+               for a, b, c, d in hunks)
+
+
 def main(root="e2e"):
     # Playwright keeps baselines in e2e/__screenshots__/<name>.spec.ts/: folders that match the glob.
     specs = sorted(p for p in Path(root).rglob("*.spec.ts") if p.is_file())
@@ -59,7 +93,8 @@ def main(root="e2e"):
     css = Path(root).resolve().parent / "app/globals.css"
     themed = css.is_file() and "ui-base.css" in css.read_text()
     shot = re.compile(r"expectScreens\(" if themed else r"toHaveScreenshot\(|expectScreens\(")
-    unseen = [p for p in ui if not shot.search(p.read_text()) and (mine is None or p.resolve() in mine)]
+    unseen = [p for p in ui if not shot.search(p.read_text()) and (mine is None or p.resolve() in mine)
+              and not (mine is not None and options_only(p))]
     for path in unseen:
         print(f"{path}: opens a page but leaves no visual baseline; end it with "
               + ('await expectScreens(page, "<id>-<what>") from e2e/a11y.ts (light and dark)' if themed

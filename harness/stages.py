@@ -598,7 +598,9 @@ class Stages:
         listing = "\n".join(f"{n}. {lines[i]}" for n, i in enumerate(bugs, 1))
         cost, subtype, text = self.claude(
             job, f"Diff: `git diff {span}` (feature {job['id']}). Findings:\n{listing}\n\nFor each finding, reply one "
-                 "line `N: KEEP` if it is a real bug in this diff, or `N: DROP — <why not>`. Nothing else.",
+                 "line `N: KEEP` if it is a real bug in this diff, or `N: DROP — <why not>`. A finding with no "
+                 "`Evidence:`, or only `(inferred)` evidence, is DROP unless you find the failing case yourself. "
+                 "Nothing else.",
             SKEPTIC_MODEL, turns=40, lane_note=False, agent="skeptic")
         self.merge_telemetry(job)
         if subtype != "success":
@@ -724,9 +726,12 @@ class Stages:
             return {"cost": cost, "subtype": subtype}
         problems, extra = job["fix_with"], 0.0
         if job.get("ci_log"):  # a cheap look at the red log first: the fix starts from the cause, not the noise
+            packet = job.pop("ci_packet", "")
             extra, subtype, text = self.claude(
                 job, f"CI failed on feature {job['id']}'s PR. The failed steps' log:\n```\n{job.pop('ci_log')}\n```\n"
-                     "Find the cause in the code. Do not edit anything.", DOCTOR_MODEL, turns=30, lane_note=False,
+                     + (f"What the failed e2e tests left (trace, console, failed requests, dev server):\n```\n{packet}\n```\n"
+                        if packet else "")
+                     + "Find the cause in the code. Do not edit anything.", DOCTOR_MODEL, turns=30, lane_note=False,
                 agent="ci-doctor", cap=min(0.3, self.caps[job["id"]]))
             self.merge_telemetry(job)
             if subtype == "success" and text.strip():

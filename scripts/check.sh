@@ -33,6 +33,8 @@ npx depcruise --config .dependency-cruiser.cjs . # module boundaries from docs/d
 python3 scripts/ui-tokens.py                    # design tokens only (docs/design-system.md)
 npm audit --omit=dev --audit-level=high         # no known high or critical advisory in what ships
 scripts/sast.sh                                 # Semgrep: OWASP, Next.js, secrets
+scripts/secrets.sh                              # gitleaks: this branch's commits and the work not committed
+python3 scripts/exposure.py                     # .env committed, server secrets named NEXT_PUBLIC_, source maps on
 python3 scripts/migration-lint.py               # new migrations keep data and say how to roll back
 python3 scripts/rls-check.py                    # every public table has row level security
 python3 scripts/e2e-size.py                     # golden principles 6 and 9
