@@ -1,4 +1,4 @@
 {
   "status": "passing",
-  "notes": "Cover column is w-60 (240px) at lg, so Replace cover and Remove cover share one row under the cover at 1280. Remove cover is a ghost button with red text; Delete book is the only red fill. Header actions at size sm, Read again primary. Verifier PASS."
+  "notes": "Merged origin/main (F094 stats, F096 polish, harness 5.48.2); F081 cover-upload baseline re-taken on the merged code. Cover column is w-60 (240px) at lg, so Replace cover and Remove cover share one row under the cover at 1280. Remove cover is a ghost button with red text; Delete book is the only red fill. Header actions at size sm, Read again primary. Verifier PASS."
 }
