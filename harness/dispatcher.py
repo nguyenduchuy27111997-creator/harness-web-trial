@@ -85,7 +85,11 @@ class Dispatcher:
                  "question to the owner": job.get("question"), "attempts": job.get("attempts", 0),
                  "fix rounds": job.get("fix_rounds", 0), "last failure": job.get("last_failure"),
                  "review findings": job.get("last_bugs") or job.get("findings"), "branch": job.get("branch"),
-                 "pr": job.get("pr_url"), "cost so far": round(job.get("cost", 0), 2)}
+                 "pr": job.get("pr_url"), "cost so far": round(job.get("cost", 0), 2),
+                 "work kept for the next session (it starts from this, so nothing was lost)":
+                     {k: v for k, v in {"commits from the last failed fix round": job.get("kept"),
+                                        "code from the last build attempt": job.get("kept_attempt"),
+                                        "uncommitted work stashed": job.get("stash")}.items() if v}}
         return (f"Event: {event}. The job, as data:\n```json\n{json.dumps({k: v for k, v in facts.items() if v}, indent=1)[:8000]}\n```\n"
                 "Its recent events:\n```\n" + "\n".join(mine) + "\n```")
 
