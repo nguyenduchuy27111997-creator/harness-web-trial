@@ -1,20 +1,19 @@
 <!-- written by harness/hooks/verifier-evidence.py; do not edit -->
-- Verified at: 2026-11-16T00:57:45 on 198e4c6 plus working tree
-- Architect run: a0d21e22180931f2e
-- Design sha256: b68b978456d9c9373e5e0006eacaf50bde630bd587b9dcbf30d6b36e24e83cfe
+- Verified at: 2026-11-18T19:09:34 on ce96fd4 plus working tree
+- Architect run: aeadb23c3d849b4e9
+- Design sha256: 56589dd2e197d3b0265ccc71f547640b1a28f9c1500de9057696d16b0e528d02
 
 VERDICT: PASS
 DESIGN: M9
 CHECKED:
-- Round-2 fixes: both are in. (1) In the empty-shelf state for `/books` (F090), the "No books yet" heading now sits above today's sentence "Your shelf is empty. Add your first book to get started." The sentence is kept, so e2e/empty-shelf.spec.ts:15 and e2e/book-isolation.spec.ts:32 still pass, and the change needs no new exception in decision 0024. The empty state's "Add book" is the only primary button: the header button, search, filter and sort are hidden. So `getByRole("link", { name: "Add book" })` in empty-shelf.spec.ts still finds exactly one link. The URL check changing to `/books?add=1` in F092 is still the one recorded exception in 0024. Updating the F004 screenshot baseline is covered by 0024's "F088 regenerates every visual baseline". (2) Covers in dark: F088 adds `dark:brightness-90` to size `lg` and the dark placeholder, and F090 adds it to `fill` when it creates that size. That ordering now matches the dependencies (F090 depends on F089, which depends on F088).
-- Coverage: F088 to F096 each still map to tokens, the shell, pages, components or contract changes, as found in round 2. Nothing they need is missing.
-- Data model and migrations: none, which is right for a redesign. `listShelfSummaries` reads existing tables under RLS.
-- Contract: these are unchanged since round 2. The lookup returns `books` (1 to 5 matches, each with `coverUrl`), and decision 0024 records that this replaces M8's shape. `ShelfSummary` and the prop changes are stated.
-- Module boundaries: the .dependency-cruiser.cjs rules are unchanged and match the doc.
-- UI: every screen the milestone adds or changes is covered with layout per width, navigation, primary action and its states. The empty-shelf state no longer conflicts with the existing specs.
-- NFR: load, threat model and cost are stated and match the spec as amended by decision 0024.
-- Consistency: decision 0024 records the overrides of the spec (dark look, Inter) and of M8 (lookup shape). I found no remaining conflict with existing specs or earlier designs.
-- Simplicity: no speculative layers.
+- Coverage: F090's acceptance is still fully covered by the /books entry: a cover grid on a computer and rows on a phone, the status filter as a segmented control with counts, search labelled "Search books", sort as a menu, placeholder shapes while loading, and an empty shelf with an Add book button. The change only touches the filter layout, the wrapping filter row and the placeholder cover.
+- Code match: the /books text matches the built code.
+  - /Users/huynguyen/Desktop/harness-web-trial-loop/F090/components/status-tabs.tsx: 2x2 grid of `h-11` segments with no sideways scroll, and from `sm` a `sm:inline-flex sm:h-9` track with `sm:h-7` segments.
+  - /Users/huynguyen/Desktop/harness-web-trial-loop/F090/app/books/page.tsx: the filter row is `flex flex-wrap items-center gap-4`.
+  - /Users/huynguyen/Desktop/harness-web-trial-loop/F090/components/book-cover.tsx: the placeholder is `aria-hidden`, with the title `line-clamp-5` and the author `line-clamp-2` from `lg`.
+- Consistency inside M9: fixed. Line 67 now gives `BookStatusForm` 44 px under `lg` and 32 px from `lg`. It gives the /books `StatusTabs` 44 px under 640 px and 28 px segments in a 36 px track from 640 px. It says decision 0028 overrides the sizes for `StatusTabs` only. Decision 0028 point 2 says the same, so F091 and /styleguide each have one size to build.
+- Touch-target accuracy: fixed. The "same height" wording is gone from both files. Both now say what actually happens with a coarse pointer: /Users/huynguyen/Desktop/harness-web-trial-loop/F090/app/ui-base.css raises Sort and search to 44 px (its `(pointer: coarse)` rule), while the plain status links stay 28 px in the 36 px track. Both record this as an accepted exception to the ui-guide's 44 px touch-target rule, note that e2e/a11y.ts checks only 390 px, and say to revisit it in a tablet pass.
+- Earlier decisions and spec: no conflict with 0024 (the M9 redesign), 0027 (list loading) or the spec. Using 640 px instead of the ladder's 768 px is stated explicitly.
+- Data model, migrations, contract and modules: unchanged.
+- Simplicity: the sideways scroll, snap and scroll-into-view are removed, and nothing speculative is added.
 PROBLEMS:
-
-Files: /Users/huynguyen/Desktop/harness-web-trial-loop/D-M9/docs/design/M9.md, /Users/huynguyen/Desktop/harness-web-trial-loop/D-M9/docs/decisions/0024-m9-redesign.md, /Users/huynguyen/Desktop/harness-web-trial-loop/D-M9/e2e/empty-shelf.spec.ts, /Users/huynguyen/Desktop/harness-web-trial-loop/D-M9/e2e/book-isolation.spec.ts, /Users/huynguyen/Desktop/harness-web-trial-loop/D-M9/app/books/page.tsx
