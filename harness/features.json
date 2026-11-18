@@ -1890,6 +1890,27 @@
         "Import / export and a shared shelf page use the same type, colors and dark look as the rest"
       ],
       "owner_check": true
+    },
+    {
+      "id": "F097",
+      "type": "bug",
+      "milestone": "M8",
+      "priority": 97,
+      "complexity": "S",
+      "title": "Fix: the cover page screenshot (F081's spec) fails on days whose date is wider or narrower than the baseline's",
+      "depends_on": [
+        "F081"
+      ],
+      "touches": [
+        "e2e/F081-cover-upload.spec.ts",
+        "e2e/__screenshots__/F081-cover-upload.spec.ts/**"
+      ],
+      "acceptance": [
+        "Reproduce first: in the local database replace public.books_set_started_on() so a book set to Reading gets started_on = '2026-11-17' instead of today, then run scripts/e2e.sh e2e/F081-cover-upload.spec.ts --grep 'refused replacement': the screenshot F081-cover-upload.png fails with about 34 different pixels (ratio 0.01), as on main's CI all of 2026-11-17 (runs 44042786773 to 44104805508) while the same code passed on 2026-11-16 and 2026-11-18",
+        "e2e/F081-cover-upload.spec.ts ('a refused replacement keeps the current cover') masks the whole block 'Started on <date>' sits in, a block whose size does not follow the date's text width, instead of only the <time> element, as F078 did for F064 and F065",
+        "Only that mask and the baseline it changes (F081-cover-upload.png) are touched: every assertion, step and screenshot of the spec stays",
+        "With the trigger pinned to 2026-11-17 and again with it restored to today, the spec passes in Playwright's Docker browser with no pixel difference, and CI's e2e shards pass on the PR"
+      ]
     }
   ]
 }
