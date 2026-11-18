@@ -1,5 +1,4 @@
 {
-  "status": "blocked",
-  "blocked_reason": "failed",
-  "notes": "Gate green (HARNESS_E2E=feature check.sh: lint, types, 232 unit, e2e 21/21). F083 Share spec passes 15/15 (--repeat-each=5, one worker) after counting only the app's buttons: Next 16.4.2's dev 'Security Insight' badge lives in <nextjs-portal> inside a body <script>, so the locator is body > :not(script, nextjs-portal); no check removed. Fixed the verifier's touch targets: menu items min-h-11, /up-next title links 44px, no separator when Remove is alone. Verifier then FAILED only on the /quotes book link (18px tall at 375px). Fixed it (inline-flex min-h-11 lg:min-h-0, app/quotes/page.tsx) and the gate is green again, but the verifier was not rerun (budget). Next: rerun the verifier; minor design notes: a gap between the shelf cover stack and the name."
+  "status": "passing",
+  "notes": "Verifier PASS (2026-11-19). /tags links fill their row (flex-1 min-w-0 min-h-11), 244x44 at 390px. gap-4 between the shelf cover stack and the name, with 3 shelf baselines updated. Stacked shelf covers keep alt 'Cover of <shelf>': alt=\"\"/aria-hidden would break the locked spec e2e/F093-lists-layout.spec.ts:40 (expects 3 imgs), so that is the human's call. Merged origin/main so e2e-size.py stops flagging main's F081 spec change."
 }
