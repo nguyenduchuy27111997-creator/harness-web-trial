@@ -18,7 +18,7 @@ The design is the contract every feature of the milestone is built and reviewed 
 ## 1b. References (a milestone with screens)
 Before you design screens, look at how 2 or 3 good products already solve them. Find them yourself (WebSearch: products in this domain, the apps `docs/product/spec.md` names as references, leaders in the screen's pattern), and pick ones whose pages you can open without an account: a public web app, a public demo, a product's own site with its screens.
 - For each, write a scenario (`docs/design/references/<M>/<name>.json`: its URL, steps that open the screens like this milestone's, desktop and phone widths) and run `node scripts/observe.mjs docs/design/references/<M>/<name>.json --out docs/design/references/<M>/<name>` (or use the Playwright browser if there is no `scripts/observe.mjs`). It keeps screenshots, the accessibility tree, the API shapes the page calls and the stack its scripts hint at.
-- Never sign up, sign in, pay or submit a form on someone else's product: look only at what a visitor sees.
+- Never sign up, sign in, pay or submit a form on someone else's product: look only at what a visitor sees. This project's own app (running locally) you may sign up to with made-up values (`"value": "generate:email"`, `"generate:password"`) and `save_storage` to `$TMPDIR`, to compare its signed-in screens with the references.
 - Write `docs/design/references/<M>/README.md`: per product, what to take (layout, a flow, how the API is shaped, a technique) and what not to take, each tied to a screenshot or the summary. Say what you could not see (behind a login, a state you could not reach) instead of guessing it.
 Skip this step for a milestone with no screens, and say so in the doc.
 

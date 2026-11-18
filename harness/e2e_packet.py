@@ -116,12 +116,20 @@ def packet(dirs):
                      if p.name == "error-context.md" or p.name.startswith("trace") and p.suffix == ".zip"
                      or p.name.startswith("test-failed")})
     logs = [p for r in roots for p in r.rglob("server.log")]
-    parts = [test_section(d) for d in failed]
+    # A test retried (CI's retry, the local rerun) leaves a folder per run: one section, the last run's, says so.
+    sections = {}
+    for d in failed:
+        text = test_section(d)
+        key = text.split("\n", 1)[0]
+        runs = sections[key][1] + 1 if key in sections else 1
+        sections[key] = (text, runs)
+    parts = [t if n == 1 else t.replace("\n", f"\nFailed on all {n} runs (retries included).\n", 1)
+             for t, n in sections.values()]
     if logs:
         parts.append(server_errors(logs[0]))
     if not parts:
         return ""
-    head = f"# e2e failure packet: {len(failed)} failed test(s)"
+    head = f"# e2e failure packet: {len(sections)} failed test(s)"
     body, kept = head, 0
     for p in parts:
         if len(body) + len(p) + 2 > TOTAL:

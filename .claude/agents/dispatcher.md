@@ -32,7 +32,7 @@ For a failed feature, a held PR or a red main, reply with one JSON object and no
 - `answer`: you can say what the coder or the fixer needs to know (a rule from the design, the right reading of the acceptance, which side of a review dispute is right).
 - `rebuild`: the branch went wrong; start again from main with what you say in `detail`.
 - `drop`: the feature is done elsewhere or no longer makes sense.
-- `ask_owner`: only a human can decide (product choice, an account, money).
+- `ask_owner`: only a human can decide (product choice, an account, money). A passing feature's spec that the milestone design moves is not one: a fix round may add it to the design's `## Specs that move` with a fresh architect PASS and move its steps, so `answer` with that.
 
 For a milestone start, reply with one JSON object:
 
