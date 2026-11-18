@@ -23,7 +23,7 @@ export function DisplayNameForm({ displayName, action }: Props) {
         error={state.fieldErrors?.display_name ?? state.formError}
       />
       <div className="flex items-center gap-2">
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" variant="secondary" disabled={pending}>
           {pending ? "Saving…" : "Save"}
         </Button>
         {state.saved && <p role="status" className="text-subheadline text-muted-foreground">Saved</p>}

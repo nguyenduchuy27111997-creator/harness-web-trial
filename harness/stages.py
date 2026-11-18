@@ -47,7 +47,12 @@ class Stages:
         with GIT_LOCK:
             self.remove_worktree(job)
             git("fetch", "-q", "origin", cwd=self.root)  # a merge earlier in this tick moved main
-            start = "origin/main" if base == "main" else base
+            # A stacked feature starts from its base as pushed, never the local branch: that one may hold a fix round's
+            # commits not yet checked, which the loop resets when the fix fails. Seen on the web trial: F092 stacked on
+            # agent/F090 during F090's fix, F090's fix failed and was reset, and F092 kept its unverified commits.
+            pushed = f"origin/{base}"
+            start = "origin/main" if base == "main" else pushed if git(
+                "rev-parse", "-q", "--verify", pushed, cwd=self.root, check=False).returncode == 0 else base
             git("worktree", "add", "-q", "-B", job["branch"], job["worktree"], start, cwd=self.root)
             job["base_sha"] = git("rev-parse", "HEAD", cwd=job["worktree"]).stdout.strip()
         job["model"] = self.model_for(job)
@@ -64,6 +69,7 @@ class Stages:
             prompt += f" The previous attempt failed: {job['last_failure']}"
         if not kind:
             prompt += self.board(job) + self.last_attempt(job)
+        prompt += self.carried_work(job)
         job.pop("locked_tests", None)  # each attempt's test-writer locks its own files
         writer = None
         if self.wants_test_writer(job):
@@ -302,6 +308,47 @@ class Stages:
                               "the skeptic found no check loosened")
         return True
 
+    def stash_work(self, job, message):
+        """Keep a session's uncommitted work as a stash the next session of this job starts from (carried_work). Seen on
+        the web trial: F090 and F091 fix rounds ended with their work uncommitted, it was stashed, and the next round
+        began from the old branch head, so the same fixes were made again and the same findings came back."""
+        wt = job["worktree"]
+        git("stash", "push", "-q", "-u", "-m", message, cwd=wt)
+        sha = git("rev-parse", "-q", "--verify", "stash@{0}", cwd=wt, check=False).stdout.strip()
+        if sha:
+            job["stash"] = sha
+            self.event(job["id"], f"uncommitted work kept as stash {sha[:10]}; the next session starts from it")
+
+    def keep_attempt(self, job):
+        """A failed build attempt whose code is sound (it only left work uncommitted, or only the test-writer's test
+        was wrong) keeps its commits for the next attempt, which starts from main again. Seen on the web trial: since
+        Nov 10, 16 of 22 retries were one of those two, and each rebuilt the app from scratch (F094 and F096 three
+        times each)."""
+        wt = job["worktree"]
+        head = git("rev-parse", "HEAD", cwd=wt).stdout.strip()
+        if head and head != job.get("base_sha"):
+            git("update-ref", f"refs/harness/unfinished/{job['id']}-{int(time.time())}", head, cwd=wt)
+            job["kept_attempt"] = {"base": job["base_sha"], "head": head, "skip_e2e": job.get("locked_tests") is not None}
+
+    def carried_work(self, job):
+        kept, sha, out = job.pop("kept", None), job.pop("stash", None), ""
+        attempt = job.pop("kept_attempt", None)
+        if attempt:
+            spec = f"{attempt['base']} {attempt['head']} -- ." + (" ':(exclude)e2e/'" if attempt["skip_e2e"] else "")
+            out += (f"\n\nThe last attempt's code is kept (its commits are {attempt['base'][:10]}..{attempt['head'][:10]}). "
+                    f"Do not write it again: bring it back with `git diff {spec} | git apply --3way`, check it against "
+                    "the acceptance, finish what is missing and commit."
+                    + (" Its e2e test is left out: use the test-writer's new one." if attempt["skip_e2e"] else ""))
+        if kept:
+            out += (f"\n\nThe last fix round's commits did not finish the feature (cut off, or not verified), so the "
+                    f"branch was set back; they are kept at {kept} (`git log HEAD..{kept}`). Start from them: "
+                    f"`git merge --ff-only {kept}`, then do what is left.")
+        if sha:
+            out += (f"\n\nThe last session of this feature ended without committing. Its work is kept in git stash {sha} "
+                    f"(see it with `git stash show -p {sha}`). Start from it: `git stash apply {sha}`, keep what is right, "
+                    "fix the rest, and commit as soon as a step works, so a session cut short keeps its work.")
+        return out
+
     def finish_build(self, job, res):
         wt = job["worktree"]
         if res.get("subtype") in ("no-json", "timeout") or res.get("error"):
@@ -315,7 +362,9 @@ class Stages:
             why = ("the architect still failed the design after 3 rounds: "
                    + proof.read_text().split("PROBLEMS:", 1)[-1].strip()[:1500]) if rejected else \
                 "the session left uncommitted work (stashed)"
-            git("stash", "push", "-q", "-u", "-m", f"loop: uncommitted work from {job['id']}", cwd=wt)
+            if not job.get("kind"):
+                self.keep_attempt(job)
+            self.stash_work(job, f"loop: uncommitted work from {job['id']}")
             # A feature that committed "needs a human" and left a stray file (a screenshot, say) still needs one:
             # building it again would hit the same wall. Seen for real in a sandboxed web run.
             f = {} if job.get("kind") else next((x for x in backlog.read(wt) if x["id"] == job["id"]), {})
@@ -359,6 +408,7 @@ class Stages:
         if job.get("locked_tests") is not None and (issue := self.handoff(job)[1]).exists():
             job["test_issue"] = issue.read_text()[:1500]  # the next attempt's test-writer reads it
             self.event(job["id"], "the coder found the test wrong; the test-writer writes it again")
+            self.keep_attempt(job)
         return self.retry(job, f.get("notes") or f"ended {f.get('status', 'unknown')}")
 
     def guard(self, job, source, base):
@@ -694,6 +744,7 @@ class Stages:
                      "that changes them, unless the change only waits for the app (a dialog to close, a request to "
                      "settle) and removes or loosens no check. A skeptic reads such a change."
                      if job.get("locked_tests") else ""))
+        prompt += self.carried_work(job)
         if job.get("fix_guard_base"):  # a conflict with main: the merger, as the session itself
             cost, subtype, text = self.claude(job, prompt, self.agent_model(job, "merger"), agent="merger", solo=True)
         else:
@@ -715,7 +766,7 @@ class Stages:
     def finish_fix(self, job, res):
         wt = job["worktree"]
         if git("status", "--porcelain", cwd=wt).stdout.strip():
-            git("stash", "push", "-q", "-u", "-m", f"loop: uncommitted fix for {job['id']}", cwd=wt)
+            self.stash_work(job, f"loop: uncommitted fix for {job['id']}")
         guard = run(["git", "show", f"{job['fix_base']}:harness/integrity.py"], cwd=wt).stdout
         # A merge of main is judged against main: the branch's own changes, not main's, must keep the rules.
         guard_base = job.get("fix_guard_base") or job["fix_base"]
@@ -742,6 +793,13 @@ class Stages:
             return self.set_stage(job, "review", note=f"fix cut off by the run's budget (${job['last_cap']}); "
                                                       "reviewed and fixed again with a full budget")
         if cut or check.returncode != 0 or f.get("status") != "passing":
+            head = git("rev-parse", "HEAD", cwd=wt).stdout.strip()
+            if check.returncode == 0 and head != job["fix_base"] and not job.get("fix_guard_base"):
+                # Work the guard accepts but that is not done yet (cut off, or not verified) is kept for the next round.
+                # Seen on the web trial: F090's fix rounds committed the owner's fixes three times, each failed round
+                # was reset, and the branch stayed at the same head for $21.
+                git("update-ref", f"refs/harness/unfinished/{job['id']}-{int(time.time())}", head, cwd=wt)
+                job["kept"] = head
             git("reset", "-q", "--hard", job["fix_base"], cwd=wt)
             if job.pop("fix_guard_base", None):  # the conflict could not be resolved: build it again from main
                 gh("pr", "close", str(job["pr"]), "--comment", "Could not resolve the conflict with main; the loop "

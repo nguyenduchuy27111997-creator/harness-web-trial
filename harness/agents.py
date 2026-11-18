@@ -107,13 +107,17 @@ class Agents:
     def low_budget(self):
         return self.state["budget"] - self.state["spent"] < MIN_SESSION
 
-    def full_cap(self, stage):
-        return min(self.opts.session_budget, STAGE_CAPS.get(stage, self.opts.session_budget))
+    def full_cap(self, stage, job=None):
+        # A fix round that follows an answer (the owner's or the dispatcher's) is a rework the answer asked for, not a
+        # finding's patch: it gets twice the fix cap. Seen on the web trial: F091's and F093's answered rounds in the
+        # M9 redesign ran out at $2.00 three times, uncommitted.
+        twice = 2 if stage == "fixing" and job and job.get("fix_from_human") else 1
+        return min(self.opts.session_budget, STAGE_CAPS.get(stage, self.opts.session_budget) * twice)
 
     def starved(self, job, res):
         """The session was cut off by a cap the run's dwindling budget set, not by the work itself."""
         return (res.get("subtype") == "error_max_budget_usd"
-                and job.get("last_cap", 0) < self.full_cap(job.get("cap_stage", "building")) - 0.005)
+                and job.get("last_cap", 0) < self.full_cap(job.get("cap_stage", "building"), job) - 0.005)
 
     def recent_costs(self):
         done = sorted((j for j in list(self.state["jobs"].values()) if FEATURE_ID.match(j["id"]) and j["stage"] == "merged"),
@@ -154,7 +158,7 @@ class Agents:
         holder = {}
         # Each lane gets its own share, so lanes together stay within the budget (a session ending at
         # once with nothing left is still capped at a cent, as before).
-        self.caps[job["id"]] = round(min(self.full_cap(job["stage"]), max(self.free_budget(), 0.01)), 2)
+        self.caps[job["id"]] = round(min(self.full_cap(job["stage"], job), max(self.free_budget(), 0.01)), 2)
         job["last_cap"], job["cap_stage"] = self.caps[job["id"]], job["stage"]
 
         def target():

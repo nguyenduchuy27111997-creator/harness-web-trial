@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Auth card, grouped settings rows (Profile / Account with email + Sign out / Delete account), grouped /library. The per-run settings email carries data-volatile, hidden in baselines by e2e/screenshot.css (decision 0027). Baselines of pages this feature restyles (auth, settings, library) regenerated."
+}
