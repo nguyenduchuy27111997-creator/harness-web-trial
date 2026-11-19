@@ -175,6 +175,20 @@ DISPATCH_ACTION = re.compile(r'"action"\s*:\s*"(\w+)"')
 ACCEPTED = re.compile(r"^The owner accepted the dispatcher's suggestion \((\w+)\)")
 
 
+def agreed(reply, answer):
+    """True when the owner's answer takes the dispatcher's own advice: one of its options or its detail, as the
+    dashboard's picker and an approval pass it on. Seen on the web trial: F092's ask_owner was right (the owner
+    approved its detail) and F090's owner picked its first option, and both were graded wrong."""
+    if re.match(r"^The owner (chose|approves|approved|accepted)\b", answer):
+        return True
+    try:
+        advice = json.loads(re.findall(r"\{.*\}", reply, re.S)[-1])
+    except (IndexError, ValueError):
+        return False
+    texts = [advice.get("detail") or ""] + [o.get("answer") or "" for o in advice.get("options") or [] if isinstance(o, dict)]
+    return any(len(t) >= 40 and t[:80] in answer for t in texts)
+
+
 def harvest(root, home):
     """Cases with what a good reply says, from the loop's kept inputs once their outcome is known, and the
     project's hand-written ones (harness/eval-cases/*.json: [{"id", "agent", "sha", "prompt", "expect"}])."""
@@ -189,10 +203,17 @@ def harvest(root, home):
         if i["agent"] == "ci-doctor":
             expect = {"where_in": o["fixed_files"]} if o.get("fixed_files") else {"verdict": "FLAKE"}
         elif i["agent"] == "dispatcher":
-            accepted = ACCEPTED.match(o.get("answer") or "")
-            expect = ({"action": accepted.group(1)} if accepted else {"action": "drop"} if o.get("stage") == "dropped"
-                      else {"not_action": ["drop", "ask_owner"]} if o.get("answer") else None)
-            if not expect:
+            answer = o.get("answer") or ""
+            accepted = ACCEPTED.match(answer)
+            if accepted:
+                expect = {"action": accepted.group(1)}
+            elif o.get("stage") == "dropped":
+                expect = {"action": "drop"}
+            elif agreed(i.get("reply") or "", answer):  # the owner picked its option or approved what it asked
+                expect = {"action": (DISPATCH_ACTION.findall(i["reply"]) or ["?"])[-1]}
+            elif answer:
+                expect = {"not_action": ["drop", "ask_owner"]}
+            else:
                 continue
         else:
             continue

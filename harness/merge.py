@@ -405,7 +405,12 @@ class Merge:
         self.start_fix(job, f"Main moved on and this branch now conflicts with it (in: {', '.join(files) or 'unknown files'}). "
                             f"Run `git merge {onto}` (already fetched), resolve every conflict so this feature and "
                             "everything main gained both keep working, keep main's tests as they are, and commit the "
-                            "merge.", count=False)
+                            "merge."
+                            + (" A conflict in harness/evidence/ is never edited by hand: take main's copy with `git "
+                               "checkout --theirs -- <file>` (in this merge, theirs is main). If docs/design/<M>.md then "
+                               "differs from main's, spawn the architect subagent on <M> so its hook writes fresh "
+                               "evidence for the merged doc, and the verifier on this feature for its own evidence."
+                               if any(f.startswith("harness/evidence/") for f in files) else ""), count=False)
         return False
 
     def advance_waiting(self, job):

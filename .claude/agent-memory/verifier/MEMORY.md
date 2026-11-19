@@ -10,3 +10,6 @@
 - [Axe sweep in MCP](project_axe-sweep-in-mcp.md) — inject axe-core via addScriptTag to check every page in light/dark + 44px
 - [e2e queue](project_e2e-queue.md) — e2e.sh is serialized across lanes, may wait >10 min; give init.sh a long timeout
 - [init nudge + skeleton delay](project_init-nudge-and-skeleton-delay.md) — rerun init.sh if it exits on Next upgrade nudge; /books skeleton fades in after 300 ms
+- [Next security nudge exit](project_next-security-nudge-exit.md) — dev server exits after nudge; rerun init.sh, don't upgrade; check menuitem 44px
+- [Inline-link exemption](project_inline-link-exemption.md) — gate skips inline <a>; measure standalone links at 390px yourself; wait out menu zoom
+- [Short-label targets](project_short-label-targets.md) — seed 2-letter names: min-h-11 links can be 14px wide; check stacked-cover alt

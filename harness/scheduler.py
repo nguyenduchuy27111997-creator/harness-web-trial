@@ -15,6 +15,10 @@ from common import (  # noqa: F401
 
 
 
+# An answer that asks for a rebuild from main: the dispatcher's rebuild option or its accepted suggestion.
+REBUILD = re.compile(r"^\s*(?:The owner (?:chose|accepted the dispatcher's suggestion \(rebuild\)):?\s*)?"
+                     r"(?:Rebuild it from main|Start again from main)", re.I)
+
 def overlap(globs, files):
     """Whether a feature's `touches` globs and another job's files (or globs) share a file."""
     return any(f == g or fnmatch.fnmatch(f, g) or fnmatch.fnmatch(g, f) for g in globs for f in files)
@@ -274,6 +278,16 @@ class Scheduler:
                 else:
                     self.set_stage(job, "queued" if stage == "building" else stage,
                                    note=f"budget +${job['budget_extra']:.2f}; going on")
+            elif job and job["stage"] == "held" and job.get("pr") and REBUILD.match(a["text"]):
+                # The owner chose to rebuild (the dashboard offers it): close the PR and build again from main with the
+                # answer. Seen on the web trial: F091's owner chose the dispatcher's rebuild, and an open PR only ever
+                # got a fix round.
+                gh("pr", "close", str(job["pr"]), "--comment", "The owner chose to build this feature again from main.",
+                   cwd=self.root, check=False)
+                job.setdefault("answers", []).append(a["text"])
+                job["pr"] = job["pr_url"] = None
+                job["attempts"], job["question"] = 0, None
+                self.set_stage(job, "queued", note="answered: rebuild from main")
             elif job and job["stage"] == "held" and job.get("pr"):
                 # Its PR is open with committed work: fix the branch with the answer, never rebuild it.
                 if self.lanes_busy() >= self.lane_limit() or not self.can_start() or self.paused():

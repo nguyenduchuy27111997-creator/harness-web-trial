@@ -244,10 +244,22 @@ class Dispatcher:
             f.write(json.dumps(row) + "\n")
 
 
+OWN = {"answer": "Do what it advises", "retry": "Retry as it is", "retry_large": "Retry on the large model",
+       "rebuild": "Rebuild from main", "split": "Split it", "drop": "Drop it", "ask_owner": "Approve what it asks"}
+
+
 def choices(advice):
     """The one-line summary and the answers the owner can pick from on the dashboard (it copies `loop.py answer`)."""
     opts = [{"label": str(o["label"])[:60], "answer": str(o["answer"])} for o in advice.get("options") or []
             if isinstance(o, dict) and o.get("label") and o.get("answer")][:4]
+    detail, action = str(advice.get("detail") or "").strip(), advice.get("action")
+    if not opts and detail:  # no options written: its own advice, then a plain retry, so the owner still picks
+        # Seen on the web trial: F091's, F093's and F092's advice came with a summary and no options.
+        if action == "rebuild" and not re.match(r"(Rebuild it|Start again) from main", detail, re.I):
+            detail = f"Rebuild it from main: {detail}"  # the words the loop reads as a rebuild of an open PR
+        opts = [{"label": OWN.get(action, "Do what it advises"), "answer": detail}]
+        if action != "retry":
+            opts.append({"label": "Retry as it is", "answer": "Retry it as it is."})
     listed = lambda k: [str(x)[:300] for x in advice.get(k) or [] if x][:5]  # noqa: E731
     return {"summary": str(advice.get("summary") or advice.get("why") or "")[:200], "options": opts,
             "evidence": listed("evidence"), "unknowns": listed("unknowns")}

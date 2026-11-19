@@ -8,8 +8,13 @@
 // A scenario: {"name", "start_url", "viewports": [{"name", "width", "height"}], "color_scheme": "light|dark",
 //   "steps": [{"id", "click"|"fill"|"press"|"wait_for"|"goto": <css or "role=button[name=Save]">, "value"}],
 //   "capture": ["screenshot", "aria", "network", "scripts", "console"]}
-// Defaults: desktop 1440x900 and phone 390x844, every capture. Nothing is typed into a login or payment form,
-// and no step submits one: it looks, it does not act for anyone. Output is bounded; what was not captured is
+//   "storage_state": "<file>" starts signed in from a saved session; "save_storage": "<file>" saves the session after
+//   the steps (sign up once on your own app, then observe its signed-in screens). Keep that file out of git
+//   ($TMPDIR): it holds a session cookie.
+// Defaults: desktop 1440x900 and phone 390x844, every capture. On someone else's product nothing is typed into a
+// login or payment field: it looks, it does not act for anyone. On this project's own app (localhost, 127.0.0.1,
+// *.localhost, *.test) a sign-in or sign-up field takes a test value the script makes up: "value": "generate:email"
+// or "generate:password", never a real one. Output is bounded; what was not captured is
 // listed as not_requested, and a step that failed says so (a missing screenshot is not a blank page).
 import { chromium } from "@playwright/test";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -62,6 +67,14 @@ const locate = (page, sel) => {
   return m ? page.getByRole(m[1], m[2] ? { name: m[2] } : {}) : page.locator(sel);
 };
 const SENSITIVE = /password|card|cvc|cvv|iban|ssn|otp|token/i;
+const LOCAL = (url) => /^(localhost|127\.0\.0\.1|\[::1\]|.+\.localhost|.+\.test)$/.test(new URL(url).hostname);
+const made = {}; // one made-up test value per kind, the same across steps and widths
+const value = (v) => {
+  const m = /^generate:(email|password)$/.exec(String(v ?? ""));
+  if (!m) return String(v ?? "");
+  made[m[1]] ??= m[1] === "email" ? `observe-${Date.now().toString(36)}@example.com` : `Obs-${Math.random().toString(36).slice(2, 12)}9!`;
+  return made[m[1]];
+};
 
 const browser = process.env.PW_WS
   ? await chromium.connect(process.env.PW_WS)
@@ -70,7 +83,8 @@ const summary = { url: sc.start_url, name: sc.name ?? null, steps: [], endpoints
                   not_requested: ALL.filter((c) => !capture.has(c)) };
 try {
   for (const vp of viewports) {
-    const ctx = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, colorScheme: sc.color_scheme ?? "light" });
+    const ctx = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, colorScheme: sc.color_scheme ?? "light",
+                                           ...(sc.storage_state ? { storageState: sc.storage_state } : {}) });
     const page = await ctx.newPage();
     page.on("console", (m) => { if (m.type() === "error" && summary.console.length < 20) summary.console.push(m.text().slice(0, 200)); });
     page.on("pageerror", (e) => { if (summary.console.length < 20) summary.console.push(`pageerror: ${String(e.message).slice(0, 200)}`); });
@@ -99,13 +113,17 @@ try {
       try {
         if (st.goto) await page.goto(new URL(st.goto, sc.start_url).href, { waitUntil: "domcontentloaded", timeout: 30000 });
         if (st.fill) {
-          if (SENSITIVE.test(st.fill)) throw new Error("refused: a sensitive field");
-          await locate(page, st.fill).fill(String(st.value ?? ""), { timeout: 10000 });
+          const generated = /^generate:/.test(String(st.value ?? ""));
+          if (SENSITIVE.test(st.fill) && !(LOCAL(page.url()) && generated))
+            throw new Error("refused: a sensitive field (only this project's own local app, with a generate: value)");
+          await locate(page, st.fill).fill(value(st.value), { timeout: 10000 });
         }
         if (st.click) await locate(page, st.click).first().click({ timeout: 10000 });
         if (st.press) await page.keyboard.press(st.press);
         if (st.wait_for) await locate(page, st.wait_for).first().waitFor({ timeout: 15000 });
         await page.waitForLoadState("networkidle", { timeout: 8000 }).catch(() => { rec.note = "network still busy after 8 s"; });
+        // Next's dev overlay ("1 Insight") is not the product: kept out of the screenshot and the tree.
+        await page.addStyleTag({ content: "nextjs-portal { display: none !important; }" }).catch(() => {});
         const base = join(out, `${vp.name}-${String(n).padStart(2, "0")}-${rec.step}`);
         if (capture.has("screenshot")) { await page.screenshot({ path: `${base}.png`, fullPage: true }); rec.screenshot = `${base}.png`; }
         if (capture.has("aria")) {
@@ -122,6 +140,7 @@ try {
       }
       summary.steps.push(rec);
     }
+    if (sc.save_storage && vp === viewports[0]) await ctx.storageState({ path: sc.save_storage }); // the session, for later
     await ctx.close();
   }
 } finally {

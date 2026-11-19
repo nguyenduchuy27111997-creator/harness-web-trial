@@ -110,18 +110,64 @@ def server_errors(log):
     return f"## Dev server ({log})\n" + "\n".join(x[:240] for x in picked)
 
 
+NETWORK = re.compile(r"ERR_SOCKS|ERR_CONNECTION_REFUSED|ECONNREFUSED|ERR_PROXY")
+
+
+def environment():
+    """When the browser could not reach the app: what the machine says, so the cause is evidence, not a guess. Seen
+    on the web trial: F090's, F091's, F093's and F097's sessions blamed a sandbox proxy for ERR_SOCKS_CONNECTION_FAILED
+    and stopped; a session started the same way had no proxy and reached the app."""
+    import os
+    import subprocess
+    import urllib.request
+    out = []
+    port = os.environ.get("PORT")
+    if port:
+        try:
+            with urllib.request.urlopen(f"http://localhost:{port}/api/harness-health", timeout=5) as r:
+                out.append(f"- the app on :{port} answers {r.status}")
+        except Exception as e:  # noqa: BLE001
+            out.append(f"- the app on :{port} does not answer ({str(e)[:80]})")
+    else:
+        out.append("- PORT is not set: which app the tests used is unknown")
+    names = sorted(k for k in os.environ if re.search(r"proxy|sandbox", k, re.I))
+    out.append(f"- proxy or sandbox variables: {', '.join(names) or 'none'}")
+    try:
+        ps = subprocess.run(["docker", "ps", "--format", "{{.Names}} {{.Status}}"], capture_output=True, text=True, timeout=10)
+        pw = [x for x in ps.stdout.splitlines() if "playwright" in x]
+        out.append(f"- browser container: {'; '.join(pw) or 'none running'}" if ps.returncode == 0
+                   else f"- docker did not answer ({ps.stderr.strip()[:80]})")
+    except (OSError, subprocess.TimeoutExpired) as e:
+        out.append(f"- docker could not be asked ({e})")
+    try:
+        out.append(f"- load {os.getloadavg()[0]:.1f} on {os.cpu_count()} CPUs")
+    except OSError:
+        pass
+    return "## Environment (the browser could not reach the app)\n" + "\n".join(out)
+
+
 def packet(dirs):
     roots = [Path(x) for x in dirs if Path(x).exists()]
     failed = sorted({p.parent for r in roots for p in r.rglob("*")
                      if p.name == "error-context.md" or p.name.startswith("trace") and p.suffix == ".zip"
                      or p.name.startswith("test-failed")})
     logs = [p for r in roots for p in r.rglob("server.log")]
-    parts = [test_section(d) for d in failed]
+    # A test retried (CI's retry, the local rerun) leaves a folder per run: one section, the last run's, says so.
+    sections = {}
+    for d in failed:
+        text = test_section(d)
+        key = text.split("\n", 1)[0]
+        runs = sections[key][1] + 1 if key in sections else 1
+        sections[key] = (text, runs)
+    parts = [t if n == 1 else t.replace("\n", f"\nFailed on all {n} runs (retries included).\n", 1)
+             for t, n in sections.values()]
     if logs:
         parts.append(server_errors(logs[0]))
+    if any(NETWORK.search(t) for t, _ in sections.values()):
+        parts.insert(0, environment())
     if not parts:
         return ""
-    head = f"# e2e failure packet: {len(failed)} failed test(s)"
+    head = f"# e2e failure packet: {len(sections)} failed test(s)"
     body, kept = head, 0
     for p in parts:
         if len(body) + len(p) + 2 > TOTAL:

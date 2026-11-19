@@ -1,11 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
 import { signUpAs } from "./accounts";
 import { addAndOpenBook } from "./books";
 import { coverFile } from "./covers";
 import { createShelves, shareShelfLink, shelveOpenBook } from "./shelves";
 import type { Database } from "../lib/database.types";
+import { rowDialog } from "./rows";
 
 // F087: account B cannot reach account A's covers, live book changes or shared shelves.
 const stamp = () => `${process.env.HARNESS_LANE ?? "local"}-${Date.now()}-${Math.floor(Math.random() * 1e4)}`;
@@ -82,6 +83,7 @@ test("a made-up share token is not found", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Shelf not found" })).toBeVisible();
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F087-made-up-token.png", { stylePath: "e2e/hide-dev-overlay.css" });
+  await expectScreens(page, "F087-made-up-token");
 });
 
 test("after A stops sharing, B and a signed-out visitor get not found on the old link", async ({ page, browser }) => {
@@ -95,7 +97,7 @@ test("after A stops sharing, B and a signed-out visitor get not found on the old
   await page.goto("/shelves");
   const link = await shareShelfLink(page, shelf);
 
-  const row = page.getByRole("listitem").filter({ hasText: shelf });
+  const row = rowDialog(page);
   await row.getByRole("button", { name: "Stop sharing" }).click();
   await expect(row.getByRole("button", { name: "Share" })).toBeVisible();
 
@@ -112,6 +114,7 @@ test("after A stops sharing, B and a signed-out visitor get not found on the old
     await expectAccessible(visitor);
   }
   await expect(anon).toHaveScreenshot("F087-stopped-sharing.png", { stylePath: "e2e/hide-dev-overlay.css" });
+  await expectScreens(anon, "F087-stopped-sharing");
   await ctxB.close();
   await ctxAnon.close();
 });

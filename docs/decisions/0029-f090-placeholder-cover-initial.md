@@ -1,4 +1,4 @@
-# 0028: The grid placeholder cover shows one initial, not the title and author
+# 0029: The grid placeholder cover shows one initial, not the title and author
 
 Date: 2026-11-19 · Feature: F090 · Milestone: M9
 

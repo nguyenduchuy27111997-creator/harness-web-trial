@@ -34,7 +34,7 @@ export function ShareShelf({ link, shareAction, stopAction }: Props) {
           id={linkId}
           href={link}
           aria-labelledby={`${labelId} ${linkId}`}
-          className="min-w-0 flex-1 truncate text-subheadline text-primary underline-offset-4 hover:underline"
+          className="block min-h-11 min-w-0 flex-1 truncate py-3 text-subheadline leading-5 text-primary underline-offset-4 hover:underline"
         >
           {link}
         </a>

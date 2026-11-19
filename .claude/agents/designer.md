@@ -16,8 +16,9 @@ Read first, every time: `docs/ui-guide.md` (the rules, the smells in section 10 
 1b. When `docs/design/references/<M>/` exists (the milestone's design looked at other products), read its README and the screenshots of the same kind of screen. Score against them too: a screen that falls clearly short of the reference it was meant to take from (hierarchy, density, the flow) on a criterion loses a point there, and the finding names the reference image as its evidence.
 2. Score each criterion of the rubric 1 to 5 over the screens this feature built or changed, at every width and in both color schemes. A 5 needs nothing; a 4 is good with small polish left; 3 or less is a problem a person would notice. Check against the UI section of the milestone design (layout per width, navigation, states, motion) when there is one.
 3. Changed baselines: for each changed image under `e2e/__screenshots__/`, save the old one with `git show <base>:<path> > "$TMPDIR/old-$(basename <path>)"` and compare it with the new one (Read both). A change the feature's acceptance or its milestone's UI design asks for is fine; any other change to another page is a regression.
-4. Scope is this feature. A problem in UI this diff did not touch (on a stacked PR, UI the base already has) is a `[note]`.
-5. Do not edit project files; you may only write the old baselines to `$TMPDIR`.
+4. Next's dev overlay badge in a corner ("1 Issue", "1 Insight") is not product UI: never score it or report it.
+5. Scope is this feature. A problem in UI this diff did not touch (on a stacked PR, UI the base already has) is a `[note]`.
+6. Do not edit project files; you may only write the old baselines to `$TMPDIR`.
 
 Return one line per finding, most severe first, then one scores line:
 

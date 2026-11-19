@@ -733,16 +733,26 @@ class Stages:
                              + "Find the cause in the code. Do not edit anything.")
             extra, subtype, text = self.claude(
                 job, doctor_prompt, DOCTOR_MODEL, turns=30, lane_note=False,
-                agent="ci-doctor", cap=min(0.3, self.caps[job["id"]]))
+                agent="ci-doctor", cap=min(0.6 if packet else 0.3, self.caps[job["id"]]))  # a packet is more to read
             self.merge_telemetry(job)
             if subtype == "success" and text.strip():
                 problems += f"\n\nThe CI doctor's diagnosis (check it, it may be wrong):\n{text.strip()}"
                 job["doctor_case"] = self.record_input("ci-doctor", job, doctor_prompt, text.strip())
+            else:  # seen on the web trial: F090's red CI left no diagnosis and nothing said so
+                self.event(job["id"], f"ci doctor gave no diagnosis ({subtype}); the fix starts from the log alone")
         review = problems.startswith("The reviewer found")
         prompt = (f"You are continuing feature {job['id']} ({job['title']}) on this branch. Fix only these problems:\n"
                   f"{problems}\n\n"
                   + ("Fix each finding, or, if one is not a real bug, leave it and say why. End your reply with one "
                      "line per finding: `FIXED: <finding>` or `REJECTED: <finding> — <why>`.\n\n" if review else "")
+                  + "Commit after each problem you fix (a work-in-progress commit is fine; the last one must pass the "
+                    "gate), so a round cut off by time or budget keeps what it did: on the web trial, F091's rounds timed "
+                    "out with their work uncommitted, round after round.\n\n"
+                  + "If a passing feature's e2e spec stands in the way because the milestone design moves what it clicks "
+                    "(a control into a menu, a form into a dialog), you may amend the design yourself: add the spec to "
+                    "`## Specs that move` in docs/design/<M>.md (the spec, the feature that owns it, this feature, how its "
+                    "steps change, never what it checks), spawn the architect subagent on <M> for a fresh PASS, then move "
+                    "only its steps. Seen on the web trial: F093 waited on a human through four fix rounds for exactly this.\n\n"
                   + f"Then run ./scripts/check.sh, spawn the verifier subagent for {job['id']} again, "
                   f"keep harness/status/{job['id']}.json passing only if the verifier passes (set it blocked with "
                   f"blocked_reason failed otherwise), add a short entry at the top of harness/log/{job['id']}.md, "

@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
 import { signUpAs } from "./accounts";
 import { addAndOpenBook, addTagsOnBookPage } from "./books";
+import { rowAction } from "./rows";
 
 const stamp = () => `${process.env.HARNESS_LANE ?? "local"}-${Date.now()}`;
 
@@ -33,7 +34,7 @@ test("tags page: lists tags with counts, renames, rejects a taken name", async (
   await expect(row("classic").getByRole("link").first()).toHaveAttribute("href", "/books?tag=classic");
 
   // Rename on every book.
-  await row("classic").getByRole("button", { name: "Rename" }).click();
+  await rowAction(page, "classic", "Rename tag");
   await page.getByLabel("New name").fill("classics");
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page.getByLabel("New name")).toHaveCount(0);
@@ -50,7 +51,7 @@ test("tags page: lists tags with counts, renames, rejects a taken name", async (
 
   // A name another of my tags has.
   await page.goto("/tags");
-  await row("travel").getByRole("button", { name: "Rename" }).click();
+  await rowAction(page, "travel", "Rename tag");
   await page.getByLabel("New name").fill("adventure");
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page.getByText("You already have that tag")).toBeVisible();
@@ -59,11 +60,12 @@ test("tags page: lists tags with counts, renames, rejects a taken name", async (
 
   await page.mouse.move(0, 0);
   await expectAccessible(page);
-  await row("travel").getByRole("button", { name: "Rename" }).click();
+  await rowAction(page, "travel", "Rename tag");
   await page.getByLabel("New name").fill("adventure");
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page.getByText("You already have that tag")).toBeVisible();
   await expect(page).toHaveScreenshot("F067-tags-taken.png", { stylePath: "e2e/hide-dev-overlay.css", fullPage: true });
+  await expectScreens(page, "F067-tags-taken");
 });
 
 test("tags page: empty state", async ({ page }) => {
@@ -75,4 +77,5 @@ test("tags page: empty state", async ({ page }) => {
   await page.mouse.move(0, 0);
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F067-tags-empty.png", { stylePath: "e2e/hide-dev-overlay.css", fullPage: true });
+  await expectScreens(page, "F067-tags-empty");
 });
