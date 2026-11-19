@@ -5,7 +5,8 @@ const SIZES = {
   fill: { w: 40, h: 60, box: "h-15 w-10 text-headline lg:aspect-2/3 lg:h-auto lg:w-full lg:text-large-title" },
 } as const;
 
-// A fixed-size box either way, so nothing shifts when the image loads.
+// A fixed-size box either way, so nothing shifts when the image loads. The initial is CSS-generated so a row's
+// text starts with the title (innerText skips ::before content).
 export function BookCover({ title, url, size, className = "" }: { title: string; url: string | null; size: keyof typeof SIZES; className?: string }) {
   const { w, h, box } = SIZES[size];
   if (url) {
@@ -18,9 +19,8 @@ export function BookCover({ title, url, size, className = "" }: { title: string;
     <div
       aria-hidden="true"
       data-testid="cover-placeholder"
-      className={`${box} flex shrink-0 items-center justify-center rounded-md border bg-muted font-heading font-semibold text-muted-foreground ${className}`}
-    >
-      {title.trim().charAt(0).toUpperCase()}
-    </div>
+      data-initial={title.trim().charAt(0).toUpperCase()}
+      className={`${box} flex shrink-0 items-center justify-center rounded-md border bg-muted font-heading font-semibold text-muted-foreground before:content-[attr(data-initial)] ${className}`}
+    />
   );
 }
