@@ -1,11 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
 import { signUpAs } from "./accounts";
 import { addAndOpenBook, tagOpenBook } from "./books";
 import { coverFile } from "./covers";
 import { createShelves, shelveOpenBook } from "./shelves";
 import type { Database } from "../lib/database.types";
+import { rowAction, rowDialog } from "./rows";
 
 const stamp = () => `${process.env.HARNESS_LANE ?? "local"}-${Date.now()}-${Math.floor(Math.random() * 1e4)}`;
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -56,10 +57,11 @@ test("a shared page shows no notes, quotes, review, tags, other shelves, email o
   await shelveOpenBook(page, other);
 
   await page.goto("/shelves");
-  const row = page.getByRole("listitem").filter({ hasText: shelf });
-  await row.getByRole("button", { name: "Share" }).click();
-  await expect(row.getByRole("button", { name: "Copy link" })).toBeVisible();
-  const match = ((await row.getByText(/\/s\/[0-9a-f]{48}/).textContent()) ?? "").match(/(\S*\/s\/[0-9a-f]{48})/);
+  const dialog = rowDialog(page);
+  await rowAction(page, shelf, "Share");
+  await dialog.getByRole("button", { name: "Share" }).click();
+  await expect(dialog.getByRole("button", { name: "Copy link" })).toBeVisible();
+  const match = ((await dialog.getByText(/\/s\/[0-9a-f]{48}/).textContent()) ?? "").match(/(\S*\/s\/[0-9a-f]{48})/);
   expect(match).not.toBeNull();
 
   const context = await browser.newContext();
@@ -80,6 +82,7 @@ test("a shared page shows no notes, quotes, review, tags, other shelves, email o
     stylePath: "e2e/hide-dev-overlay.css",
     mask: [anon.getByRole("heading", { level: 1 }), anon.getByRole("listitem")],
   });
+  await expectScreens(anon, "F084-shared-nothing-private", { mask: [anon.getByRole("heading", { level: 1 }), anon.getByRole("listitem")] });
   await context.close();
 });
 

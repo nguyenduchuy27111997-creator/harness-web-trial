@@ -1,4 +1,5 @@
 import { expect, type Page } from "@playwright/test";
+import { rowAction, rowDialog } from "./rows";
 
 export async function createShelves(page: Page, names: string[]) {
   await page.goto("/shelves");
@@ -32,10 +33,11 @@ export async function shelveOpenBook(page: Page, shelf: string) {
 
 // Shares `shelf` on /shelves and returns the link's address (/s/<token>).
 export async function shareShelfLink(page: Page, shelf: string) {
-  const row = page.getByRole("listitem").filter({ hasText: shelf });
-  await row.getByRole("button", { name: "Share" }).click();
-  await expect(row.getByRole("button", { name: "Copy link" })).toBeVisible();
-  const match = ((await row.getByText(/\/s\/[0-9a-f]{48}/).textContent()) ?? "").match(/(\S*\/s\/[0-9a-f]{48})/);
+  const dialog = rowDialog(page);
+  await rowAction(page, shelf, "Share");
+  await dialog.getByRole("button", { name: "Share" }).click();
+  await expect(dialog.getByRole("button", { name: "Copy link" })).toBeVisible();
+  const match = ((await dialog.getByText(/\/s\/[0-9a-f]{48}/).textContent()) ?? "").match(/(\S*\/s\/[0-9a-f]{48})/);
   expect(match).not.toBeNull();
   return match![1];
 }

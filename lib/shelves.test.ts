@@ -7,6 +7,7 @@ import {
   insertShelf,
   listShelfBookIds,
   listBookShelfIds,
+  listShelfSummaries,
   listShelves,
   parseShelfChoice,
   parseShelfFilter,
@@ -254,5 +255,26 @@ describe("listShelfBookIds", () => {
   it("is empty for a malformed id without querying", async () => {
     const supabase = { from: () => { throw new Error("queried"); } } as unknown as SupabaseClient<Database>;
     expect(await listShelfBookIds(supabase, "nope")).toEqual([]);
+  });
+});
+
+describe("listShelfSummaries", () => {
+  function client(result: { data: unknown; error: { message: string } | null }) {
+    const query = { select: () => query, order: () => query, then: (r: (v: unknown) => unknown) => r(result) };
+    return { from: () => query } as unknown as SupabaseClient<Database>;
+  }
+  it("counts the books and keeps the 3 newest non-null covers", async () => {
+    const row = (created_at: string, cover_path: string | null) => ({ created_at, books: { cover_path } });
+    const data = [
+      { id: "1", name: "A", book_shelves: [row("2024-01-01", "a"), row("2024-01-04", "d"), row("2024-01-03", null), row("2024-01-02", "b"), row("2024-01-05", "e")] },
+      { id: "2", name: "B", book_shelves: [] },
+    ];
+    expect(await listShelfSummaries(client({ data, error: null }))).toEqual([
+      { id: "1", name: "A", count: 5, coverPaths: ["e", "d", "b"] },
+      { id: "2", name: "B", count: 0, coverPaths: [] },
+    ]);
+  });
+  it("throws on a database error", async () => {
+    await expect(listShelfSummaries(client({ data: null, error: { message: "boom" } }))).rejects.toThrow("boom");
   });
 });
