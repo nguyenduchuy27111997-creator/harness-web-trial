@@ -13,7 +13,7 @@ import dispatcher
 
 from common import (  # noqa: F401
     api_reachable, final_result, free_port, git, health, kill_group, lang, limit_resume, metrics, now, online,
-    preview, run, stop_processes_in, stream, API_DOWN, AUTH, AUTH_PAUSE, CLAUDE, ENV_KEEP, FEATURE_FLOOR, FEATURE_ID, FIX_SONNET,
+    preview, run, stop_processes_in, stream, trust, API_DOWN, AUTH, AUTH_PAUSE, CLAUDE, ENV_KEEP, FEATURE_FLOOR, FEATURE_ID, FIX_SONNET,
     INFRA_PAUSE, LIMIT, MAX_LOAD, MIN_DISK_GB, MIN_SESSION, OFFLINE_MAX, PORT_LOCK, PRIOR_COST, PROBE_EVERY,
     PROBE_MAX, Path, SANDBOX, SESSION_TIMEOUT, STAGE_CAPS, STREAM, DAILY_BUDGET, DAY_SHED, MIN_LANES,
 )
@@ -228,6 +228,7 @@ class Agents:
                                                                             {"fixing": "fixer"}.get(job["stage"], "coder")),
                                                      "model": model,
                                                      "stage": job["stage"], "since": now()}
+        trust(job["worktree"])  # the project's permissions.allow applies only in a trusted folder
         proc = subprocess.Popen(cmd, cwd=job["worktree"], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                 text=True, start_new_session=True)
         self.procs.add(proc)
