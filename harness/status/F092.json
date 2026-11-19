@@ -1,0 +1,5 @@
+{
+  "status": "blocked",
+  "blocked_reason": "failed",
+  "notes": "agent/F092 contains none of the earlier F092 work (AddBookSheet, lookup/coverUrl); the branch sits at F090's commit 7c4b113. The test-writer's e2e/F092-add-sheet.spec.ts now fails (no 'Add book' dialog at /books?add=1). No verifier evidence exists, so passing cannot be recorded, and baseline regeneration was not done. The earlier build must be recovered or rebuilt from scratch; then regenerate the F090 baselines (owner-approved), verify, and open the 3 follow-up bugs (focus return to Add book, form reset on resize across 768px, no visible close X on the desktop dialog)."
+}
