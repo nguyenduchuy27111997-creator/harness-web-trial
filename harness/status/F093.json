@@ -1,4 +1,5 @@
 {
-  "status": "passing",
-  "notes": "Verifier PASS (2026-11-19). /tags links fill their row (flex-1 min-w-0 min-h-11), 244x44 at 390px. gap-4 between the shelf cover stack and the name, with 3 shelf baselines updated. Stacked shelf covers keep alt 'Cover of <shelf>': alt=\"\"/aria-hidden would break the locked spec e2e/F093-lists-layout.spec.ts:40 (expects 3 imgs), so that is the human's call. Merged origin/main so e2e-size.py stops flagging main's F081 spec change."
+  "status": "blocked",
+  "blocked_reason": "failed",
+  "notes": "Shelf cover box is now w-18 (3 x 40px BookCover sm overlapping by 24px = 72px), so the stack no longer overflows and every shelf name starts at the same x. Not verified: e2e in this session failed at every page.goto with net::ERR_SOCKS_CONNECTION_FAILED (the sandbox proxy, not the app; curl gets 200), so the shelf baselines (F028-shelves, F033-deleted, F030-rename-cancelled-*) were not regenerated and the verifier was not run. HARNESS_E2E=skip ./scripts/check.sh is green. Next: run ./scripts/e2e.sh on the shelves specs with --update-snapshots=changed, then the verifier."
 }
