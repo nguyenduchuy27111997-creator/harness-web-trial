@@ -1,5 +1,5 @@
 {
   "status": "blocked",
   "blocked_reason": "failed",
-  "notes": "components/rename-shelf-form.tsx:46 cover box is w-18 (3 x 40px BookCover sm overlapping 24px = 72px), so the stack fits and every shelf name starts at the same x. Unverified: e2e here failed at every page.goto with net::ERR_SOCKS_CONNECTION_FAILED (sandbox proxy; curl gets 200); HARNESS_E2E=skip check.sh is green. Next: update shelf baselines (F028-shelves, F033-deleted, F030-rename-cancelled-*) with --update-snapshots=changed, run the full gate and the verifier."
+  "notes": "Environment, not code: e2e here fails at page.goto with net::ERR_SOCKS_CONNECTION_FAILED (the sandbox proxy to Docker's browser), on and off. Code is final: components/rename-shelf-form.tsx w-18 cover box (0e1b135). Every shelf-row baseline it moves is redrawn (F028, F029, F030, F033, F083 shared-again) and each spec passes on its own. Next: in a working environment, run HARNESS_E2E=feature ./scripts/check.sh (if pages reload in a loop, move .next/dev aside), then the verifier and designer."
 }
