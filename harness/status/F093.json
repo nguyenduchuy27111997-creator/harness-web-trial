@@ -1,5 +1,5 @@
 {
   "status": "blocked",
   "blocked_reason": "failed",
-  "notes": "Shelf cover box is now w-18 (3 x 40px BookCover sm overlapping by 24px = 72px), so the stack no longer overflows and every shelf name starts at the same x. Not verified: e2e in this session failed at every page.goto with net::ERR_SOCKS_CONNECTION_FAILED (the sandbox proxy, not the app; curl gets 200), so the shelf baselines (F028-shelves, F033-deleted, F030-rename-cancelled-*) were not regenerated and the verifier was not run. HARNESS_E2E=skip ./scripts/check.sh is green. Next: run ./scripts/e2e.sh on the shelves specs with --update-snapshots=changed, then the verifier."
+  "notes": "Fix reverted (stop hook: check.sh e2e failing in sandbox). Re-apply: components/rename-shelf-form.tsx:46 w-16 -> w-18 (3 x 40px BookCover sm overlapping 24px = 72px) so the cover stack fits and every shelf name starts at the same x. e2e here failed at every page.goto with net::ERR_SOCKS_CONNECTION_FAILED (sandbox proxy; curl gets 200). Then update shelf baselines (F028-shelves, F033-deleted, F030-rename-cancelled-*) with --update-snapshots=changed and run the verifier."
 }

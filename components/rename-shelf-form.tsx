@@ -43,7 +43,7 @@ function ShelfRow({ count, covers, deleteAction, shareLink, shareAction, stopSha
   const onOpenChange = (next: boolean) => !next && setOpen(null);
   return (
     <div className="flex items-center gap-4">
-      <div className="flex w-18 shrink-0 -space-x-6" data-testid="shelf-covers">
+      <div className="flex w-16 shrink-0 -space-x-6" data-testid="shelf-covers">
         {covers.length === 0 ? (
           <BookCover title={props.name} url={null} size="sm" />
         ) : (
