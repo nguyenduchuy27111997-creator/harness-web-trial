@@ -11,6 +11,13 @@
   padding-bottom: calc(env(safe-area-inset-bottom) + 0.25rem);
 }
 
+/* The placeholder cover's initial (BookCover): generated, so a row's innerText starts with the title. */
+@utility cover-initial {
+  &::before {
+    content: attr(data-initial);
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

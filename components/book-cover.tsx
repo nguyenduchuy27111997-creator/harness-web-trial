@@ -20,7 +20,7 @@ export function BookCover({ title, url, size, className = "" }: { title: string;
       aria-hidden="true"
       data-testid="cover-placeholder"
       data-initial={title.trim().charAt(0).toUpperCase()}
-      className={`${box} flex shrink-0 items-center justify-center rounded-md border bg-muted font-heading font-semibold text-muted-foreground before:content-[attr(data-initial)] ${className}`}
+      className={`${box} flex shrink-0 items-center justify-center rounded-md border bg-muted font-heading font-semibold text-muted-foreground cover-initial ${className}`}
     />
   );
 }
