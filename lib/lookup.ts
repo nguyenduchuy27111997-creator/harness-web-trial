@@ -1,6 +1,6 @@
-export type LookupBook = { title: string; author: string; totalPages: number | null };
+export type LookupBook = { title: string; author: string; totalPages: number | null; coverUrl: string | null };
 export type LookupResult =
-  | { status: "found"; book: LookupBook }
+  | { status: "found"; books: LookupBook[] }
   | { status: "not_found" }
   | { status: "timeout" }
   | { status: "unavailable" };
@@ -52,18 +52,36 @@ export function createLookup({ fetch, now }: { fetch: typeof globalThis.fetch; n
       const data = (await getJson(`${OPEN_LIBRARY}${authorKey}.json`, signal)) as { name?: unknown };
       if (typeof data.name === "string") author = data.name;
     }
-    return { status: "found", book: { title: edition.title, author, totalPages: pages(edition.number_of_pages) } };
+    return {
+      status: "found",
+      books: [
+        {
+          title: edition.title,
+          author,
+          totalPages: pages(edition.number_of_pages),
+          coverUrl: `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg?default=false`,
+        },
+      ],
+    };
   }
 
   async function byTitle(title: string, signal: AbortSignal): Promise<LookupResult> {
-    const params = new URLSearchParams({ title, limit: "1", fields: "title,author_name,number_of_pages_median" });
+    const params = new URLSearchParams({ title, limit: "5", fields: "title,author_name,number_of_pages_median,cover_i" });
     const data = (await getJson(`${OPEN_LIBRARY}/search.json?${params}`, signal)) as {
-      docs?: { title?: unknown; author_name?: unknown[]; number_of_pages_median?: unknown }[];
+      docs?: { title?: unknown; author_name?: unknown[]; number_of_pages_median?: unknown; cover_i?: unknown }[];
     };
-    const doc = data.docs?.[0];
-    if (!doc || typeof doc.title !== "string") return { status: "not_found" };
-    const author = typeof doc.author_name?.[0] === "string" ? doc.author_name[0] : "";
-    return { status: "found", book: { title: doc.title, author, totalPages: pages(doc.number_of_pages_median) } };
+    const books: LookupBook[] = [];
+    for (const doc of data.docs ?? []) {
+      if (typeof doc.title !== "string") continue;
+      const coverId = typeof doc.cover_i === "number" && Number.isInteger(doc.cover_i) && doc.cover_i > 0 ? doc.cover_i : null;
+      books.push({
+        title: doc.title,
+        author: typeof doc.author_name?.[0] === "string" ? doc.author_name[0] : "",
+        totalPages: pages(doc.number_of_pages_median),
+        coverUrl: coverId === null ? null : `https://covers.openlibrary.org/b/id/${coverId}-M.jpg`,
+      });
+    }
+    return books.length > 0 ? { status: "found", books: books.slice(0, 5) } : { status: "not_found" };
   }
 
   return async function lookupBook(raw: unknown): Promise<LookupResult> {

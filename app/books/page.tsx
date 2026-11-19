@@ -10,6 +10,7 @@ import { ShelfSelect } from "@/components/shelf-select";
 import { TagSelect } from "@/components/tag-select";
 import { SortSelect } from "@/components/sort-select";
 import { LoadMore } from "@/components/load-more";
+import { AddBookSheet } from "./new/add-book-sheet";
 import { LiveRefresh } from "./live-refresh";
 import { StatusTabs } from "@/components/status-tabs";
 import { booksHref, countByStatus, filterBooks, listBooks, PAGE_SIZE, pageBooks, parseLimit, parseSearch, parseSort, parseStatusFilter, sortBooks } from "@/lib/books";
@@ -19,7 +20,7 @@ import { createClient, requireUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "My books · Bookshelf" };
 
-type BooksParams = { status?: string | string[]; q?: string | string[]; sort?: string | string[]; shelf?: string | string[]; tag?: string | string[]; limit?: string | string[] };
+type BooksParams = { status?: string | string[]; q?: string | string[]; sort?: string | string[]; shelf?: string | string[]; tag?: string | string[]; limit?: string | string[]; add?: string | string[] };
 
 function Header({ add }: { add: boolean }) {
   return (
@@ -27,7 +28,7 @@ function Header({ add }: { add: boolean }) {
       <h1 className="font-heading text-large-title">My books</h1>
       {add && (
         <Button asChild>
-          <Link href="/books/new">Add book</Link>
+          <Link href="/books?add=1">Add book</Link>
         </Button>
       )}
     </div>
@@ -37,10 +38,11 @@ function Header({ add }: { add: boolean }) {
 // The title and Add book come at once; the list streams in behind book-shaped placeholders (design M9).
 export default async function BooksPage({ searchParams }: { searchParams: Promise<BooksParams> }) {
   const user = await requireUser();
-  const params = await searchParams;
+  const { add, ...params } = await searchParams;
   return (
     <div className="flex w-full flex-col gap-6">
       <LiveRefresh userId={user.id} />
+      {add === "1" && <AddBookSheet />}
       <Suspense
         key={JSON.stringify(params)}
         fallback={
@@ -82,7 +84,7 @@ async function Books({ params }: { params: BooksParams }) {
           <h2 className="text-title-2">No books yet</h2>
           <p className="text-body text-muted-foreground">Your shelf is empty. Add your first book to get started.</p>
           <Button asChild>
-            <Link href="/books/new">Add book</Link>
+            <Link href="/books?add=1">Add book</Link>
           </Button>
         </div>
       </>

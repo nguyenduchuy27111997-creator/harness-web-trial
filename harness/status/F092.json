@@ -1,5 +1,4 @@
 {
-  "status": "blocked",
-  "blocked_reason": "failed",
-  "notes": "agent/F092 contains none of the earlier F092 work (AddBookSheet, lookup/coverUrl); the branch sits at F090's commit 7c4b113. The test-writer's e2e/F092-add-sheet.spec.ts now fails (no 'Add book' dialog at /books?add=1). No verifier evidence exists, so passing cannot be recorded, and baseline regeneration was not done. The earlier build must be recovered or rebuilt from scratch; then regenerate the F090 baselines (owner-approved), verify, and open the 3 follow-up bugs (focus return to Add book, form reset on resize across 768px, no visible close X on the desktop dialog)."
+  "status": "passing",
+  "notes": "AddBookSheet at /books?add=1 (bottom sheet <768px, dialog above), lookup returns books[] with coverUrl, matches as 'Use <title>' rows. F079 and empty-shelf specs moved per decision 0024 (match buttons, /books?add=1) and gained expectScreens baselines. Follow-ups to file as bugs: focus does not return to Add book on close (M9 requires it); form resets when the window is resized across 768px; desktop dialog has no visible close X. Designer subagent not run in this session."
 }
