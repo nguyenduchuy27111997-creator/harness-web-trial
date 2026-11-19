@@ -11,7 +11,9 @@ import {
   AlertDialogFooter,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { XIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { NewBookForm } from "./new-book-form";
 
@@ -56,6 +58,12 @@ export function AddBookSheet() {
               <DialogTitle className="text-title-2">Add book</DialogTitle>
             </DialogHeader>
             {form}
+            <DialogClose asChild>
+              <Button variant="ghost" size="icon-sm" className="absolute top-3 right-3">
+                <XIcon />
+                <span className="sr-only">Close</span>
+              </Button>
+            </DialogClose>
           </DialogContent>
         </Dialog>
       ) : (
