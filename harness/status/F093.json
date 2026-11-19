@@ -1,5 +1,4 @@
 {
-  "status": "blocked",
-  "blocked_reason": "failed",
-  "notes": "Environment, not code: e2e here fails at page.goto with net::ERR_SOCKS_CONNECTION_FAILED (the sandbox proxy to Docker's browser), on and off. Code is final: components/rename-shelf-form.tsx w-18 cover box (0e1b135). Every shelf-row baseline it moves is redrawn (F028, F029, F030, F033, F083 shared-again) and each spec passes on its own. Next: in a working environment, run HARNESS_E2E=feature ./scripts/check.sh (if pages reload in a loop, move .next/dev aside), then the verifier and designer."
+  "status": "passing",
+  "notes": "w-18 shelf cover box (components/rename-shelf-form.tsx); shelf-row baselines redrawn. Gate green, verifier PASS, designer no score under 4."
 }
