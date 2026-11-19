@@ -255,6 +255,8 @@ def choices(advice):
     detail, action = str(advice.get("detail") or "").strip(), advice.get("action")
     if not opts and detail:  # no options written: its own advice, then a plain retry, so the owner still picks
         # Seen on the web trial: F091's, F093's and F092's advice came with a summary and no options.
+        if action == "rebuild" and not re.match(r"(Rebuild it|Start again) from main", detail, re.I):
+            detail = f"Rebuild it from main: {detail}"  # the words the loop reads as a rebuild of an open PR
         opts = [{"label": OWN.get(action, "Do what it advises"), "answer": detail}]
         if action != "retry":
             opts.append({"label": "Retry as it is", "answer": "Retry it as it is."})

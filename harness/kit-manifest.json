@@ -1,5 +1,5 @@
 {
-  "version": "5.57.0",
+  "version": "5.57.1",
   "preset": "nextjs-supabase",
   "files": {
     ".claude/agents/advisor.md": "e7a83e9817e031dfa49a2671940111ea252614b123ef8c48dc15cd3aac0b2c52",
@@ -62,7 +62,7 @@
     "harness/dashboard/assets/dashboard.css": "8994cc9f028cf43aac9457332462d71e8a2e5c90896e664b72f295d3163c6beb",
     "harness/dashboard/assets/dashboard.esm": "22b7a64a46b750ceecc39ca0cd5337991c31ec586d0a5a101f58d77206eaf486",
     "harness/dashboard/index.html": "7bd0c26cb3d5e0cdb2ff01cb04ce5adf47ccc7959e0722b756b7df7c3aa94d82",
-    "harness/dispatcher.py": "d4000cb859023f1470c9d8f1713b86c49159c4907e4a4cdfbbb9281869ad20c4",
+    "harness/dispatcher.py": "a2f84b336dbc63771892cdd48b6e6bbd2489a06aedee95a850df9b2746334b46",
     "harness/e2e_packet.py": "33843604e3b8adb9a020e564aa10f4d2bceb0ce52477164ee0864592f6292742",
     "harness/eval.py": "df40ed39793f80e042477ebf2215a1cd3c9a4fd74fc96be13f28681e6bfbbe42",
     "harness/features.json": "c86c9fc3db082a2700d29b949566705a240dbf707ec5ef022beeba74834c0d9f",
@@ -222,7 +222,7 @@
     "harness/reporters/playwright.mjs": "fefbac79fe176235dc2b80a42b4f924d1c0492de810a441733e0d774fa659a1f",
     "harness/reporters/vitest.mjs": "d8aae5231bff873d7accaa61979fdbdb6cc3d4ed21870f78f5125a110a5d67d6",
     "harness/runner.py": "4cd3ef03596e6c584c389408de022e721bc0131d441f6484b2adcbfbc14b8b97",
-    "harness/scheduler.py": "57b0a33e5f8da6d388015e7bc0f0de113447be87e3c9f1258c8909aad09ee4bb",
+    "harness/scheduler.py": "55a96314d2038c31e6db6ee07df4c5855ba42c14a21e24fb5a9ea55ef8e84fcb",
     "harness/stack.json": "3bb54c8a7c4dc853aa0ace49bf7ab8709465ad8566d4af5a4898b811f47e9b2f",
     "harness/stages.py": "e31dfaab4dd92c43b16afa091b88eac21122dc62555d528cba48468d72c13af3",
     "harness/stream.py": "88be57920690890dab97128b97cbbaaa96e0e10dcc2a82dc63e1953d94117de5",
