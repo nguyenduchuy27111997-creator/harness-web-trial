@@ -148,7 +148,7 @@ export function NewBookForm({ sheet, onCancel, onDirtyChange }: { sheet?: boolea
       </div>
       </div>
       {sheet ? (
-        <div className="flex justify-between gap-3 border-t p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div className="flex justify-between gap-3 border-t p-4 pb-safe-4">
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
