@@ -1,21 +1,18 @@
 <!-- written by harness/hooks/verifier-evidence.py; do not edit -->
-- Verified at: 2026-11-17T02:41:18 on bfd5c96 plus working tree
-- Architect run: a845724cc5625df19
-- Design sha256: d0b44f881722e88e6b1de4ab5b55382010eaa973e28484384c6d96903ecffe43
+- Verified at: 2026-11-19T16:49:09 on 86e5c13 plus working tree
+- Architect run: ac7830cf1601be2de
+- Design sha256: 835933bc7c9857a1973542bce5fbed6cd0e3d03021235613a2573d68c5a0895f
 
 VERDICT: PASS
 DESIGN: M9
 CHECKED:
-- Scope: the only change in this round is the "Empty year" sentence in the `/stats` and `/stats/[year]` (F094) bullet of /Users/huynguyen/Desktop/harness-web-trial-loop/F094/docs/design/M9.md. I checked it against decision 0027, F094, the F059 spec and the code, and did not re-review the rest of M9.
-- Consistency with decision 0027 (/Users/huynguyen/Desktop/harness-web-trial-loop/F094/docs/decisions/0027-f094-empty-year-and-goal-ring.md): the doc now cites 0027 by name. Both say the same thing. On `/stats`, an empty year replaces the tiles with the empty state ("No books finished in <year>" plus a "Go to my books" button), keeps the chart at all-zero counts, and keeps the goal ring and form. On `/stats/[year]`, an empty year shows only the empty state. The earlier wording ("instead of the tiles and chart") is gone, and 0027's Context explains why it changed.
-- Locked spec F059 (/Users/huynguyen/Desktop/harness-web-trial-loop/F094/e2e/F059-monthly-chart.spec.ts): "every month shows 0" expects a "Finished by month" region with exactly 12 list items, each reading `^<Mon>\s*0$`. The design keeps the chart at all-zero counts on an empty `/stats`. /Users/huynguyen/Desktop/harness-web-trial-loop/F094/components/monthly-chart.tsx matches: the extra muted line is removed, and when every month is 0 the bar `div` is left out, so each `li` holds only the month label and its 0 count.
-- Code agrees with the doc:
-  - /Users/huynguyen/Desktop/harness-web-trial-loop/F094/app/stats/(overview)/page.tsx renders `EmptyYear` instead of `StatsTiles` when finishedThisYear is 0, always renders `MonthlyChart`, and keeps the goal section.
-  - /Users/huynguyen/Desktop/harness-web-trial-loop/F094/app/stats/[year]/page.tsx renders only `EmptyYear` for an empty year, with no tiles and no chart.
-  - /Users/huynguyen/Desktop/harness-web-trial-loop/F094/components/empty-year.tsx is an h2 plus a `Button asChild` `Link` to /books, so "button" in the doc is accurate.
-  - The "You finished no books in <year>." sentence stays as sr-only text in year-review.tsx, as 0027 says.
-- Features and spec: F094's acceptance (tiles, accent bars, goal ring, phone layout) has nothing about empty years, so the change conflicts with none of it. The only empty state in the spec is the one for an empty book list, which this change does not touch.
-- Contract, data model, modules: unchanged by this sentence. Only existing `lib/stats` functions are used.
-- Simplicity: removing the extra empty-chart line makes the design simpler. Nothing speculative was added.
-- Outside the design doc: F094's `touches` in harness/features.json does not list `components/empty-year.tsx` or `components/year-review.tsx`. If the loop enforces `touches`, that may matter, but it is a backlog question and does not affect this verdict.
+- Scope of change: `git diff docs/design/M9.md` changes only the `BookCover` line under "Components whose props change". The `author?` prop is dropped and the `fill` placeholder becomes a `bg-muted` 2:3 block with a hairline and one centered `font-heading text-large-title` initial. It is still `aria-hidden`, and it cites decision 0028. Nothing else in M9 changed.
+- Decision: /Users/huynguyen/Desktop/harness-web-trial-loop/F090/docs/decisions/0028-f090-placeholder-cover-initial.md gives the context (the title and author showed twice in the grid), the decision (one initial, as on the phone rows, and the `content-data` utility removed) and the consequences. The number 0028 is not used by any other file (0027 has three files, which was already the case).
+- Coverage and spec: F090's acceptance only asks for "a grid of covers with title and author under each". The UI section of M9 (line 73) still puts the title (`line-clamp-2`) and author (`line-clamp-1`) under `BookCover fill`, so the acceptance is still met. Spec M8 only asks for "the cover, or a placeholder".
+- Code: /Users/huynguyen/Desktop/harness-web-trial-loop/F090/components/book-cover.tsx takes `{ title, url, size, className? }` with no `author`. The placeholder is `aria-hidden`, has `border bg-muted font-heading` and shows the first letter of the title, with `fill` at `lg:aspect-2/3 lg:w-full lg:text-large-title`. No caller passes `author=` to `BookCover`. The only `author=` is on `EditBookForm`. `content-data` is gone from `app/*.css` and the code. `text-large-title` is defined in `app/ui-base.css`. Commit f80c5d1 touches only book-cover.tsx, book-list.tsx and globals.css.
+- design-system.md: line 19 ("the placeholder is `muted` with the hairline") and the type rules (Lora through `font-heading`, named sizes only) match the new wording. Nothing in it described the old title/author placeholder, so it needs no change.
+- Rest of M9: line 68 (covers in dark: the placeholder uses dark `muted` and the hairline) and line 81 (`/s/[token]` uses `sm`, no `fill`) agree. `sm` and `lg` are unchanged.
+- Specs that move: `grep -rn "cover-placeholder|content-data" e2e` finds nothing. No e2e spec reads the placeholder's text, so no spec moves.
+- Contract, data model, NFR, module boundaries: none of these change. This is a presentational prop change only.
+- Simplicity: the change removes a prop and a CSS utility and adds nothing.
 PROBLEMS:
