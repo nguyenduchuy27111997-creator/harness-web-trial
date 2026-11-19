@@ -1,4 +1,4 @@
 {
   "status": "passing",
-  "notes": "AddBookSheet at /books?add=1 (bottom sheet <768px, dialog above), lookup returns books[] with coverUrl, matches as 'Use <title>' rows. F079 and empty-shelf specs moved per decision 0024 (match buttons, /books?add=1) and gained expectScreens baselines. Follow-ups to file as bugs: focus does not return to Add book on close (M9 requires it); form resets when the window is resized across 768px; desktop dialog has no visible close X. Designer subagent not run in this session."
+  "notes": "AddBookSheet at /books?add=1 (bottom sheet <768px, dialog above), lookup returns books[] with coverUrl, matches as 'Use <title>' rows. F079 and empty-shelf specs moved per decision 0024 (match buttons, /books?add=1) and gained expectScreens baselines. Follow-ups to file as bugs: focus does not return to Add book on close (M9 requires it); form resets when the window is resized across 768px. Designer subagent not run in this session. Review round: footer keeps 16px bottom padding (pb-safe-4 = max(1rem, safe-area inset)), desktop dialog has a \u00d7 close; verifier PASS."
 }
