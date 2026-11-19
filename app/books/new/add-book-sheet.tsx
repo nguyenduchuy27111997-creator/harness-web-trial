@@ -54,16 +54,16 @@ export function AddBookSheet() {
       {wide ? (
         <Dialog open onOpenChange={(open) => !open && requestClose()}>
           <DialogContent aria-describedby={undefined} className="flex max-h-5/6 flex-col gap-0 p-0 sm:max-w-md">
-            <DialogHeader className="p-4">
+            <DialogHeader className="flex shrink-0 items-center justify-between p-4">
               <DialogTitle className="text-title-2">Add book</DialogTitle>
+              <DialogClose asChild>
+                <Button variant="ghost" size="icon-sm">
+                  <XIcon />
+                  <span className="sr-only">Close</span>
+                </Button>
+              </DialogClose>
             </DialogHeader>
             {form}
-            <DialogClose asChild>
-              <Button variant="ghost" size="icon-sm" className="absolute top-3 right-3">
-                <XIcon />
-                <span className="sr-only">Close</span>
-              </Button>
-            </DialogClose>
           </DialogContent>
         </Dialog>
       ) : (
