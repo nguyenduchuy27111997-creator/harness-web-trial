@@ -84,7 +84,7 @@ export function NewBookForm({ sheet, onCancel, onDirtyChange, onSaved }: { sheet
 
   return (
     <form action={action} noValidate className={sheet ? "flex min-h-0 flex-1 flex-col" : "flex flex-col gap-4"}>
-      {sheet && <input type="hidden" name="sheet" value="1" />}
+      {sheet && <Input type="hidden" name="sheet" value="1" />}
       <div className={sheet ? "flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pt-1 pb-4" : "contents"}>
       {state.formError && (
         <p role="alert" className="text-subheadline text-destructive">
