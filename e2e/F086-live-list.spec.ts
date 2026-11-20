@@ -19,6 +19,7 @@ test("add, status change and delete show in another tab without a reload", async
   const s = stamp();
   await signUpAs(page, `f086-a-${s}@example.com`);
   const title = `Live Book ${s}`;
+  await addBook(page, `Seed Book ${s}`); // M9: the empty shelf shows no filter
   const other = await context.newPage();
   await other.goto("/books");
   await expect(other.getByRole("navigation", { name: "Book filter" })).toBeVisible();
@@ -54,6 +55,7 @@ test("add, status change and delete show in another tab without a reload", async
 test("a second account's changes never reach my tab", async ({ page, browser, baseURL }) => {
   const s = stamp();
   await signUpAs(page, `f086-b-${s}@example.com`);
+  await addBook(page, `Seed Book ${s}`); // M9: the empty shelf shows no filter
   await page.goto("/books");
   await expect(page.getByRole("navigation", { name: "Book filter" })).toBeVisible();
 
@@ -78,6 +80,7 @@ test("after the connection drops and comes back the list catches up", async ({ p
   const s = stamp();
   await signUpAs(page, `f086-d-${s}@example.com`);
   const adder = await context.newPage();
+  await addBook(page, `Seed Book ${s}`); // M9: the empty shelf shows no filter
   await page.goto("/books");
   await expect(page.getByRole("navigation", { name: "Book filter" })).toBeVisible();
 

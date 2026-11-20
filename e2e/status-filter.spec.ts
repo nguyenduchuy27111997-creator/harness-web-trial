@@ -27,7 +27,6 @@ test("filter the list by status with tabs kept in the URL", async ({ page }) => 
   await signUp(page, `f013-${tag}@example.com`);
 
   const tabs = page.getByRole("navigation", { name: "Book filter" });
-  await expect(tabs.getByRole("link", { name: "All" })).toBeVisible();
 
   const books = [
     { title: "Wanted Book", status: "Want to read" },
@@ -37,6 +36,8 @@ test("filter the list by status with tabs kept in the URL", async ({ page }) => 
   for (const book of books) {
     await addBook(page, book.title, book.status);
     await expect(page.getByRole("listitem").filter({ hasText: book.title })).toBeVisible();
+    // M9: the empty shelf shows no filter, so the first check waits for the first book.
+    if (book === books[0]) await expect(tabs.getByRole("link", { name: "All" })).toBeVisible();
   }
 
   const rows = page.getByRole("listitem");
