@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
 
 // F005: add a book from /books/new. Each run uses a fresh account and book titles (golden principle 7).
 test("add a book", async ({ page }) => {
@@ -30,9 +30,10 @@ test("add a book", async ({ page }) => {
   await page.getByLabel("Author").fill("Frank Herbert");
   await page.getByLabel("Status").click();
   await page.getByRole("option", { name: "Reading" }).click();
-  await page.getByRole("button", { name: "Save" }).click();
+  await page.getByRole("dialog", { name: "Add book" }).getByRole("button", { name: "Add book", exact: true }).click();
   await expect(page).toHaveURL(/\/books$/);
   await expect(page.getByRole("listitem").filter({ hasText: "Dune" })).toContainText("Reading");
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F005-books-added.png");
+  await expectScreens(page, "F005-books-added");
 });

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
 
 // F004: a new account sees an empty shelf with a way to add a book. Each run uses a fresh email (golden principle 7).
 test("empty shelf on /books", async ({ page }) => {
@@ -19,5 +19,8 @@ test("empty shelf on /books", async ({ page }) => {
   await expect(page).toHaveScreenshot("F004-empty-shelf.png");
 
   await page.getByRole("link", { name: "Add book" }).click();
-  await expect(page).toHaveURL(/\/books\/new$/);
+  await expect(page).toHaveURL(/\/books\?add=1$/);
+  await expect(page.getByRole("dialog", { name: "Add book" })).toBeVisible();
+  await page.mouse.move(0, 0);
+  await expectScreens(page, "F004-add-sheet");
 });

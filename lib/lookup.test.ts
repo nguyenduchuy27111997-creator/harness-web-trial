@@ -12,7 +12,10 @@ function fakeFetch() {
     }
     if (url.endsWith("/authors/OL21594A.json")) return Response.json({ name: "Jane Austen" });
     if (url.includes("/search.json?")) {
-      return Response.json({ docs: [{ title: "The Hobbit", author_name: ["J.R.R. Tolkien"], number_of_pages_median: 310 }] });
+      return Response.json({ docs: [
+          { title: "The Hobbit", author_name: ["J.R.R. Tolkien"], number_of_pages_median: 310, cover_i: 123 },
+          { title: "There and Back Again", number_of_pages_median: 128 },
+        ] });
     }
     if (url.includes("/isbn/")) return new Response("{}", { status: 404 });
     return new Response("", { status: 503 });
@@ -41,7 +44,14 @@ describe("lookupBook", () => {
     const lookupBook = createLookup({ fetch, now: () => 0 });
     expect(await lookupBook("9780141439518")).toEqual({
       status: "found",
-      book: { title: "Pride and Prejudice", author: "Jane Austen", totalPages: 480 },
+      books: [
+        {
+          title: "Pride and Prejudice",
+          author: "Jane Austen",
+          totalPages: 480,
+          coverUrl: "https://covers.openlibrary.org/b/isbn/9780141439518-M.jpg?default=false",
+        },
+      ],
     });
   });
 
@@ -50,10 +60,13 @@ describe("lookupBook", () => {
     const lookupBook = createLookup({ fetch, now: () => 0 });
     expect(await lookupBook("The Hobbit")).toEqual({
       status: "found",
-      book: { title: "The Hobbit", author: "J.R.R. Tolkien", totalPages: 310 },
+      books: [
+        { title: "The Hobbit", author: "J.R.R. Tolkien", totalPages: 310, coverUrl: "https://covers.openlibrary.org/b/id/123-M.jpg" },
+        { title: "There and Back Again", author: "", totalPages: 128, coverUrl: null },
+      ],
     });
     expect(calls[0]).toBe(
-      "https://openlibrary.org/search.json?title=the+hobbit&limit=1&fields=title%2Cauthor_name%2Cnumber_of_pages_median",
+      "https://openlibrary.org/search.json?title=the+hobbit&limit=5&fields=title%2Cauthor_name%2Cnumber_of_pages_median%2Ccover_i",
     );
   });
 

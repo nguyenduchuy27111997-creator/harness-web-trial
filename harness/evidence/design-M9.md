@@ -1,17 +1,14 @@
 <!-- written by harness/hooks/verifier-evidence.py; do not edit -->
-- Verified at: 2026-11-20T15:51:28 on 9ded4b6 plus working tree
-- Architect run: a9519dc5716c6caef
-- Design sha256: 8566ea5584fc245ae034b2b513fe0dc817da4c11af8a4657c38309257996ebb2
+- Verified at: 2026-11-21T05:44:07 on fe15448 plus working tree
+- Architect run: a803a6c30347d16ec
+- Design sha256: 99efe864b016f31116b2742a03c53d9e1ad4b332ff6cbd344486d4a9643afa5a
 
 VERDICT: PASS
 DESIGN: M9
 CHECKED:
-- F082 fix (re-review): in /Users/huynguyen/Desktop/harness-web-trial-loop/F090/e2e/F082-cover-display.spec.ts the placeholder-size locator now climbs from the letter to `xpath=ancestor-or-self::*[@data-testid="cover-placeholder"][1]`. On that reverse axis `[1]` is the nearest match, so the locator finds the placeholder `<div>`, the same box that `ancestor-or-self::*[1]` found when the initial was plain text inside the div (F082, d83358c). The `<= 40` / `<= 60` checks are unchanged and measure the placeholder box again. This removes the loosening I reported earlier.
-- Agreement: the M9.md `## Specs that move` F082 bullet and /Users/huynguyen/Desktop/harness-web-trial-loop/F090/docs/decisions/0030-f090-specs-that-move.md both describe this locator step change, giving the old and new locators. They agree with the spec diff and with components/book-cover.tsx: with `fill`, the row initial is a `<span aria-hidden class="lg:hidden">` and the grid keeps the `lg:cover-initial` `::before` initial (an `@utility` in app/globals.css, so the variant works).
-- status-filter (F013): the "All" check is the same assertion. It runs once, after the first book is added. Nothing is loosened.
-- F086-live-list (all 3 tests): only a seed `addBook` step is added. The "Reading (1)" count, the live-title visibility and the `toHaveCount(0)` checks are unchanged and still hold with the seed book.
-- F088 "pages follow the system": only one `addBook` step is added before the nav check. The colour checks are unchanged.
-- Other F082 checks: the viewport step only. The thumbnail size, signed URL, "Z" visible, "Q" count-0 and no-shift checks are unchanged.
-- Specs that read the title first (book-sort, shelf-filter): they read row text with `allInnerTexts().split("\n")[0]` at the default desktop width, where the grid's CSS initial still applies, so the title still comes first. These specs do not move.
-- Scope: the amendment changes no data model, migration, contract, module boundary or NFR, and adds no extra layer. The other M9 sections were not re-reviewed.
+- Contract (createBook, decision 0031): the code matches the doc. `/Users/huynguyen/Desktop/harness-web-trial-loop/F092/app/books/actions.ts` calls `revalidatePath("/books")`, then returns `{ saved: true }` when the form has `sheet=1`, and otherwise still runs `redirect("/books")`. Errors are unchanged: field errors and "Could not save the book. Try again." come back before that branch. `BookFormState` in `/Users/huynguyen/Desktop/harness-web-trial-loop/F092/lib/books.ts` is `FormState<...> & { saved?: true }`, as the doc says. The `sheet` flag only picks how the action responds; `requireUser` and RLS are untouched, so the threat model does not change.
+- UI, Add sheet paragraph: matches `/Users/huynguyen/Desktop/harness-web-trial-loop/F092/app/books/new/new-book-form.tsx` and `/Users/huynguyen/Desktop/harness-web-trial-loop/F092/app/books/new/add-book-sheet.tsx`. The form adds the hidden `sheet=1` field only in sheet mode. `useEffect` calls `onSaved` when `state.saved` is set, and `AddBookSheet` passes `onSaved={close}`, which is the same close path Cancel, Escape and Discard use. `close` only calls `router.replace` while `pathname === "/books"` and `add` is in the URL. `/books/new` (no `sheet` prop) keeps its Save button and its redirect.
+- Decisions: the updated line about the add sheet agrees with the Contract and UI text and with `docs/decisions/0031-f092-sheet-add-without-redirect.md`. 0031 says it replaces M1's always-redirect only for the sheet, so it does not conflict with the earlier design.
+- Specs that move (F005): in `/Users/huynguyen/Desktop/harness-web-trial-loop/F092/e2e/add-book.spec.ts` only the submit step changed, to the dialog-scoped "Add book" button. The URL, Dune-row and `expectAccessible` checks are still there, and so is `toHaveScreenshot("F005-books-added.png")`. The added `expectScreens(page, "F005-books-added")` follows the Testing rule (line 95), and its staged light and dark baselines are named the way `expectScreens` names them (`<name>-<scheme>.png`). Nothing it checked is removed. `toHaveURL(/\/books$/)` still holds, because `close` replaces the URL with `/books` after the save.
+- Rest of the doc: not re-reviewed; it had an earlier PASS and this diff does not change it.
 PROBLEMS:

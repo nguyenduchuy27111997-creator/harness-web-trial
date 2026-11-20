@@ -1,17 +1,18 @@
 import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
 import { signUpAs } from "./accounts";
 
 const stamp = () => `${process.env.HARNESS_LANE ?? "local"}-${Date.now()}`;
 
-type Entry = { status: string; book?: { title: string; author: string; totalPages: number | null } };
+type Book = { title: string; author: string; totalPages: number | null };
+type Entry = { status: string; books?: Book[] };
 
 // The fixture is keyed by the parsed query (ISBN digits, or the lower-cased title); pick found entries from it.
 // Read inside the tests: the coder adds the fixture file.
 function pick() {
   const fixture: Record<string, Entry> = JSON.parse(readFileSync("e2e/fixtures/lookup.json", "utf8"));
-  const found = Object.entries(fixture).filter(([, e]) => e.status === "found" && e.book);
+  const found = Object.entries(fixture).filter(([, e]) => e.status === "found" && e.books);
   return {
     isbnEntry: found.find(([key]) => /^\d{10}$|^\d{13}$/.test(key))!,
     titleEntry: found.find(([key]) => !/^\d+$/.test(key))!,
@@ -33,12 +34,16 @@ test("an ISBN fills title, author and total pages, still editable, and saves", a
   await expectAccessible(page);
 
   const [key, entry] = pick().isbnEntry;
-  const book = entry.book!;
+  const book = entry.books![0];
   await lookupField(page).fill(key);
   await lookupButton(page).click();
+  await page.getByRole("button", { name: `Use ${book.title}` }).click();
   await expect(page.getByLabel("Title")).toHaveValue(book.title);
   await expect(page.getByLabel("Author")).toHaveValue(book.author);
   if (book.totalPages !== null) await expect(page.getByLabel("Total pages")).toHaveValue(String(book.totalPages));
+
+  await page.mouse.move(0, 0);
+  await expectScreens(page, "F079-isbn-filled");
 
   // Edit before saving.
   const edited = `${book.title} ${stamp()}`;
@@ -54,9 +59,10 @@ test("a title fills the form", async ({ page }) => {
   await signUpAs(page, `f079t-${stamp()}@example.com`);
   await page.goto("/books/new");
   const { titleEntry } = pick();
-  const book = titleEntry[1].book!;
+  const book = titleEntry[1].books![0];
   await lookupField(page).fill(titleEntry[0]);
   await lookupButton(page).click();
+  await page.getByRole("button", { name: `Use ${book.title}` }).click();
   await expect(page.getByLabel("Title")).toHaveValue(book.title);
   await expect(page.getByLabel("Author")).toHaveValue(book.author);
   if (book.totalPages !== null) await expect(page.getByLabel("Total pages")).toHaveValue(String(book.totalPages));

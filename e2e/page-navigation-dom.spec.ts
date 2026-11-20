@@ -41,7 +41,7 @@ test("after moving between pages the document has one main, unique ids and singl
   await page.getByRole("link", { name: "Add book" }).first().click();
   await page.getByLabel("Title").fill("Dom Book");
   await page.getByLabel("Author").fill("Dom Author");
-  await page.getByRole("button", { name: "Save" }).click();
+  await page.getByRole("dialog", { name: "Add book" }).getByRole("button", { name: "Add book", exact: true }).click();
   await expect(page).toHaveURL(/\/books$/);
   await page.getByRole("link", { name: "Dom Book" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Dom Book" })).toBeVisible();

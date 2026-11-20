@@ -11,6 +11,11 @@
   padding-bottom: calc(env(safe-area-inset-bottom) + 0.25rem);
 }
 
+/* At least 16px, or the home-indicator inset when it is larger. */
+@utility pb-safe-4 {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
 /* The placeholder cover's initial (BookCover): generated, so a row's innerText starts with the title. */
 @utility cover-initial {
   &::before {
