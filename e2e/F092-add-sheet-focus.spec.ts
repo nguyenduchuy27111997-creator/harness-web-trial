@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { expectAccessible, expectScreens } from "./a11y";
 import { signUpAs } from "./accounts";
 
 const stamp = () => `${process.env.HARNESS_LANE ?? "local"}-${Date.now()}`;
@@ -16,5 +17,7 @@ for (const [name, viewport] of [
     await addLink(page).first().click();
     await expect(sheet(page)).toBeVisible();
     await expect(sheet(page).locator("#lookup")).toBeFocused();
+    await expectAccessible(page);
+    await expectScreens(page, `F092-add-sheet-focus-${name}`);
   });
 }
