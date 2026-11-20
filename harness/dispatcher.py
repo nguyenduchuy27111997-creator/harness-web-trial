@@ -49,8 +49,13 @@ class Dispatcher:
         asked = self.state.setdefault("consulted", [])
         # Asked already, but before it wrote the owner's options (kit < 5.50): asked once more for them.
         unpicked = stage in WAITING_HUMAN and not job.get("choices") and job.get("options_asked") != key
-        if key in asked and not unpicked:
+        # Turned on with jobs already waiting: advice given before, when it could only suggest, is asked once more so
+        # it can act on it. Seen on the web trial: F090, F091 and F092 kept waiting on the owner after autonomy was on.
+        unacted = AUTONOMY and MODE == "decide" and stage in WAITING_HUMAN and job.get("alone_asked") != key
+        if key in asked and not unpicked and not unacted:
             return
+        if AUTONOMY:
+            job["alone_asked"] = key
         asked[:] = [k for k in asked if k != key][-199:] + [key]
         job["options_asked"] = key
         wt = job.get("worktree")
