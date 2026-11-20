@@ -1,4 +1,46 @@
 {
+  "epics": [
+    {
+      "id": "library",
+      "title": "Library"
+    },
+    {
+      "id": "book-page",
+      "title": "Book page"
+    },
+    {
+      "id": "look-and-feel",
+      "title": "Look & feel"
+    },
+    {
+      "id": "shelves",
+      "title": "Shelves"
+    },
+    {
+      "id": "history-stats",
+      "title": "Reading history & stats"
+    },
+    {
+      "id": "notes-quotes",
+      "title": "Notes & quotes"
+    },
+    {
+      "id": "tags",
+      "title": "Tags"
+    },
+    {
+      "id": "sharing",
+      "title": "Sharing"
+    },
+    {
+      "id": "import-export",
+      "title": "Import/export"
+    },
+    {
+      "id": "account",
+      "title": "Account"
+    }
+  ],
   "features": [
     {
       "id": "F001",
@@ -13,7 +55,8 @@
         "Open /sign-up again and sign up with the same email: an error shows next to the form and no account is created",
         "Submit with an empty email or a 5-character password: a validation error shows next to that field"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "account"
     },
     {
       "id": "F002",
@@ -29,7 +72,8 @@
         "On /sign-in enter that email with a wrong password, click Sign in: see 'Invalid email or password' and stay on /sign-in",
         "Enter the right password, click Sign in: land on /books with Sign out in the header",
         "/sign-in links to /sign-up and /sign-up links to /sign-in"
-      ]
+      ],
+      "epic": "account"
     },
     {
       "id": "F003",
@@ -44,7 +88,8 @@
         "While signed out, open /books: end up on /sign-in",
         "Sign in from there: land on /books",
         "While signed out, open / : end up on /sign-in; while signed in, open / : end up on /books"
-      ]
+      ],
+      "epic": "account"
     },
     {
       "id": "F004",
@@ -60,7 +105,8 @@
         "See the heading 'My books', one sentence saying the shelf is empty, and an 'Add book' button",
         "Click 'Add book': land on /books/new"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "library"
     },
     {
       "id": "F005",
@@ -76,7 +122,8 @@
         "Enter title 'Middlemarch' and author 'George Eliot', leave Status, click Save",
         "Land on /books and see 'Middlemarch' by 'George Eliot' with a 'Want to read' badge; the empty state is gone",
         "Add another book choosing Status 'Reading': it shows a 'Reading' badge"
-      ]
+      ],
+      "epic": "library"
     },
     {
       "id": "F006",
@@ -92,7 +139,8 @@
         "Enter a 201-character title: an error next to Title says it must be at most 200 characters",
         "Enter a 121-character author: an error next to Author says it must be at most 120 characters",
         "Fix both and Save: the book is added and shows on /books"
-      ]
+      ],
+      "epic": "library"
     },
     {
       "id": "F007",
@@ -109,7 +157,8 @@
         "Each row shows the title in the serif font, the author, and its badge: Finished, Reading, Want to read",
         "At phone width (390px) the list is a single column with no horizontal scroll"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "library"
     },
     {
       "id": "F008",
@@ -125,7 +174,8 @@
         "Sign up account A and add a book with a unique title",
         "Sign out, sign up account B, open /books: B sees the empty state and not A's book",
         "Sign out, sign in as A: A's book is still listed"
-      ]
+      ],
+      "epic": "library"
     },
     {
       "id": "F009",
@@ -141,7 +191,8 @@
         "See the title as the page heading, the author, the status badge and a 'Back to my books' link",
         "Click 'Back to my books': return to /books"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "book-page"
     },
     {
       "id": "F010",
@@ -156,7 +207,8 @@
         "On a 'Want to read' book's page, change Status to 'Reading' and save: the badge shows Reading, also on /books after reload",
         "Change Status to 'Finished' and save: the page shows 'Finished on <today's date>'",
         "Change Status back to 'Reading': the finish date is no longer shown"
-      ]
+      ],
+      "epic": "book-page"
     },
     {
       "id": "F011",
@@ -172,7 +224,8 @@
         "Mark it Finished: a 5-star rating control appears",
         "Choose 4 stars and save: after reload the page shows 4 of 5 stars selected",
         "Change to 2 stars and save: after reload it shows 2 of 5"
-      ]
+      ],
+      "epic": "book-page"
     },
     {
       "id": "F012",
@@ -187,7 +240,8 @@
         "On a 'Finished' book's page, type a review 'Loved the ending.' and save: after reload the review text is shown",
         "Enter 2,001 characters and save: an error next to the review field says it must be at most 2,000 characters and the old review is kept",
         "On a 'Want to read' book's page there is no review field"
-      ]
+      ],
+      "epic": "book-page"
     },
     {
       "id": "F013",
@@ -204,7 +258,8 @@
         "Reload the page: the Reading tab is still selected with the same single book",
         "Open /books?status=finished directly: only the Finished book shows; click All: the URL is /books and all books show",
         "A tab with no books shows a short 'No books here' message"
-      ]
+      ],
+      "epic": "library"
     },
     {
       "id": "F014",
@@ -219,7 +274,8 @@
         "On a book's page click Delete: a dialog asks to confirm",
         "Click Cancel: the dialog closes and the book is still there",
         "Click Delete again and confirm: land on /books and the book is no longer listed, also after reload"
-      ]
+      ],
+      "epic": "book-page"
     },
     {
       "id": "F015",
@@ -236,7 +292,8 @@
         "Open /stats: see 'Books finished this year: 3' and 'Average rating: 4.5'",
         "The header links to /stats and back to /books"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "history-stats"
     },
     {
       "id": "F016",
@@ -251,7 +308,8 @@
         "As account A add a book and note its /books/<id> URL",
         "Sign out, sign in as account B and open that URL: see a 'Book not found' page with a link back to /books, served with HTTP status 404",
         "Open /books/00000000-0000-0000-0000-000000000000: the same 'Book not found' page with status 404"
-      ]
+      ],
+      "epic": "book-page"
     },
     {
       "id": "F017",
@@ -268,7 +326,8 @@
         "While signed in, open /sign-in: end up on /books, not the sign-in form",
         "While signed in, open /sign-up: end up on /books, not the sign-up form",
         "Click Sign out, then open /sign-in and /sign-up: each still shows its form"
-      ]
+      ],
+      "epic": "account"
     },
     {
       "id": "F018",
@@ -286,7 +345,8 @@
         "Click Edit, change the title to 'Middlemarch', click Save: the page heading shows 'Middlemarch', also after reload",
         "Open /books: the list shows 'Middlemarch' by 'George Eliot' and no longer 'Midlemarch'"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "book-page"
     },
     {
       "id": "F019",
@@ -303,7 +363,8 @@
         "Enter a 121-character author: an error next to Author says it must be at most 120 characters",
         "Reload the page: the book still has its old title and author",
         "Fix both and Save: the page and /books show the new values"
-      ]
+      ],
+      "epic": "book-page"
     },
     {
       "id": "F020",
@@ -321,7 +382,8 @@
         "Search 'eliot', then click the Reading tab: the URL keeps q=eliot with status=reading and only Silas Marner shows",
         "Reload the page: the search field still shows 'eliot', the Reading tab is selected and only Silas Marner shows",
         "Clear the search field and submit: the URL has no q and all Reading books show"
-      ]
+      ],
+      "epic": "library"
     },
     {
       "id": "F021",
@@ -336,7 +398,8 @@
         "Signed in with at least one book, open /books?q=zzzz: one sentence says no books match 'zzzz' and a 'Clear search' link shows",
         "Click 'Clear search': the URL is /books and all books show",
         "Open /books?status=reading&q=zzzz and click 'Clear search': the URL is /books?status=reading and the Reading tab stays selected"
-      ]
+      ],
+      "epic": "library"
     },
     {
       "id": "F022",
@@ -355,7 +418,8 @@
         "Choose 'Highest rated': the URL has sort=rating and the order is Alpha, Bravo, then the unrated Delta and Charlie last",
         "Click the Finished tab: the URL keeps sort=rating and the order is Alpha, Bravo, Charlie; reload keeps the tab, the sort and the order",
         "Search 'a' with sort=rating: the URL keeps both q and sort, and the results are in rating order"
-      ]
+      ],
+      "epic": "library"
     },
     {
       "id": "F023",
@@ -372,7 +436,8 @@
         "Reload /stats: the goal and progress are still shown",
         "Enter 0, then 366, then 2.5 and submit each: an error next to the field says the goal must be a whole number from 1 to 365, and no goal is saved"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "history-stats"
     },
     {
       "id": "F024",
@@ -387,7 +452,8 @@
         "With a goal of 20 and one book finished this year, on /stats click 'Change goal': the number field shows 20",
         "Enter 10 and save: see '1 of 10 books finished this year' and the progress bar at 10%, also after reload",
         "Click 'Change goal', enter 366 and save: an error next to the field says the goal must be a whole number from 1 to 365, and after reload the goal is still 10"
-      ]
+      ],
+      "epic": "history-stats"
     },
     {
       "id": "F025",
@@ -407,7 +473,8 @@
         "Sign in, click Add book, add 'Midlemarch' by 'George Eliot', then click it in the list to open /books/<id> without reloading: the document has one <main> and one element with id=\"status\", and the status combobox is named 'Status', not 'Status Status'",
         "Click Edit: the fields are named 'Title' and 'Author', not 'Title Title' and 'Author Author', and there is one element each with id=\"title\" and id=\"author\"",
         "Click the browser Back button to /books and then Forward to the book page: the page still shows 'Midlemarch' and the counts above still hold"
-      ]
+      ],
+      "epic": "library"
     },
     {
       "id": "F026",
@@ -426,7 +493,8 @@
         "The button that saves title and author and the button that saves the status each have an accessible name that says what it saves (for example 'Save title and author' and 'Save status'), not just 'Save'",
         "Change the title to 'Middlemarch' and click the title-and-author save button: the heading shows 'Middlemarch' and the status is unchanged",
         "Pick 'Reading' in Status and click the status save button: the page shows 'Reading', also after reload"
-      ]
+      ],
+      "epic": "book-page"
     },
     {
       "id": "F027",
@@ -444,7 +512,8 @@
         "Enter 5 in the field and click 'Cancel': the form closes without saving, the page still shows '0 of 20 books finished this year' and the 'Change goal' button is back",
         "Click 'Change goal' again: the field shows 20, not 5",
         "Reload the page: it still shows '0 of 20 books finished this year'"
-      ]
+      ],
+      "epic": "history-stats"
     },
     {
       "id": "F028",
@@ -461,7 +530,8 @@
         "Create 'Book club': both shelves are listed",
         "Sign out, sign up a second account and open /shelves: it shows no shelves"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "shelves"
     },
     {
       "id": "F029",
@@ -477,7 +547,8 @@
         "Enter a 41-character name: an error next to the field says it must be at most 40 characters, and no shelf is created",
         "Create 'Travel', then try to create 'travel' (any case, with spaces around it): an error next to the field says I already have a shelf with that name, and the list still has one 'Travel'",
         "A second account can create its own 'Travel' shelf without an error"
-      ]
+      ],
+      "epic": "shelves"
     },
     {
       "id": "F030",
@@ -494,7 +565,8 @@
         "Rename 'Trips' to 'book club': an error next to the field says I already have a shelf with that name; after reload the shelf is still 'Trips'",
         "Rename 'Trips' to an empty name: 'Name is required' shows next to the field",
         "Click 'Rename', change the name, then click 'Cancel': the form closes and the name is unchanged"
-      ]
+      ],
+      "epic": "shelves"
     },
     {
       "id": "F031",
@@ -511,7 +583,8 @@
         "Choose 'Travel' and click 'Add to shelf': the section lists 'Travel', also after reload",
         "Add it to 'Book club' too: the section lists both shelves, and the picker no longer offers a shelf the book is already on",
         "A user with no shelves sees one sentence with a link to /shelves instead of the picker"
-      ]
+      ],
+      "epic": "shelves"
     },
     {
       "id": "F032",
@@ -525,7 +598,8 @@
       "acceptance": [
         "With 'Middlemarch' on 'Travel' and 'Book club', on its page click the remove button next to 'Travel' (named 'Remove from Travel'): only 'Book club' is listed, also after reload",
         "The book is still on /books, and 'Travel' is still listed on /shelves and offered again in the picker"
-      ]
+      ],
+      "epic": "shelves"
     },
     {
       "id": "F033",
@@ -541,7 +615,8 @@
         "Click Cancel: 'Travel' is still listed",
         "Click 'Delete' again and confirm: 'Travel' is gone from /shelves, also after reload",
         "Open /books: 'Middlemarch' is still there; its page lists no 'Travel' shelf"
-      ]
+      ],
+      "epic": "shelves"
     },
     {
       "id": "F034",
@@ -562,7 +637,8 @@
         "Search 'a' and choose 'Title A to Z': the URL keeps shelf, status, q and sort, and only Alpha shows",
         "Choose 'All shelves': the URL has no shelf and Alpha and Charlie show",
         "Open /books?shelf=<an id that is not one of my shelves>: all my books show and the filter shows 'All shelves'"
-      ]
+      ],
+      "epic": "shelves"
     },
     {
       "id": "F035",
@@ -578,7 +654,8 @@
         "Enter 250 and 100 and save: the page shows 'Page 100 of 250 (40%)', also after reload",
         "Change the status to Want to read: the Progress section is hidden; change it back to Reading: it shows page 100 of 250 again",
         "A book with status Want to read shows no Progress section"
-      ]
+      ],
+      "epic": "book-page"
     },
     {
       "id": "F036",
@@ -594,7 +671,8 @@
         "Enter total 250 and current page 251, then -1: an error next to Current page says it must be a whole number from 0 to 250, and nothing is saved",
         "Reload: the earlier saved progress is unchanged",
         "Enter total 250 and current page 0: it saves and shows 'Page 0 of 250 (0%)'"
-      ]
+      ],
+      "epic": "book-page"
     },
     {
       "id": "F037",
@@ -611,7 +689,8 @@
         "A Reading book without progress, and books that are Want to read, show no percentage or bar",
         "Change the book's progress to page 250 of 250: the list shows '100%'"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "library"
     },
     {
       "id": "F038",
@@ -626,7 +705,8 @@
         "With a Reading book at page 100 of 250, change its status to Finished: the page shows Finished and no Progress section",
         "Change the status back to Reading: the Progress section shows 'Page 250 of 250 (100%)', also after reload",
         "Finishing a Reading book with no progress recorded works as before and leaves no progress"
-      ]
+      ],
+      "epic": "book-page"
     },
     {
       "id": "F039",
@@ -642,7 +722,8 @@
         "With 2 Want to read, 1 Reading and 3 Finished books, /books shows the tabs 'All (6)', 'Want to read (2)', 'Reading (1)' and 'Finished (3)'",
         "Change a book from Reading to Finished: the tabs then read 'Reading (0)' and 'Finished (4)', also after reload",
         "With a search in ?q=, each tab counts only the books the search shows"
-      ]
+      ],
+      "epic": "library"
     },
     {
       "id": "F040",
@@ -659,7 +740,8 @@
         "Add a second note 'Chapter 20 is the turning point': it shows above the first one",
         "Notes can be added whatever the book's status: change it to Finished and add a third note, which shows at the top"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "notes-quotes"
     },
     {
       "id": "F041",
@@ -674,7 +756,8 @@
         "On a book's page click 'Add note' with the field empty, then with only spaces: 'Note is required' shows next to the field and no note is added",
         "Enter 2,001 characters: an error next to the field says the note must be at most 2,000 characters, the text stays in the field, and no note is added",
         "Enter exactly 2,000 characters: the note is added and shows in full"
-      ]
+      ],
+      "epic": "notes-quotes"
     },
     {
       "id": "F042",
@@ -690,7 +773,8 @@
         "Change it to 'Chapter 20 is the turning point' and save: the note shows the new text and keeps its original date, also after reload",
         "Edit it to an empty text: 'Note is required' shows next to the field; after reload the note is unchanged",
         "Click 'Edit', change the text, then click 'Cancel': the form closes and the note is unchanged"
-      ]
+      ],
+      "epic": "notes-quotes"
     },
     {
       "id": "F043",
@@ -705,7 +789,8 @@
         "With two notes on a book, click 'Delete' next to one: a confirm dialog asks whether to delete the note",
         "Click Cancel: both notes are still shown",
         "Click 'Delete' again and confirm: that note is gone, also after reload, and the other note and the book are still there"
-      ]
+      ],
+      "epic": "notes-quotes"
     },
     {
       "id": "F044",
@@ -722,7 +807,8 @@
         "Save a second quote with no page: it shows above the first one, with no page number",
         "Quotes can be saved whatever the book's status"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "notes-quotes"
     },
     {
       "id": "F045",
@@ -739,7 +825,8 @@
         "Enter 1,001 characters: an error next to the Quote field says it must be at most 1,000 characters, and nothing is saved",
         "On a book with no total pages, enter page 0, 10001 and 2.5: an error next to Page says it must be a whole number from 1 to 10,000, and nothing is saved; page 10000 saves",
         "On a Reading book with progress saved as total 250, enter page 251: an error next to Page says it must be a whole number from 1 to 250, and nothing is saved; page 250 saves"
-      ]
+      ],
+      "epic": "notes-quotes"
     },
     {
       "id": "F046",
@@ -763,7 +850,8 @@
         "Clear the page and save: the quote shows no page number",
         "Edit the text to empty: 'Quote is required' shows next to the field; after reload the quote is unchanged",
         "Click 'Edit', change the text, then click 'Cancel': the form closes and the quote is unchanged"
-      ]
+      ],
+      "epic": "notes-quotes"
     },
     {
       "id": "F047",
@@ -778,7 +866,8 @@
         "With two quotes on a book, click 'Delete' next to one: a confirm dialog asks whether to delete the quote",
         "Click Cancel: both quotes are still shown",
         "Click 'Delete' again and confirm: that quote is gone, also after reload, and the other quote and the book are still there"
-      ]
+      ],
+      "epic": "notes-quotes"
     },
     {
       "id": "F048",
@@ -802,7 +891,8 @@
         "Open /quotes: both quotes show, Persuasion's first; each shows its text, its page number if it has one, and its book's title",
         "Click 'Middlemarch' next to its quote: land on that book's page /books/<id>"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "notes-quotes"
     },
     {
       "id": "F049",
@@ -824,7 +914,8 @@
         "Search 'persua': only the Persuasion quote shows, matched by its book title; reload keeps the search box text and the result",
         "Search 'zzz': one sentence says no quotes match 'zzz', with a 'Clear search' link that goes back to /quotes with all quotes",
         "Clear the search box and submit: the URL has no q and both quotes show"
-      ]
+      ],
+      "epic": "notes-quotes"
     },
     {
       "id": "F050",
@@ -848,7 +939,8 @@
         "Delete Middlemarch from its page after confirming: /quotes shows only the Persuasion quote, also after reload",
         "Search /quotes for a word from the Middlemarch quote: no quotes match",
         "Opening Middlemarch's old URL shows the book not found page"
-      ]
+      ],
+      "epic": "book-page"
     },
     {
       "id": "F051",
@@ -872,7 +964,8 @@
         "Sign out and sign up account B: /quotes says B has no quotes, and searching /quotes?q=narrow shows no quotes",
         "As B, open A's book URL /books/<id>: the book not found page shows, with none of A's notes or quotes",
         "With B's session against the local Supabase, reading, updating or deleting A's note and quote by id returns or changes no rows (an integration test the verifier runs); signed in again as A, the note and the quote are unchanged"
-      ]
+      ],
+      "epic": "notes-quotes"
     },
     {
       "id": "F052",
@@ -895,7 +988,8 @@
         "Change its status to Reading: the page shows 'Started' with today's date, also after reload",
         "Change it back to Want to read: the start date is gone, also after reload",
         "A book that was already Reading or Finished before this change shows no start date and still opens without errors"
-      ]
+      ],
+      "epic": "history-stats"
     },
     {
       "id": "F053",
@@ -917,7 +1011,8 @@
         "A finished book with no start date shows only 'Finished' with its date and no 'Read in' text",
         "A book that is Reading shows 'Started' and no 'Finished' or 'Read in' text"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "history-stats"
     },
     {
       "id": "F054",
@@ -940,7 +1035,8 @@
         "Set Started to 2026-10-01 and Finished to 2026-10-12 and click Save: the page shows those dates and 'Read in 12 days', also after reload",
         "Open 'Edit dates' again and click Cancel: the dates are unchanged",
         "On a book that is Reading, 'Edit dates' shows only the Started field; saving 2026-10-05 shows that date"
-      ]
+      ],
+      "epic": "history-stats"
     },
     {
       "id": "F055",
@@ -963,7 +1059,8 @@
         "Set Finished to tomorrow and click Save: an error next to Finished says the date cannot be in the future",
         "Clear the Started field and save: the start date is removed and the page shows no 'Read in' text",
         "Fix the dates and save: the errors are gone and the new dates show"
-      ]
+      ],
+      "epic": "history-stats"
     },
     {
       "id": "F056",
@@ -990,7 +1087,8 @@
         "A 'Past reads' section on the page lists the earlier read with its start date, finish date and 4 stars",
         "Finish it again, rate it 5 stars and read it again: Past reads lists both reads, newest first"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "history-stats"
     },
     {
       "id": "F057",
@@ -1012,7 +1110,8 @@
         "Click Cancel: both past reads are still listed",
         "Click 'Delete' again and confirm: that read is gone, also after reload, and the book and the other read are unchanged",
         "With no past reads the Past reads section is not shown"
-      ]
+      ],
+      "epic": "history-stats"
     },
     {
       "id": "F058",
@@ -1037,7 +1136,8 @@
         "With a goal of 20, Stats shows '2 of 20 books finished this year'",
         "Delete one past read on the book page: /stats says 1 book finished this year",
         "The average rating on /stats is unchanged by past reads: it is the average of the books' current ratings"
-      ]
+      ],
+      "epic": "history-stats"
     },
     {
       "id": "F059",
@@ -1060,7 +1160,8 @@
         "Finish two books and set their finish dates to the 3rd and the 20th of March this year: March shows 2 and the other months 0",
         "A book finished last year is not counted in any month",
         "With no books finished this year, the chart shows 0 for every month"
-      ]
+      ],
+      "epic": "history-stats"
     },
     {
       "id": "F060",
@@ -1082,7 +1183,8 @@
         "A book finished this year with no total pages is not counted, and Stats still shows the pages of the others",
         "Read the 250-page book again and finish it: Stats shows '620 pages read this year'",
         "With no pages read this year, Stats shows '0 pages read this year'"
-      ]
+      ],
+      "epic": "history-stats"
     },
     {
       "id": "F061",
@@ -1107,7 +1209,8 @@
         "A book read twice this year is listed once per read",
         "/stats/2020 with nothing finished that year says I finished no books in 2020; /stats/abc and a year after this one show the not found page"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "history-stats"
     },
     {
       "id": "F062",
@@ -1129,7 +1232,8 @@
         "A year with no rated books shows no average and no Highest rated list",
         "Set one book's finish date to last year: /stats/<this year> has a 'Previous year' link to /stats/<last year>, which lists that book and has a 'Next year' link back",
         "/stats/<this year> has no 'Next year' link"
-      ]
+      ],
+      "epic": "history-stats"
     },
     {
       "id": "F063",
@@ -1151,7 +1255,8 @@
         "Sign out and sign up account B: /stats says B finished 0 books this year and /stats/<this year> lists none of A's books",
         "As B, open A's book URL /books/<id>: the book not found page shows, with none of A's dates or past reads",
         "With B's session against the local Supabase, reading, updating or deleting A's past read by id returns or changes no rows (an integration test the verifier runs); signed in again as A, both reads are unchanged"
-      ]
+      ],
+      "epic": "history-stats"
     },
     {
       "id": "F064",
@@ -1176,7 +1281,8 @@
         "Each chip has a 'Remove tag <name>' button; removing 'travel' leaves only 'classic', also after reload",
         "The book list shows each book's tags under its title"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "tags"
     },
     {
       "id": "F065",
@@ -1198,7 +1304,8 @@
         "A tag longer than 24 characters shows 'Tags are at most 24 characters'",
         "Adding 'Classic' to a book that has 'classic' shows 'This book already has that tag' (case does not matter)",
         "On a book with 10 tags, adding an 11th shows 'A book has at most 10 tags'"
-      ]
+      ],
+      "epic": "tags"
     },
     {
       "id": "F066",
@@ -1222,7 +1329,8 @@
         "Choosing 'classic' shows only books tagged 'classic' and puts ?tag=classic in the URL; reload keeps it",
         "The tag filter combines with the status tab, search, sort and shelf filter, all kept in the URL",
         "A tag with no books in the current tab shows the empty message with a 'Show all tags' link that clears only the tag"
-      ]
+      ],
+      "epic": "tags"
     },
     {
       "id": "F067",
@@ -1244,7 +1352,8 @@
         "/tags lists my tags A to Z, each with how many books have it ('1 book', '3 books'), linking to /books?tag=<name>",
         "Renaming 'classic' to 'classics' changes it on every book; a name another of my tags has shows 'You already have that tag'",
         "With no tags, /tags says 'No tags yet' and that tags are added from a book's page"
-      ]
+      ],
+      "epic": "tags"
     },
     {
       "id": "F068",
@@ -1267,7 +1376,8 @@
         "On /library, 'Download CSV' downloads bookshelf.csv whose first row is title,author,status,rating,total_pages,started_on,finished_on",
         "Each of my books is one row with its values; an empty value is an empty cell; a title with a comma or a double quote is quoted correctly",
         "Another account's books never appear in my file"
-      ]
+      ],
+      "epic": "import-export"
     },
     {
       "id": "F069",
@@ -1291,7 +1401,8 @@
         "Exporting from one account and importing that file into a new account gives a list with the same titles, statuses and ratings",
         "A file over 1 MB or with more than 1,000 rows is refused with 'The file is too large' before any preview"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "import-export"
     },
     {
       "id": "F070",
@@ -1312,7 +1423,8 @@
         "Rows without a title, with an unknown status or a rating outside 1 to 5 are not in the preview; a note says 'N rows will be skipped' and lists each row number with why",
         "A row with the same title and author as a book I have is skipped as 'Already on your shelf'",
         "After 'Add N books', a message says 'Added N books, skipped M'"
-      ]
+      ],
+      "epic": "import-export"
     },
     {
       "id": "F071",
@@ -1337,7 +1449,8 @@
         "The header has an 'Up next' link to /up-next, which lists my queued books in order, each with 'Move up', 'Move down' and 'Remove'; the order is kept after reload",
         "A newly queued book goes to the end; the first book has no 'Move up' and the last has no 'Move down'",
         "A book that leaves Want to read leaves the queue"
-      ]
+      ],
+      "epic": "shelves"
     },
     {
       "id": "F072",
@@ -1357,7 +1470,8 @@
         "/up-next shows 'Start reading <title>' for the first book",
         "Clicking it moves that book to Reading with today's start date and takes it off the queue; the next book is now first",
         "With an empty queue, /up-next says 'Nothing up next' and links to the Want to read tab"
-      ]
+      ],
+      "epic": "shelves"
     },
     {
       "id": "F073",
@@ -1380,7 +1494,8 @@
         "Saving the display name 'Huy' shows 'Huy' in the header before 'Sign out', also after reload",
         "An empty name shows 'Enter a name'; a name over 40 characters shows 'Names are at most 40 characters'",
         "Without a display name the header shows no name"
-      ]
+      ],
+      "epic": "account"
     },
     {
       "id": "F074",
@@ -1403,7 +1518,8 @@
         "Signing in again with the same email and password fails",
         "Another account's books and data are unchanged"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "account"
     },
     {
       "id": "F075",
@@ -1428,7 +1544,8 @@
         "Account A tags a book 'classic', queues two books, sets a display name and imports a CSV; account B sees 'No tags yet' on /tags, 'Nothing up next' on /up-next, none of A's books on /books or /books?tag=classic, and no name in the header",
         "With B's session against the local Supabase, reading, updating or deleting A's tags, queue rows or profile by id returns or changes no rows (an integration test the verifier runs)",
         "Signed in again as A, A's tags, queue, name and books are unchanged"
-      ]
+      ],
+      "epic": "tags"
     },
     {
       "id": "F076",
@@ -1448,7 +1565,8 @@
         "e2e/F064-tags-book.spec.ts masks each book's whole row or card in its list screenshot, a block whose size does not change from run to run, instead of the title link text whose width follows its Date.now() suffix",
         "Every assertion and the full-page screenshot of the spec stay as they are; only the masks and the regenerated baseline F064-list-tags.png change",
         "The spec passes 5 runs in a row in Playwright's Docker browser (scripts/e2e.sh e2e/F064-tags-book.spec.ts --repeat-each=5) with no pixel difference"
-      ]
+      ],
+      "epic": "tags"
     },
     {
       "id": "F077",
@@ -1468,7 +1586,8 @@
         "Signed in, opening /books/not-a-uuid shows the book not found page with HTTP 404, as before tags (decision 0002), not a 500",
         "listBookTags and every other tag query that takes a book id return nothing for an id that is not a UUID, with the isUuid guard lib/notes.ts, quotes.ts, reads.ts and queue.ts already use",
         "A new e2e spec checks the 404 for /books/not-a-uuid; no existing spec changes"
-      ]
+      ],
+      "epic": "book-page"
     },
     {
       "id": "F078",
@@ -1489,7 +1608,8 @@
         "Every e2e screenshot masks each date that comes from the day the test runs (for example 'Started on <date>', 'Finished on <date>', 'Read in N days'), with a mask over the block the date sits in, so the baselines pass on any later day; e2e/F064-tags-book.spec.ts ('book page: add and remove tags') and e2e/F065-tag-validation.spec.ts ('an 11th tag is rejected') first",
         "Only masks and the baselines they change are touched: every assertion, step and screenshot stays",
         "Each changed spec passes in Playwright's Docker browser (scripts/e2e.sh <spec>), and CI's e2e shards pass on the PR"
-      ]
+      ],
+      "epic": "library"
     },
     {
       "id": "F079",
@@ -1513,7 +1633,8 @@
         "The lookup goes through our server route, never from the browser to Open Library; the route answers from a fixture when BOOK_LOOKUP_FIXTURE is set, and every test and the verifier use the fixture",
         "Looking up the same ISBN twice within a day calls Open Library once (a unit test with a fake fetch)"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "library"
     },
     {
       "id": "F080",
@@ -1534,7 +1655,8 @@
         "When Open Library takes over 5 s, the form says 'Lookup timed out, enter the book by hand' and the fields stay editable",
         "When nothing is found it says 'No book found for <query>'; when the service refuses (429 or 5xx) it says 'Lookup is not available right now'",
         "In each case 'Add book' still saves a book typed by hand"
-      ]
+      ],
+      "epic": "library"
     },
     {
       "id": "F081",
@@ -1559,7 +1681,8 @@
         "A file over 2 MB or of another type is refused with 'Use a JPEG, PNG or WebP image up to 2 MB' and nothing is stored",
         "Covers are in a private bucket: storage policies let only the owner read, write or delete their book's cover (an integration test with a second account)",
         "Deleting the book or the account deletes its cover file"
-      ]
+      ],
+      "epic": "book-page"
     },
     {
       "id": "F082",
@@ -1579,7 +1702,8 @@
       "acceptance": [
         "The list shows each book's cover as a small thumbnail, or a placeholder with the title's first letter when it has none",
         "Covers load through short-lived signed URLs, never a public URL; the page has no layout shift when a cover loads (the thumbnail has a fixed size)"
-      ]
+      ],
+      "epic": "book-page"
     },
     {
       "id": "F083",
@@ -1606,7 +1730,8 @@
         "'Stop sharing' makes the old link show the not found page; sharing again makes a new token",
         "Anonymous access goes through one security definer function or view that returns only the shared shelf's allowed columns; RLS on books, notes, quotes, reviews and tags is unchanged"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "sharing"
     },
     {
       "id": "F084",
@@ -1624,7 +1749,8 @@
       "acceptance": [
         "A shared page never shows notes, quotes, reviews, tags, other shelves, the owner's email or display name",
         "With the anon key against the local Supabase, the share function returns nothing for a wrong or revoked token, and no anon query can read books, notes, quotes or covers outside a shared shelf (an integration test the verifier runs)"
-      ]
+      ],
+      "epic": "sharing"
     },
     {
       "id": "F085",
@@ -1645,7 +1771,8 @@
         "With 45 books the list shows 20, 'Load more' shows 40, then 45 and the button goes away",
         "Paging keeps the tab, search, sort, shelf and tag filters, and the counts in the tabs are unchanged",
         "A book added while paged in still shows once, not twice"
-      ]
+      ],
+      "epic": "library"
     },
     {
       "id": "F086",
@@ -1667,7 +1794,8 @@
         "With /books open in two tabs, a book added in one shows in the other within 5 seconds without a reload; a status change and a delete show too",
         "Only my own books come through: a second account's changes never reach my tab (Realtime with RLS)",
         "When the connection drops and comes back, the list catches up"
-      ]
+      ],
+      "epic": "library"
     },
     {
       "id": "F087",
@@ -1685,7 +1813,8 @@
       "acceptance": [
         "Account B cannot open A's cover by its storage path or a stale signed URL, cannot see A's books through Realtime, and /s/<made-up token> is not found",
         "After A stops sharing, B and a signed-out visitor both get not found on the old link"
-      ]
+      ],
+      "epic": "sharing"
     },
     {
       "id": "F088",
@@ -1710,7 +1839,8 @@
         "Text uses the UI guide's type styles: the serif for page and book titles, Inter for everything else; /styleguide shows the type scale in light and dark",
         "Every page passes the accessibility check in both looks, and on a phone every button and field is at least 44 px tall"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "look-and-feel"
     },
     {
       "id": "F089",
@@ -1732,7 +1862,8 @@
         "On a phone a bar at the bottom holds My books, Up next, Shelves, Stats and More; More opens Tags, Quotes, Import / export and Settings",
         "My name and Sign out sit in an account menu, and the top bar stays in place while I scroll, with the page blurred under it"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "look-and-feel"
     },
     {
       "id": "F090",
@@ -1754,7 +1885,8 @@
         "The status filter is a segmented control with counts, search sits at the top and says 'Search books', and sort is a menu",
         "While the list loads it shows placeholders in the shape of books, and an empty shelf says what to do next with an Add book button"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "look-and-feel"
     },
     {
       "id": "F091",
@@ -1775,7 +1907,8 @@
         "Status is a segmented control, reading progress is a bar with pages read of the total, and rating, review, notes and quotes follow in that order",
         "Delete sits at the bottom in red and asks to confirm, naming the book"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "look-and-feel"
     },
     {
       "id": "F092",
@@ -1796,7 +1929,8 @@
         "Looking up a title or ISBN shows the matches with their covers, and picking one fills in the form",
         "After saving, the sheet closes and the new book appears at the top of the list"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "look-and-feel"
     },
     {
       "id": "F093",
@@ -1818,7 +1952,8 @@
         "Quotes show as a list with each quote in the serif and its book under it",
         "Each of these pages has a large title and an empty state with its one action"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "look-and-feel"
     },
     {
       "id": "F094",
@@ -1841,7 +1976,8 @@
         "The reading goal shows as a ring with books finished out of the goal",
         "On a phone the tiles sit two per row and the chart fits the width"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "look-and-feel"
     },
     {
       "id": "F095",
@@ -1865,7 +2001,8 @@
         "Changing a status or a rating gives a short press and settle",
         "With reduced motion turned on, nothing slides or scales: changes fade or happen at once"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "look-and-feel"
     },
     {
       "id": "F096",
@@ -1889,7 +2026,8 @@
         "Settings groups my name, account and delete account in grouped rows, like a settings app",
         "Import / export and a shared shelf page use the same type, colors and dark look as the rest"
       ],
-      "owner_check": true
+      "owner_check": true,
+      "epic": "look-and-feel"
     },
     {
       "id": "F097",
@@ -1910,7 +2048,8 @@
         "e2e/F081-cover-upload.spec.ts ('a refused replacement keeps the current cover') masks the whole block 'Started on <date>' sits in, a block whose size does not follow the date's text width, instead of only the <time> element, as F078 did for F064 and F065",
         "Only that mask and the baseline it changes (F081-cover-upload.png) are touched: every assertion, step and screenshot of the spec stays",
         "With the trigger pinned to 2026-11-17 and again with it restored to today, the spec passes in Playwright's Docker browser with no pixel difference, and CI's e2e shards pass on the PR"
-      ]
+      ],
+      "epic": "book-page"
     }
   ]
 }
