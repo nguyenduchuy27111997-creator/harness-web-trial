@@ -14,7 +14,7 @@ Report: $ARGUMENTS
 3. Find the feature it belongs to in `harness/features.json` (by behavior, not by file). Leave that feature's entry unchanged.
 4. Add one entry to `harness/features.json`, following the field rules in `/kickoff` step 6:
    - `id`: the next free `F` number. `type`: `bug`. `milestone`: the milestone of the feature it belongs to, or the current one.
-   - `title`: `Fix: <what the user sees go wrong>`.
+   - `title`: `Fix: <what the user sees go wrong>`. `epic`: the epic of the feature it belongs to (when the backlog has epics).
    - `acceptance`: the reproduction steps, ending with the correct result. The verifier must be able to perform and observe every step.
    - `priority`: the next free integer after the highest one in the file. Bugs already run before other features of the same readiness.
    - `depends_on`: only features that must pass before this fix can be verified.

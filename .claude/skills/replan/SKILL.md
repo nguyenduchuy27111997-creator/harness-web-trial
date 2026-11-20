@@ -12,7 +12,7 @@ Goal: the backlog matches the current spec again, and nothing already verified i
 1. Find what changed in the spec: `git log --oneline -- docs/product/spec.md`, then diff it since the last `kickoff` or `replan` progress entry. If nothing changed, ask the human what to re-plan and stop if there is nothing.
 2. List the scope items that were added, removed, or changed.
 3. Draft the backlog changes, following the field rules in `/kickoff` step 6:
-   - **Added scope:** new features with the next free ids and priorities (no status file: they start failing).
+   - **Added scope:** new features with the next free ids and priorities (no status file: they start failing), each with its `epic` (a new area of the product gets a new entry in the top-level `epics`, placed where the owner wants it in the order).
    - **Removed scope:** delete the features that only served it. Delete `passing` features too, and their `harness/status/<id>.json`; their history stays in git. Remove them from any `depends_on`.
    - **Changed scope:** if a feature's `acceptance` changes, set its `harness/status/<id>.json` back to `failing` with `notes` saying what changed. Never edit the acceptance of a feature and keep it `passing`.
    - Never change `id`. Renumber priorities only if the order really changed.
