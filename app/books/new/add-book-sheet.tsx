@@ -46,11 +46,6 @@ export function AddBookSheet() {
   }, [params, router]);
 
   const requestClose = () => (dirty ? setConfirming(true) : close());
-  // Radix would focus the first tabbable (the ×); the design wants the lookup field.
-  const focusLookup = (event: Event) => {
-    event.preventDefault();
-    document.getElementById("lookup")?.focus();
-  };
   const form = <NewBookForm sheet onCancel={requestClose} onDirtyChange={setDirty} />;
   if (wide === null) return null;
 
@@ -58,7 +53,7 @@ export function AddBookSheet() {
     <>
       {wide ? (
         <Dialog open onOpenChange={(open) => !open && requestClose()}>
-          <DialogContent aria-describedby={undefined} onOpenAutoFocus={focusLookup} className="flex max-h-5/6 flex-col gap-0 p-0 sm:max-w-md">
+          <DialogContent aria-describedby={undefined} className="flex max-h-5/6 flex-col gap-0 p-0 sm:max-w-md">
             <DialogHeader className="flex shrink-0 items-center justify-between p-4">
               <DialogTitle className="text-title-2">Add book</DialogTitle>
               <DialogClose asChild>
@@ -73,7 +68,7 @@ export function AddBookSheet() {
         </Dialog>
       ) : (
         <Sheet open onOpenChange={(open) => !open && requestClose()}>
-          <SheetContent side="bottom" aria-describedby={undefined} onOpenAutoFocus={focusLookup} className="gap-0 rounded-t-xl">
+          <SheetContent side="bottom" aria-describedby={undefined} className="gap-0 rounded-t-xl">
             <SheetHeader>
               <SheetTitle className="text-title-2">Add book</SheetTitle>
             </SheetHeader>
