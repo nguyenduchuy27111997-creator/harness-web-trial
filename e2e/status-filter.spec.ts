@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
 
 async function signUp(page: Page, email: string) {
   await page.goto("/sign-up");
@@ -75,4 +75,5 @@ test("filter the list by status with tabs kept in the URL", async ({ page }) => 
   await expect(page.getByText("No books here. Add one or switch tabs.")).toBeVisible();
   await expect(page.getByRole("link", { name: "Add book" })).toBeVisible();
   await expect(rows).toHaveCount(0);
+  await expectScreens(page, "F013-empty-tab");
 });

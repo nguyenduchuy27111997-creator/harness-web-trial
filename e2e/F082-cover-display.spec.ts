@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
 import { signUpAs } from "./accounts";
 import { addAndOpenBook } from "./books";
 import { coverFile, submitCover } from "./covers";
@@ -47,6 +47,9 @@ test("the list shows a thumbnail for a book with a cover and a first-letter plac
       page.getByRole("listitem").getByText(/Quiet |Zebra /),
       page.getByRole("listitem").getByText(/^(Some Author|George Eliot)$/),
     ],
+  });
+  await expectScreens(page, "F082-cover-row", {
+    mask: [page.getByRole("heading", { level: 1 }), page.getByRole("listitem").getByText(/Quiet |Zebra /)],
   });
 });
 
