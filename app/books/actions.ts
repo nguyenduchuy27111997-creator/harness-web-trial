@@ -21,5 +21,7 @@ export async function createBook(_prev: BookFormState, formData: FormData): Prom
     return { formError: "Could not save the book. Try again.", values };
   }
   revalidatePath("/books");
+  // From the sheet (/books?add=1) the sheet closes itself; a redirect would add a history entry.
+  if (formData.get("sheet") === "1") return { saved: true };
   redirect("/books");
 }

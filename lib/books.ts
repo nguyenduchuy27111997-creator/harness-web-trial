@@ -119,7 +119,7 @@ export const STATUS_LABELS: Record<BookStatus, string> = {
   finished: "Finished",
 };
 
-export type BookFormState = FormState<"title" | "author" | "status" | "total_pages">;
+export type BookFormState = FormState<"title" | "author" | "status" | "total_pages"> & { saved?: true };
 
 type NewBook = { title: string; author: string; status: BookStatus; total_pages?: number };
 

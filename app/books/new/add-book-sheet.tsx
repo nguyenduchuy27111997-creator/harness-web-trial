@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState, useSyncExternalStore } from "react";
 import {
   AlertDialog,
@@ -33,17 +33,20 @@ function useWide(): boolean | null {
 // `/books?add=1`: a bottom sheet under 768 px, a centered dialog above; closing leaves `/books`.
 export function AddBookSheet() {
   const router = useRouter();
+  const pathname = usePathname();
   const params = useSearchParams();
   const wide = useWide();
   const [dirty, setDirty] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
+  // Only while the sheet's URL is current: a late close after navigation must not rewrite /books/<id>.
   const close = useCallback(() => {
+    if (pathname !== "/books" || !params.has("add")) return;
     const next = new URLSearchParams(params);
     next.delete("add");
     const rest = next.toString();
     router.replace(rest ? `/books?${rest}` : "/books");
-  }, [params, router]);
+  }, [pathname, params, router]);
 
   const requestClose = () => (dirty ? setConfirming(true) : close());
   // Radix would focus the first tabbable (the ×); the design wants the lookup field.
@@ -51,7 +54,7 @@ export function AddBookSheet() {
     event.preventDefault();
     document.getElementById("lookup")?.focus();
   };
-  const form = <NewBookForm sheet onCancel={requestClose} onDirtyChange={setDirty} />;
+  const form = <NewBookForm sheet onCancel={requestClose} onDirtyChange={setDirty} onSaved={close} />;
   if (wide === null) return null;
 
   return (

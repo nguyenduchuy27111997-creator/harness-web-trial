@@ -28,7 +28,7 @@ function MatchCover({ book }: { book: LookupBook }) {
 }
 
 // `sheet`: the form lives in the add sheet: Cancel calls `onCancel`, the fields scroll and the buttons stay pinned.
-export function NewBookForm({ sheet, onCancel, onDirtyChange }: { sheet?: boolean; onCancel?: () => void; onDirtyChange?: (dirty: boolean) => void } = {}) {
+export function NewBookForm({ sheet, onCancel, onDirtyChange, onSaved }: { sheet?: boolean; onCancel?: () => void; onDirtyChange?: (dirty: boolean) => void; onSaved?: () => void } = {}) {
   const [state, action, pending] = useActionState(createBook, {} as BookFormState);
   // Controlled, so a lookup can fill them; the user can still edit them before saving.
   const [title, setTitle] = useState("");
@@ -38,6 +38,10 @@ export function NewBookForm({ sheet, onCancel, onDirtyChange }: { sheet?: boolea
   const [lookupMessage, setLookupMessage] = useState("");
   const [lookingUp, setLookingUp] = useState(false);
   const [matches, setMatches] = useState<LookupBook[]>([]);
+
+  useEffect(() => {
+    if (state.saved) onSaved?.();
+  }, [state, onSaved]);
 
   useEffect(() => {
     onDirtyChange?.([title, author, totalPages, query].some((v) => v.trim() !== ""));
@@ -80,6 +84,7 @@ export function NewBookForm({ sheet, onCancel, onDirtyChange }: { sheet?: boolea
 
   return (
     <form action={action} noValidate className={sheet ? "flex min-h-0 flex-1 flex-col" : "flex flex-col gap-4"}>
+      {sheet && <input type="hidden" name="sheet" value="1" />}
       <div className={sheet ? "flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pt-1 pb-4" : "contents"}>
       {state.formError && (
         <p role="alert" className="text-subheadline text-destructive">
