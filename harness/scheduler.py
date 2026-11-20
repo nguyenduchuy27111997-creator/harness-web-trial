@@ -272,6 +272,15 @@ class Scheduler:
                 more = re.search(r"\$?\s*(\d+(?:\.\d+)?)\s*(?:\$|dollars?|usd)?\s*more", a["text"], re.I)
                 job["budget_extra"] = job.get("budget_extra", 0) + (float(more.group(1)) if more else 5.0)
                 stage, job["question"] = job.pop("budget_held"), None
+                rest = re.sub(r"^\s*\$?\s*\d+(?:\.\d+)?\s*(?:\$|dollars?|usd)?\s*more\b[.,:;]?\s*", "", a["text"], flags=re.I)
+                if job.get("pr") and len(rest) > 30:
+                    # More money and what to do with it: a fix round with the answer. Seen on the web trial: F090's owner
+                    # gave "$5 more" with what to change, the loop went back to review and CI, and the answer was lost.
+                    job.setdefault("answers", []).append(a["text"])
+                    job["fix_rounds"] = job["review_failures"] = 0
+                    job["answered"] = True
+                    self.start_fix(job, f"The owner gave more budget and answered: {rest}")
+                    continue
                 if stage == "fixing":
                     self.set_stage(job, "fixing", note=f"budget +${job['budget_extra']:.2f}; fixing")
                     self.launch(job, self.work_fix)
