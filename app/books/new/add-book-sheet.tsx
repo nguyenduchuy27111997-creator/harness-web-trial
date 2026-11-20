@@ -76,7 +76,7 @@ export function AddBookSheet() {
           <SheetContent side="bottom" aria-describedby={undefined} showCloseButton={false} onOpenAutoFocus={focusLookup} className="gap-0 rounded-t-xl">
             <SheetHeader className="flex-row items-center justify-between">
               <SheetTitle className="text-title-2">Add book</SheetTitle>
-              {/* 32 px drawn, 44 px hit area on a phone (ui-guide). */}
+              {/* At least a 44 px hit area on a phone (ui-guide). */}
               <SheetClose asChild>
                 <Button variant="ghost" size="icon" className="relative after:absolute after:-inset-1.5">
                   <XIcon />
