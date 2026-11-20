@@ -30,7 +30,7 @@ test("add a book", async ({ page }) => {
   await page.getByLabel("Author").fill("Frank Herbert");
   await page.getByLabel("Status").click();
   await page.getByRole("option", { name: "Reading" }).click();
-  await page.getByRole("button", { name: "Save" }).click();
+  await page.getByRole("dialog", { name: "Add book" }).getByRole("button", { name: "Add book", exact: true }).click();
   await expect(page).toHaveURL(/\/books$/);
   await expect(page.getByRole("listitem").filter({ hasText: "Dune" })).toContainText("Reading");
   await expectAccessible(page);
