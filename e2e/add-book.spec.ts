@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
 
 // F005: add a book from /books/new. Each run uses a fresh account and book titles (golden principle 7).
 test("add a book", async ({ page }) => {
@@ -35,4 +35,5 @@ test("add a book", async ({ page }) => {
   await expect(page.getByRole("listitem").filter({ hasText: "Dune" })).toContainText("Reading");
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F005-books-added.png");
+  await expectScreens(page, "F005-books-added");
 });
