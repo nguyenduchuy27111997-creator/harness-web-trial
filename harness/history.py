@@ -217,7 +217,9 @@ def roadmap(root, home, state):
     lanes = max(1, state.get("lanes") or 1)
     passing = {f["id"] for f in feats if f.get("status") == "passing"}
     out = [{"id": f["id"], "title": f.get("title", ""), "milestone": f.get("milestone"), "priority": f.get("priority", 0),
-            "type": f.get("type"), "depends_on": f.get("depends_on", []), "acceptance": f.get("acceptance", []),
+            "type": f.get("type"), "epic": f.get("epic"), "depends_on": f.get("depends_on", []),
+            "acceptance": f.get("acceptance", []), "cost": round((jobs.get(f["id"]) or {}).get("cost", 0), 2),
+            "attempts": (jobs.get(f["id"]) or {}).get("attempts", 0), "fix_rounds": (jobs.get(f["id"]) or {}).get("fix_rounds", 0),
             "status": f.get("status"), "stage": (jobs.get(f["id"]) or {}).get("stage")} for f in feats]
     milestones = []
     for ms in dict.fromkeys(f["milestone"] for f in out if f["milestone"]):
@@ -232,7 +234,7 @@ def roadmap(root, home, state):
     nxt = [{"id": f["id"], "title": f["title"], "why": "bug" if f["type"] == "bug" else
             ("ready: needs " + ", ".join(f["depends_on"]) + ", all merged") if f["depends_on"] else "ready", "priority": f["priority"]}
            for f in ready[:5]]
-    return {"features": out, "milestones": milestones, "next": nxt}
+    return {"features": out, "milestones": milestones, "next": nxt, "epics": backlog.epics(root)}
 
 
 TREE_MAX = 20_000

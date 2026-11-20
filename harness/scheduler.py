@@ -93,6 +93,7 @@ class Scheduler:
         if sha != self.state.get("main_sha") or not hasattr(self, "main"):
             self.state["main_sha"] = sha
             self.main = {f["id"]: f for f in backlog.read(self.root, "origin/main")}
+            self.epics = backlog.epics(self.root, "origin/main")
             self.overlay_touches()  # the dispatcher's, in decide mode
             docs = git("ls-tree", "--name-only", "origin/main", "docs/design/", cwd=self.root).stdout.split()
             self.designed = {Path(d).stem for d in docs if d.endswith(".md")}
@@ -103,7 +104,7 @@ class Scheduler:
         if not hasattr(self, "main"):
             return []
         out = []
-        todo = sorted(self.main.values(), key=lambda f: (f.get("type") != "bug", f["priority"]))
+        todo = backlog.order(self.main.values(), getattr(self, "epics", []))  # bugs, milestone, the owner's epic order
         # Only the first milestone still to design gets a job: a later design builds on the earlier one on main.
         for ms in list(dict.fromkeys(f.get("milestone") for f in todo if self.needs_design(f)))[:1]:
             job = self.job(f"D-{ms}")

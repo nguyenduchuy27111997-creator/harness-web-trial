@@ -35,7 +35,8 @@ g.add_argument("--status", metavar="FEATURE_ID")
 g.add_argument("--get", nargs=2, metavar=("FEATURE_ID", "KEY"))
 args = p.parse_args()
 
-features = backlog.read(Path(__file__).resolve().parent.parent)
+ROOT = Path(__file__).resolve().parent.parent
+features = backlog.read(ROOT)
 status_of = {f["id"]: f["status"] for f in features}
 
 if args.status:
@@ -65,10 +66,10 @@ def retryable(f):
             and f.get("attempts", 0) <= args.retries)
 
 
-todo = sorted(
-    (f for f in features
-     if (f["status"] == "failing" or retryable(f)) and in_scope(f) and ready(f)),
-    key=lambda f: (f["status"] != "failing", f.get("type") != "bug", f["priority"]),
+todo = sorted(  # failing before retries, then bugs, milestone, the owner's epic order, priority (backlog.order)
+    backlog.order([f for f in features if (f["status"] == "failing" or retryable(f)) and in_scope(f) and ready(f)],
+                  backlog.epics(ROOT)),
+    key=lambda f: f["status"] != "failing",
 )
 if args.count:
     print(len(todo))

@@ -1,7 +1,8 @@
 """The backlog, read and written in one place.
 
   harness/features.json      what each feature is (id, milestone, priority, title,
-                             acceptance, type, complexity, depends_on); humans change it
+                             acceptance, type, complexity, depends_on, epic), and the
+                             product's epics in the owner's order; humans change it
   harness/status/<id>.json   where it stands: status, notes, blocked_reason, attempts;
                              no file means `failing`
   harness/log/<id>.md        its session log, newest entry first
@@ -44,6 +45,21 @@ def _status_files(root, ref):
 def definitions(root=".", ref=""):
     text = _show(root, ref, FEATURES)
     return json.loads(text)["features"] if text else []
+
+
+def epics(root=".", ref=""):
+    """The product's epics in the owner's order of priority: [{"id", "title"}], or [] when it has none."""
+    text = _show(root, ref, FEATURES)
+    return [e for e in (json.loads(text).get("epics") or []) if isinstance(e, dict) and e.get("id")] if text else []
+
+
+def order(features, epic_list):
+    """The order the loop builds in: bugs first, then by milestone, then by the owner's order of epics within it (a
+    feature without an epic after those with one), then by priority."""
+    rank = {e["id"]: i for i, e in enumerate(epic_list)}
+    ms = lambda f: int(m.group(1)) if (m := __import__("re").fullmatch(r"M(\d+)", f.get("milestone") or "")) else 10**6  # noqa: E731
+    return sorted(features, key=lambda f: (f.get("type") != "bug", ms(f), rank.get(f.get("epic"), len(rank)),
+                                           f.get("priority", 0)))
 
 
 def statuses(root=".", ref=""):

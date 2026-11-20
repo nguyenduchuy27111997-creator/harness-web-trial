@@ -4,7 +4,8 @@
 Definitions (harness/features.json) need: id, milestone, priority (int), title,
 acceptance (list); optional: type, complexity, depends_on, owner_check (bool: the owner checks
 it against what they meant once it merges), touches (list of file globs it will change: the loop
-builds two features that share a file one on the other, not side by side). Each feature's state
+builds two features that share a file one on the other, not side by side), epic (the id of one of the top-level
+`epics`, [{"id", "title"}] in the owner's order of priority). Each feature's state
 (harness/status/<id>.json, see backlog.py) has status, notes, and optionally
 blocked_reason and attempts; no file means failing.
 """
@@ -27,8 +28,14 @@ def milestone_rank(m):
     return int(found.group(1)) if found else None
 
 
-def problems(features):
+def problems(features, epics=None):
     out = []
+    epic_ids = [e.get("id") for e in epics or []]
+    for e in {i for i in epic_ids if epic_ids.count(i) > 1}:
+        out.append(f"duplicate epic {e}")
+    if any(not isinstance(e, dict) or not isinstance(e.get("id"), str) or not isinstance(e.get("title"), str)
+           for e in epics or []):
+        out.append("`epics` must be a list of {\"id\": str, \"title\": str}")
     ids = [f.get("id") for f in features]
     by_id = {f.get("id"): f for f in features}
     for fid in {i for i in ids if ids.count(i) > 1}:
@@ -47,6 +54,8 @@ def problems(features):
                 out.append(f"{fid}: `{key}` is {f[key]!r}, expected one of {sorted(allowed)}")
         if "touches" in f and not (isinstance(f["touches"], list) and all(isinstance(g, str) and g for g in f["touches"])):
             out.append(f"{fid}: `touches` must be a list of file globs")
+        if "epic" in f and (not isinstance(f["epic"], str) or (epics is not None and f["epic"] not in epic_ids)):
+            out.append(f"{fid}: `epic` {f['epic']!r} is not one of the top-level epics")
         if "owner_check" in f and not isinstance(f["owner_check"], bool):
             out.append(f"{fid}: `owner_check` must be true or false")
         if "attempts" in f and (not isinstance(f["attempts"], int) or f["attempts"] < 0):
@@ -102,9 +111,10 @@ def main():
     path = Path(sys.argv[1] if len(sys.argv) > 1 else "harness/features.json")
     root = path.resolve().parent.parent
     try:
-        json.loads(path.read_text())["features"]
+        doc = json.loads(path.read_text())
+        doc["features"]
         features = backlog.read(root)
-        found = problems(features) + status_problems(root, {f.get("id") for f in features})
+        found = problems(features, doc.get("epics")) + status_problems(root, {f.get("id") for f in features})
     except (ValueError, KeyError, TypeError) as e:
         print(f"{path}: not a valid backlog ({e})")
         return 1
