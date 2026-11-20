@@ -32,6 +32,7 @@ async function addBook(page: Page, title: string) {
 // F088 acceptance 1: dark system = dark look, light system = cream look, no setting to change.
 test("pages follow the system: dark with a dark system, cream with a light one, no setting", async ({ page }) => {
   await signUpAs(page, `f088-a-${stamp()}@example.com`);
+  await addBook(page, `Look Book ${stamp()}`); // M9: the empty shelf shows no filter
   await expect(page.getByRole("navigation", { name: "Book filter" })).toBeVisible();
 
   await page.emulateMedia({ colorScheme: "dark" });

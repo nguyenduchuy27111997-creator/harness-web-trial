@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
 import { signUpAs } from "./accounts";
 import { saveStatus } from "./books";
 
@@ -19,6 +19,7 @@ test("add, status change and delete show in another tab without a reload", async
   const s = stamp();
   await signUpAs(page, `f086-a-${s}@example.com`);
   const title = `Live Book ${s}`;
+  await addBook(page, "Seed Book"); // M9: the empty shelf shows no filter
   const other = await context.newPage();
   await other.goto("/books");
   await expect(other.getByRole("navigation", { name: "Book filter" })).toBeVisible();
@@ -49,11 +50,13 @@ test("add, status change and delete show in another tab without a reload", async
   await expect(other).toHaveScreenshot("F086-live-list.png", {
     stylePath: "e2e/hide-dev-overlay.css",
   });
+  await expectScreens(other, "F086-live-list-seed");
 });
 
 test("a second account's changes never reach my tab", async ({ page, browser, baseURL }) => {
   const s = stamp();
   await signUpAs(page, `f086-b-${s}@example.com`);
+  await addBook(page, "Seed Book"); // M9: the empty shelf shows no filter
   await page.goto("/books");
   await expect(page.getByRole("navigation", { name: "Book filter" })).toBeVisible();
 
@@ -78,6 +81,7 @@ test("after the connection drops and comes back the list catches up", async ({ p
   const s = stamp();
   await signUpAs(page, `f086-d-${s}@example.com`);
   const adder = await context.newPage();
+  await addBook(page, "Seed Book"); // M9: the empty shelf shows no filter
   await page.goto("/books");
   await expect(page.getByRole("navigation", { name: "Book filter" })).toBeVisible();
 

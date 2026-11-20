@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "Grid title capped at its cell (F064); row placeholder initial is a span; M9 Specs that move for F013/F086/F088/F082 (decision 0030, architect PASS). Verifier PASS 2026-11-20."
+}

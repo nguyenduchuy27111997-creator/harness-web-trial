@@ -7,8 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { booksHref, parseSearch, type BookSort, type BookStatus } from "@/lib/books";
 
-// Navigates instead of a GET form so an empty search leaves no q in the URL (design M3). `href`, when given, builds the target instead of booksHref (QuoteSearchForm, design M5).
-export function SearchForm({ status, q, sort, shelf, tag, href }: { status?: BookStatus; q?: string; sort?: BookSort; shelf?: string; tag?: string; href?: (q?: string) => string }) {
+// Navigates instead of a GET form so an empty search leaves no q in the URL (design M3). `href`, when given, builds the target instead of booksHref (QuoteSearchForm, design M5). `tall` gives /books its 36 px controls (F090).
+export function SearchForm({ status, q, sort, shelf, tag, href, placeholder, hideLabel, tall }: { status?: BookStatus; q?: string; sort?: BookSort; shelf?: string; tag?: string; href?: (q?: string) => string; placeholder?: string; hideLabel?: boolean; tall?: boolean }) {
   const router = useRouter();
   const id = useId();
   return (
@@ -23,10 +23,12 @@ export function SearchForm({ status, q, sort, shelf, tag, href }: { status?: Boo
       }}
     >
       <div className="flex flex-1 flex-col gap-2">
-        <Label htmlFor={id}>Search</Label>
-        <Input id={id} name="q" type="search" defaultValue={q} />
+        <Label htmlFor={id} className={hideLabel ? "sr-only" : undefined}>
+          Search
+        </Label>
+        <Input id={id} name="q" type="search" defaultValue={q} placeholder={placeholder} className={tall ? "h-9" : undefined} />
       </div>
-      <Button type="submit" variant="outline">
+      <Button type="submit" variant="outline" className={tall ? "h-9" : undefined}>
         Search
       </Button>
     </form>

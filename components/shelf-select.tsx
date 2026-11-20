@@ -11,10 +11,12 @@ export function ShelfSelect({ status, q, sort, shelf, tag, shelves }: { status?:
   const router = useRouter();
   return (
     <div className="flex flex-col gap-2">
-      <Label htmlFor="shelf">Shelf</Label>
+      <Label htmlFor="shelf" className="sr-only">
+        Shelf
+      </Label>
       <Select value={shelf ?? "all"} onValueChange={(value) => router.push(booksHref({ status, q, sort, tag, shelf: value === "all" ? undefined : value }))}>
-        <SelectTrigger id="shelf" className="w-full sm:w-48">
-          <SelectValue />
+        <SelectTrigger id="shelf" className="h-9 w-full sm:w-48">
+          <SelectValue placeholder="All shelves" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All shelves</SelectItem>

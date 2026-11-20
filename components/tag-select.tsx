@@ -10,9 +10,11 @@ export function TagSelect({ status, q, sort, shelf, tag, tags }: { status?: Book
   const router = useRouter();
   return (
     <div className="flex flex-col gap-2">
-      <Label htmlFor="tag">Tag</Label>
+      <Label htmlFor="tag" className="sr-only">
+        Tag
+      </Label>
       <Select value={tag ?? "all"} onValueChange={(value) => router.push(booksHref({ status, q, sort, shelf, tag: value === "all" ? undefined : value }))}>
-        <SelectTrigger id="tag" className="w-full sm:w-48">
+        <SelectTrigger id="tag" className="h-9 w-full sm:w-48">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

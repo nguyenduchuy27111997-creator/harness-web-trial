@@ -8,10 +8,12 @@ import { SORT_LABELS, booksHref, parseSort, type BookSort, type BookStatus } fro
 export function SortSelect({ status, q, sort, shelf, tag }: { status?: BookStatus; q?: string; sort: BookSort; shelf?: string; tag?: string }) {
   const router = useRouter();
   return (
-    <div className="flex flex-col gap-2">
-      <Label htmlFor="sort">Sort</Label>
+    <div className="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto">
+      <Label htmlFor="sort" className="sr-only">
+        Sort
+      </Label>
       <Select value={sort} onValueChange={(value) => router.push(booksHref({ status, q, sort: parseSort(value), shelf, tag }))}>
-        <SelectTrigger id="sort" className="w-full sm:w-48">
+        <SelectTrigger id="sort" className="h-9 w-full sm:w-48">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
