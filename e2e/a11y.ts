@@ -21,15 +21,19 @@ export async function expectAccessible(page: Page) {
   // Buttons use transition-all: right after a server action the submit button fades back from
   // disabled:opacity-50, and axe sampling it mid-fade reported color-contrast on a slow CI runner
   // (fixed this way in the web trial). Let running transitions finish first; an endless one (a
-  // spinner) never does, so it is skipped.
-  await page.evaluate(() =>
-    Promise.all(
-      document
-        .getAnimations()
-        .filter((a) => a.effect?.getComputedTiming().endTime !== Infinity)
-        .map((a) => a.finished.catch(() => {})),
-    ),
-  );
+  // spinner) never does, so it is skipped. Transitions can start after the first wait (a color-scheme switch
+  // starts the buttons' color fade late: F092's phone sheet failed on it in dark), so wait until a pass finds none.
+  await expect
+    .poll(() =>
+      page.evaluate(async () => {
+        const running = document
+          .getAnimations()
+          .filter((a) => a.effect?.getComputedTiming().endTime !== Infinity);
+        await Promise.all(running.map((a) => a.finished.catch(() => {})));
+        return running.length;
+      }),
+    )
+    .toBe(0);
   const { violations } = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
     .analyze();
