@@ -11,7 +11,7 @@ import threading
 import time
 from pathlib import Path
 
-from common import backlog, lang, now, write_answer, WAITING_HUMAN
+from common import backlog, gh, lang, now, write_answer, WAITING_HUMAN
 
 MODE = os.environ.get("LOOP_DISPATCHER", "")  # "suggest" turns it on; "decide" lets it act (v9, P35)
 # What it may do alone in decide mode: never drop a feature, change the backlog or its acceptance, and only when it is
@@ -20,6 +20,13 @@ MODE = os.environ.get("LOOP_DISPATCHER", "")  # "suggest" turns it on; "decide" 
 ACTS = {"retry", "retry_large", "answer", "rebuild", "split"}
 SURE = float(os.environ.get("LOOP_DISPATCHER_SURE", "0.7"))
 MAX_DECISIONS = 2
+# Full autonomy (LOOP_AUTONOMY=1, with decide mode): the dispatcher answers every hold itself, at any confidence, product
+# choices included (its first option), never dropping a feature; past ACCEPT_AT decisions a feature whose branch passes
+# its gate and verifier is merged with the rest filed as follow-up issues; past LADDER_MAX it stops and waits for the
+# owner. Seen on the web trial: 252 hours of holds in a week waited on the owner, though the dispatcher had advice for most.
+AUTONOMY = os.environ.get("LOOP_AUTONOMY") == "1"
+ACCEPT_AT = int(os.environ.get("LOOP_ACCEPT_AT", "4"))
+LADDER_MAX = int(os.environ.get("LOOP_LADDER_MAX", "10"))
 PLAN_WAIT = 15 * 60  # seconds a milestone's features wait for its plan
 CAP = float(os.environ.get("LOOP_DISPATCHER_CAP", "0.5"))  # dollars at most per question
 EVENTS = {"held": "held", "failed": "failed", "reverted": "main red", "needs_human": "needs human"}
@@ -42,8 +49,13 @@ class Dispatcher:
         asked = self.state.setdefault("consulted", [])
         # Asked already, but before it wrote the owner's options (kit < 5.50): asked once more for them.
         unpicked = stage in WAITING_HUMAN and not job.get("choices") and job.get("options_asked") != key
-        if key in asked and not unpicked:
+        # Turned on with jobs already waiting: advice given before, when it could only suggest, is asked once more so
+        # it can act on it. Seen on the web trial: F090, F091 and F092 kept waiting on the owner after autonomy was on.
+        unacted = AUTONOMY and MODE == "decide" and stage in WAITING_HUMAN and job.get("alone_asked") != key
+        if key in asked and not unpicked and not unacted:
             return
+        if AUTONOMY:
+            job["alone_asked"] = key
         asked[:] = [k for k in asked if k != key][-199:] + [key]
         job["options_asked"] = key
         wt = job.get("worktree")
@@ -89,6 +101,7 @@ class Dispatcher:
                  "fix rounds": job.get("fix_rounds", 0), "last failure": job.get("last_failure"),
                  "review findings": job.get("last_bugs") or job.get("findings"), "branch": job.get("branch"),
                  "pr": job.get("pr_url"), "cost so far": round(job.get("cost", 0), 2),
+                 "decisions you made alone so far": job.get("decided", 0) if AUTONOMY else None,
                  "work kept for the next session (it starts from this, so nothing was lost)":
                      {k: v for k, v in {"commits from the last failed fix round": job.get("kept"),
                                         "code from the last build attempt": job.get("kept_attempt"),
@@ -162,6 +175,8 @@ class Dispatcher:
         except (TypeError, ValueError):
             sure = 0.0
         detail, why = (advice.get("detail") or "").strip(), (advice.get("why") or "").strip()
+        if AUTONOMY and MODE == "decide" and job["stage"] in WAITING_HUMAN and job["stage"] != "reverted":
+            return self.act_alone(job, advice, key, action, sure, why, detail)
         text = {"retry": "Retry it as it is.", "retry_large": f"Retry it on the large model. {detail}",
                 "answer": detail, "rebuild": f"Rebuild it from main: {detail}",
                 "split": "Build it in these parts, one after another in this branch, keeping every acceptance "
@@ -183,6 +198,67 @@ class Dispatcher:
         said = f"{action}" + (f" ({why[:160]})" if why else "")
         self.event(job["id"], f"dispatcher decided: {said}")
         self.push(f"decided:{key}", lang.say("Dispatcher decided"), f"{job['id']}: {said}")
+        return True
+
+    def act_alone(self, job, advice, key, action, sure, why, detail):
+        """Full autonomy: take the advice whatever its confidence. ask_owner takes its first option (the product choice
+        it recommends, recorded as a decision the owner can reverse); drop is never taken. The ladder: after ACCEPT_AT
+        decisions, a branch that passes its gate and the verifier merges with the review's remaining findings filed as
+        issues; after LADDER_MAX, the owner decides."""
+        n = job.get("decided", 0)
+        if n >= LADDER_MAX:
+            self.event(job["id"], f"dispatcher: {n} decisions without a merge; the owner decides now")
+            return False
+        if n >= ACCEPT_AT and self.accept(job, key):
+            return True
+        options = [o for o in (job.get("choices") or {}).get("options") or [] if "drop" not in o.get("label", "").lower()]
+        if action in ("ask_owner", "drop") or (action not in ACTS and action != "answer"):
+            text = (options[0]["answer"] if options else detail) or "Retry it as it is."
+            action = "rebuild" if re.match(r"(Rebuild it|Start again) from main", text, re.I) else "answer"
+        else:
+            text = {"retry": "Retry it as it is.", "retry_large": f"Retry it on the large model. {detail}",
+                    "answer": detail, "rebuild": f"Rebuild it from main: {detail}",
+                    "split": "Build it in these parts, one after another in this branch, keeping every acceptance "
+                             f"criterion as it is:\n{detail}"}.get(action, detail).strip() or "Retry it as it is."
+        job["decided"] = n + 1
+        if action == "retry_large":
+            job["large"] = True
+        # The decision first, so the loop reads a rebuild as one; who decided after it.
+        write_answer(self.home, job["id"], f"{text}\n\n(Decided by the dispatcher, not the owner: decision {n + 1}, "
+                                           f"confidence {sure:.2f}. {why})")
+        self.decide_log({"key": key, "at": now(), "job": job["id"], "applied": action, "alone": n + 1})
+        said = f"{action} ({n + 1} of at most {LADDER_MAX})" + (f": {why[:150]}" if why else "")
+        self.event(job["id"], f"dispatcher decided: {said}")
+        self.push(f"decided:{key}", lang.say("Dispatcher decided"), f"{job['id']}: {said}")
+        return True
+
+    def accept(self, job, key):
+        """The ladder's last step before the owner: a feature whose branch passes its gate and its verifier but keeps
+        getting review findings merges, and the findings become follow-up issues (labeled bug: /bug brings them into the
+        backlog). Only from a hold on review findings, never on red CI. True when it moved the feature to CI."""
+        wt = Path(job.get("worktree") or "")
+        status, evidence = wt / f"harness/status/{job['id']}.json", wt / f"harness/evidence/{job['id']}.md"
+        try:
+            passing = json.loads(status.read_text()).get("status") == "passing"
+        except (OSError, ValueError):
+            passing = False
+        findings = [x for x in (job.get("last_bugs") or job.get("findings") or "").splitlines() if "[bug]" in x]
+        if not (job.get("pr") and passing and evidence.exists() and "VERDICT: PASS" in evidence.read_text()
+                and findings and "CI" not in (job.get("note") or "")):
+            return False
+        body = "\n".join(f"- {x}" for x in findings)[:6000]
+        issue = ["issue", "create", "--title", f"[{job['id']}] Follow-up: review findings left when it was merged", "--body",
+                 f"The dispatcher merged {job['id']} after {job.get('decided', 0)} decisions: its gate and verifier passed, "
+                 f"and these review findings remained (PR {job.get('pr_url')}):\n\n{body}\n\nBring them into the backlog "
+                 "with /bug."]
+        if gh(*issue, "--label", "bug", cwd=self.root, check=False).returncode:
+            gh(*issue, cwd=self.root, check=False)  # a repo without the bug label
+        job["decided"] = job.get("decided", 0) + 1
+        job["question"] = None
+        self.decide_log({"key": key, "at": now(), "job": job["id"], "applied": "accept"})
+        self.event(job["id"], f"dispatcher decided: accept; {len(findings)} review finding(s) filed as a follow-up issue")
+        self.push(f"accept:{key}", lang.say("Dispatcher decided"), f"{job['id']}: merged with {len(findings)} follow-up(s)")
+        self.set_stage(job, "ci", note="accepted: review findings filed as follow-ups")
         return True
 
     def propose(self, job, action, text, sure, why):

@@ -34,6 +34,8 @@ For a failed feature, a held PR or a red main, reply with one JSON object and no
 - `drop`: the feature is done elsewhere or no longer makes sense.
 - `ask_owner`: only a human can decide (product choice, an account, money). A passing feature's spec that the milestone design moves is not one: a fix round may add it to the design's `## Specs that move` with a fresh architect PASS and move its steps, so `answer` with that.
 
+When the owner has turned on full autonomy, nobody answers but you: every hold gets your advice, at any confidence, and `ask_owner` takes your first option, so put the choice you recommend first and make it one the coder can carry out. Climb a ladder as `decisions you made alone so far` grows: the first two, the narrowest fix that answers the findings; at the third, if the same findings came back, `rebuild` with a plan that avoids what failed, or `split`; from the fourth, the loop merges a branch that passes its gate and its verifier and files the remaining review findings as follow-up issues, so tell the fixer to make the gate and the verifier pass and leave polish. Never `drop`.
+
 For a milestone start, reply with one JSON object:
 
 ```
