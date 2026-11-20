@@ -960,8 +960,13 @@ def cmd_start(root, a):
         problems.append("the project has uncommitted changes; commit or stash them first")
     if git("remote", "get-url", "origin", cwd=root, check=False).returncode != 0:
         problems.append("no GitHub remote `origin`: the loop opens a PR per feature")
-    if run([GH, "auth", "status"], cwd=root).returncode != 0:
-        problems.append("gh is not signed in (gh auth login)")
+    # Only origin's host: `gh auth status` fails when any host it knows has a stale token. Seen on the web trial: an
+    # expired token for a company GitHub Enterprise host stopped a loop whose repo is on github.com.
+    url = git("remote", "get-url", "origin", cwd=root, check=False).stdout.strip()
+    m = re.match(r"^(?:https?://|ssh://)?(?:[^@/]+@)?([^/:]+)[/:]", url)
+    host = os.environ.get("GH_HOST") or (m.group(1) if m else "github.com")
+    if run([GH, "auth", "status", "--hostname", host], cwd=root).returncode != 0:
+        problems.append(f"gh is not signed in to {host} (gh auth login --hostname {host})")
     if problems:
         for p in problems:
             print(f"Cannot start: {p}")

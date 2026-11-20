@@ -138,10 +138,11 @@ class Agents:
         if not FEATURE_ID.match(job["id"]) or job.get("cost", 0) < self.feature_budget(job):
             return False
         base = self.feature_budget(job) - job.get("budget_extra", 0)
-        if dispatcher.MODE == "decide" and job.get("budget_extra", 0) + base <= 2 * base + 0.005:
+        if dispatcher.MODE == "decide" and (dispatcher.AUTONOMY or job.get("budget_extra", 0) + base <= 2 * base + 0.005):
+            # Full autonomy grants with no cap: the ladder of decisions, not money, decides when the owner is asked.
             # The owner chose to let it grant more, up to three times the feature's budget, and be told (v9, P35).
             job["budget_extra"] = round(job.get("budget_extra", 0) + base, 2)
-            grant = f"budget +${base:.2f} (now ${self.feature_budget(job):.2f}, at most ${3 * base:.2f})"
+            grant = f"budget +${base:.2f} (now ${self.feature_budget(job):.2f}" + (")" if dispatcher.AUTONOMY else f", at most ${3 * base:.2f})")
             self.event(job["id"], f"dispatcher decided: {grant}; spent ${job['cost']:.2f}")
             self.push(f"grant:{job['id']}:{job['budget_extra']}", lang.say("Dispatcher decided"), f"{job['id']}: {grant}")
             return False

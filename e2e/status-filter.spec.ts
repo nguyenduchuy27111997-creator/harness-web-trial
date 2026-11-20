@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
 
 async function signUp(page: Page, email: string) {
   await page.goto("/sign-up");
@@ -27,7 +27,6 @@ test("filter the list by status with tabs kept in the URL", async ({ page }) => 
   await signUp(page, `f013-${tag}@example.com`);
 
   const tabs = page.getByRole("navigation", { name: "Book filter" });
-  await expect(tabs.getByRole("link", { name: "All" })).toBeVisible();
 
   const books = [
     { title: "Wanted Book", status: "Want to read" },
@@ -37,6 +36,8 @@ test("filter the list by status with tabs kept in the URL", async ({ page }) => 
   for (const book of books) {
     await addBook(page, book.title, book.status);
     await expect(page.getByRole("listitem").filter({ hasText: book.title })).toBeVisible();
+    // M9: the empty shelf shows no filter, so the first check waits for the first book.
+    if (book === books[0]) await expect(tabs.getByRole("link", { name: "All" })).toBeVisible();
   }
 
   const rows = page.getByRole("listitem");
@@ -74,4 +75,5 @@ test("filter the list by status with tabs kept in the URL", async ({ page }) => 
   await expect(page.getByText("No books here. Add one or switch tabs.")).toBeVisible();
   await expect(page.getByRole("link", { name: "Add book" })).toBeVisible();
   await expect(rows).toHaveCount(0);
+  await expectScreens(page, "F013-empty-tab");
 });

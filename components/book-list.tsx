@@ -27,7 +27,7 @@ export function BookList({ books, tagsByBook, coverUrls }: { books: ShelfBook[];
             <div className="flex min-w-0 flex-1 flex-col gap-1 break-words">
               <Link
                 href={`/books/${book.id}`}
-                className="link-target font-heading text-headline font-semibold [overflow-wrap:anywhere] after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-offset-2 focus-visible:after:ring-offset-background lg:line-clamp-2"
+                className="link-target max-w-full font-heading text-headline font-semibold [overflow-wrap:anywhere] after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-offset-2 focus-visible:after:ring-offset-background lg:line-clamp-2"
               >
                 {book.title}
               </Link>

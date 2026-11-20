@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
 import { signUpAs } from "./accounts";
 import { addAndOpenBook } from "./books";
 import { coverFile, submitCover } from "./covers";
@@ -30,6 +30,7 @@ const row = (page: Page, title: string) => page.getByRole("listitem").filter({ h
 
 test("the list shows a thumbnail for a book with a cover and a first-letter placeholder for one without", async ({ page }) => {
   const { covered, bare } = await shelfWithOneCover(page, "list");
+  await page.setViewportSize({ width: 390, height: 844 }); // M9: the 40x60 thumbnail is the phone row
   await page.goto("/books");
 
   const thumb = row(page, covered).getByRole("img", { name: `Cover of ${covered}` });
@@ -47,10 +48,14 @@ test("the list shows a thumbnail for a book with a cover and a first-letter plac
       page.getByRole("listitem").getByText(/^(Some Author|George Eliot)$/),
     ],
   });
+  await expectScreens(page, "F082-cover-row", {
+    mask: [page.getByRole("heading", { level: 1 }), page.getByRole("listitem").getByText(/Quiet |Zebra /)],
+  });
 });
 
 test("covers load through signed URLs, never public ones, in a fixed-size thumbnail", async ({ page }) => {
   const { covered, bare } = await shelfWithOneCover(page, "signed");
+  await page.setViewportSize({ width: 390, height: 844 }); // M9: the 40x60 thumbnail is the phone row
   await page.goto("/books");
   const thumb = row(page, covered).getByRole("img", { name: `Cover of ${covered}` });
   await expect(thumb).toBeVisible();
@@ -69,7 +74,7 @@ test("covers load through signed URLs, never public ones, in a fixed-size thumbn
   expect(Math.round(loaded!.height)).toBe(60);
   const letter = await row(page, bare).getByText("Z", { exact: true }).boundingBox();
   expect(letter).not.toBeNull();
-  const placeholder = await row(page, bare).getByText("Z", { exact: true }).locator("xpath=ancestor-or-self::*[1]").boundingBox();
+  const placeholder = await row(page, bare).getByText("Z", { exact: true }).locator('xpath=ancestor-or-self::*[@data-testid="cover-placeholder"][1]').boundingBox();
   expect(placeholder!.width).toBeLessThanOrEqual(40);
   expect(placeholder!.height).toBeLessThanOrEqual(60);
 
