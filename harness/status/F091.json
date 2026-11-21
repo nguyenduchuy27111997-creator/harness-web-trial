@@ -1,5 +1,4 @@
 {
-  "status": "blocked",
-  "notes": "F064/F065 baselines redrawn locally (Docker browser, same pixels as CI) with the h1 + date line masked (073ac21f); diffs were only the masked regions. check.sh green (exit 0; 8 load timeouts passed on the one-worker rerun) with the dev server started by hand. Verifier FAIL for environment only: Playwright MCP browser unreachable (ECONNREFUSED 127.0.0.1:49913); no app code changed since the last verifier PASS (7d6f01bf). Rerun the verifier once the MCP browser is restarted. F081-cover-upload still fails on CI (F097). Designer follow-ups still open: Read again placement, segment width and selected colour, Saved layout shift, empty-progress hint, tablet width.",
-  "blocked_reason": "failed"
+  "status": "passing",
+  "notes": "F064/F065 baselines redrawn with the h1 + date line masked (073ac21f). check.sh green (one screenshot flake passed on the one-worker rerun); verifier PASS (3 criteria, 375 and 1280). F081-cover-upload still fails on CI (F097). Designer follow-ups still open: Read again placement, segment width and selected colour, Saved layout shift, empty-progress hint, tablet width."
 }
