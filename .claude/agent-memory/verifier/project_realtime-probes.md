@@ -19,3 +19,5 @@ On F086 4th verify (2026-11-16): the auto-mode classifier denied running the nod
 On F095 (2026-11-22): to watch list motion on live refresh, record per-frame li transform/opacity in tab A, act in tab B, then `a.bringToFront()`; a hidden tab A never refreshes or paints until it is in front. Load more (`?limit=40`) remounts the list, so appended items show no motion at all.
 
 Two-window list probe (F095, 2026-11-22): from the observer page, `window.open(href, "edit", "popup,width=700,...")` + `page.waitForEvent("popup")` gives an actor window that stays visible, so both rAF loops run (ctx.newPage tabs stall; force-click there hits the wrong element). Record per-li transform/opacity each frame on the observer.
+
+F095 re-verify (2026-11-22): an actor in `browser().newContext({storageState: await page.context().storageState()})` also leaves the observer visible and works. Wait about 4 s after `page.goto` on the observer before acting: a delete made about 1.5 s after load was missed until a reload (the channel was not subscribed yet). That is a probe timing issue, not a bug.
