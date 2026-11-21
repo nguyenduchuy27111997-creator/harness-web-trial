@@ -1,7 +1,9 @@
 "use client";
 
 import { StarIcon } from "lucide-react";
+import { MotionConfig, motion, useReducedMotion } from "motion/react";
 import { startTransition, useActionState, useState } from "react";
+import { quick } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { RatingFormState } from "@/lib/books";
@@ -17,6 +19,8 @@ type Props = {
 const STARS = [1, 2, 3, 4, 5];
 
 export function RatingForm({ rating, action }: Props) {
+  // With reduced motion a press scale would jump, not animate, so there is none.
+  const reduceMotion = useReducedMotion();
   const [state, formAction, pending] = useActionState(
     action,
     {} as RatingFormState,
@@ -25,6 +29,7 @@ export function RatingForm({ rating, action }: Props) {
   // "Saved" only describes the value that was submitted; hide it once the choice differs from it.
   const [submitted, setSubmitted] = useState(value);
   return (
+    <MotionConfig reducedMotion="user">
     <form
       onSubmit={(event) => {
         // Submit by hand: the automatic form reset after an action puts the radios back to their first value.
@@ -47,17 +52,20 @@ export function RatingForm({ rating, action }: Props) {
         >
           {STARS.map((n) => (
             <RadioGroupItem
+              asChild
               key={n}
               value={String(n)}
               className="flex min-h-11 min-w-11 items-center justify-center p-1"
               aria-label={n === 1 ? "1 star" : `${n} stars`}
             >
-              <StarIcon
-                className={
-                  n <= Number(value) ? "size-6 text-primary" : "size-6"
-                }
-                fill={n <= Number(value) ? "currentColor" : "none"}
-              />
+              <motion.button type="button" whileTap={reduceMotion ? undefined : { scale: 0.97 }} transition={quick}>
+                <StarIcon
+                  className={
+                    n <= Number(value) ? "size-6 text-primary" : "size-6"
+                  }
+                  fill={n <= Number(value) ? "currentColor" : "none"}
+                />
+              </motion.button>
             </RadioGroupItem>
           ))}
         </RadioGroup>
@@ -76,5 +84,6 @@ export function RatingForm({ rating, action }: Props) {
         </p>
       )}
     </form>
+    </MotionConfig>
   );
 }

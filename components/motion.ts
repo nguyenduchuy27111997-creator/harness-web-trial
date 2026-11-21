@@ -1,7 +1,7 @@
 // The app's motion, in one place (docs/ui-guide.md): short springs like Apple's, for the Motion library
 // (`import { motion } from "motion/react"`). Animate opacity and transform only, to show what changed or where
 // something came from; never to decorate. Motion follows prefers-reduced-motion through <MotionConfig
-// reducedMotion="user"> in a client provider around the app; CSS transitions follow it through app/ui-base.css.
+// reducedMotion="user"> inside each animating component (decision 0033); CSS transitions follow it through app/ui-base.css.
 
 // Most state changes: a row appearing, a panel opening, a badge changing. No bounce, like Apple's .smooth.
 export const spring = { type: "spring", visualDuration: 0.35, bounce: 0 } as const;
@@ -15,5 +15,13 @@ export const appear = {
   initial: { opacity: 0, y: 8 },
   animate: { opacity: 1, y: 0 },
   exit: { opacity: 0, y: -4 },
+  transition: spring,
+} as const;
+
+// Items appended at the end (Load more): fade in only, no slide (design M9).
+export const fadeIn = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
   transition: spring,
 } as const;

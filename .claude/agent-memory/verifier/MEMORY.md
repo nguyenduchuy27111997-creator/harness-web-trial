@@ -13,3 +13,4 @@
 - [Next security nudge exit](project_next-security-nudge-exit.md) — dev server exits after nudge; rerun init.sh, don't upgrade; check menuitem 44px
 - [Inline-link exemption](project_inline-link-exemption.md) — gate skips inline <a>; measure standalone links at 390px yourself; wait out menu zoom
 - [Short-label targets](project_short-label-targets.md) — seed 2-letter names: min-h-11 links can be 14px wide; check stacked-cover alt
+- [Partial node_modules](project_partial-node-modules.md) — init.sh 'next: command not found': npm ci, then rerun; two-tab realtime probes

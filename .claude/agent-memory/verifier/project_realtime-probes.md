@@ -15,3 +15,9 @@ On F086 re-verify (2026-11-16): `page.screenshot` at the default MCP viewport cu
 On F086 3rd verify (2026-11-16): the MCP browser kept the previous run's session, so /sign-up redirected to /books; click "Sign out" first. Toggling setOffline mid-flow logs one harmless server "⨯ Error: The destination stream errored while writing data." in the init log. The 45s offline wait came back about 10s after going online.
 
 On F086 4th verify (2026-11-16): the auto-mode classifier denied running the node probe with `--env-file=.env.local`. What worked instead, all in MCP: second account in `browser().newContext()` adds via UI; attach `page.on('websocket')` frame capture, reload the tab, and assert no frame contains the other account's title; for offline catch-up, sign A into a separate context, `setOffline(true)` on the main context, and add from the separate one. A raw `new WebSocket` built in the page got no messages at all, so don't use it.
+
+On F095 (2026-11-22): to watch list motion on live refresh, record per-frame li transform/opacity in tab A, act in tab B, then `a.bringToFront()`; a hidden tab A never refreshes or paints until it is in front. Load more (`?limit=40`) remounts the list, so appended items show no motion at all.
+
+Two-window list probe (F095, 2026-11-22): from the observer page, `window.open(href, "edit", "popup,width=700,...")` + `page.waitForEvent("popup")` gives an actor window that stays visible, so both rAF loops run (ctx.newPage tabs stall; force-click there hits the wrong element). Record per-li transform/opacity each frame on the observer.
+
+F095 re-verify (2026-11-22): an actor in `browser().newContext({storageState: await page.context().storageState()})` also leaves the observer visible and works. Wait about 4 s after `page.goto` on the observer before acting: a delete made about 1.5 s after load was missed until a reload (the channel was not subscribed yet). That is a probe timing issue, not a bug.

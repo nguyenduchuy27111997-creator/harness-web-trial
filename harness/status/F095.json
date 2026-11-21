@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "motion 14.9.0 (exact, preset pin). MotionConfig reducedMotion=user per animating component (decision 0033, LCP budget). AnimatePresence + motion.li layout/appear in book-list; Load more appends fade in only. whileTap scale 0.97 with quick on status segments and stars, off under reduced motion. Selected status segment is the CSS aria-checked background again (the layoutId indicator was reverted: it broke F091/F009 locked book-page baselines and no acceptance line asks for it; M9 line 90 amended under decision 0034, architect PASS). Gate green, verifier PASS."
+}
