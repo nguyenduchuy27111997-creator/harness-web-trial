@@ -2,9 +2,10 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
+import { useState } from "react";
 import { BookCover } from "@/components/book-cover";
 import { BOOK_GRID } from "@/components/book-grid";
-import { appear } from "@/components/motion";
+import { appear, fadeIn } from "@/components/motion";
 import { StatusBadge } from "@/components/status-badge";
 import { TagChip } from "@/components/tag-chip";
 import { Progress } from "@/components/ui/progress";
@@ -13,6 +14,14 @@ import { progressPercent, type ShelfBook } from "@/lib/books";
 // Rows with a small cover on a phone, two columns of rows on a tablet, a grid of covers from 1024 px (design M9).
 // The title link stretches over its cell, so the whole cell is one link.
 export function BookList({ books, tagsByBook, coverUrls }: { books: ShelfBook[]; tagsByBook?: Map<string, string[]>; coverUrls?: Map<string, string> }) {
+  // Books appended after the ones already shown (Load more) only fade in; any other new book slides in.
+  const [prev, setPrev] = useState(books);
+  const [appended, setAppended] = useState<ReadonlySet<string>>(new Set());
+  if (books !== prev) {
+    const extends_ = prev.length < books.length && prev.every((b, i) => b.id === books[i].id);
+    setPrev(books);
+    setAppended(new Set(extends_ ? books.slice(prev.length).map((b) => b.id) : []));
+  }
   return (
     <ul className={`w-full max-w-3xl lg:max-w-none ${BOOK_GRID}`}>
       <AnimatePresence initial={false}>
@@ -22,7 +31,7 @@ export function BookList({ books, tagsByBook, coverUrls }: { books: ShelfBook[];
             ? progressPercent(book.current_page, book.total_pages)
             : null;
         return (
-          <motion.li key={book.id} layout {...appear} className="group relative flex min-w-0 items-center gap-4 py-2 lg:flex-col lg:items-stretch lg:gap-2 lg:py-0">
+          <motion.li key={book.id} layout="position" {...(appended.has(book.id) ? fadeIn : appear)} className="group relative flex min-w-0 items-center gap-4 py-2 lg:flex-col lg:items-stretch lg:gap-2 lg:py-0">
             <BookCover
               title={book.title}
               url={(book.cover_path && coverUrls?.get(book.cover_path)) || null}

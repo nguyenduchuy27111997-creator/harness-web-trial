@@ -17,3 +17,11 @@ export const appear = {
   exit: { opacity: 0, y: -4 },
   transition: spring,
 } as const;
+
+// Items appended at the end (Load more): fade in only, no slide (design M9).
+export const fadeIn = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
+  transition: spring,
+} as const;
