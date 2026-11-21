@@ -1,27 +1,32 @@
 <!-- written by harness/hooks/verifier-evidence.py; do not edit -->
-- Verified at: 2026-11-21T07:28:33 on 96b42a2 plus working tree
-- Architect run: aabc8646b64d92e40
-- Design sha256: 6af5606adba1b06377ebe313ad3a19410b88fbe3aac4e76ed87e9dd8b3188240
+- Verified at: 2026-11-21T09:53:52 on 61df9863 plus working tree
+- Architect run: a23e0fd918d23a972
+- Design sha256: 8a5bfb39c51fc986715f558df6e63fc4e16bb95e6377528426f564f3c1abcb59
 
 VERDICT: PASS
 DESIGN: M9
 CHECKED:
-- Coverage: I checked all nine M9 features (F088 to F096) against the Components, UI screens, Specs that move and Shared scaffold sections. Each acceptance line maps to a screen, component or contract. F091's third line ("Delete sits at the bottom in red and asks to confirm, naming the book") is now covered by the new `ConfirmDeleteButton` props bullet (`triggerLabel`, `triggerVariant`, heading "Delete <title>?") and by the `/books/[id]` screen text.
-- Data model and migrations: M9 adds no migration ("No migration" in Shared scaffold). `listShelfSummaries` reads existing tables under the existing RLS. Nothing new to check here.
-- Contract: The prop changes for `ConfirmDeleteButton`, `BookCover`, `BookStatusForm` and `StatusTabs` are stated with their inputs. The new `ConfirmDeleteButton` props are optional and default to today's behaviour, so the other callers (notes, quotes, past reads, shelves) stay as they are.
-- Consistency: The new `/Users/huynguyen/Desktop/harness-web-trial-loop/F091/docs/decisions/0032-f091-delete-book-names-book.md` records that it replaces decision 0008's "the book dialog's text and look are unchanged", for the book page only. The design bullet cites it. No other conflict found with decisions 0027 to 0031 or the earlier designs.
-- Specs that move: I re-ran the greps the doc names.
-  - `Save status` and `Delete this book` / `name: "Delete"` give the files the F091 block lists.
-  - `name: "Edit"` gives exactly `edit-book.spec.ts:19,28,44`, `edit-book-validation.spec.ts:19,48,59` and `page-navigation-dom.spec.ts:51`, which the doc lists as unchanged. That is correct: `components/edit-book-form.tsx` now renders "Edit details", and a Playwright name match that is not exact matches a substring, so "Edit" still finds "Edit details".
-  - `book-save-buttons.spec.ts` uses the exact name "Edit details", and the doc lists that rename.
-  - `F086-live-list.spec.ts:44` uses a non-exact "Delete", which still matches "Delete book". The doc lists it as unchanged, which is right.
-  - The status changes keep each check's meaning: combobox `toContainText` becomes radio `toBeChecked`, and a count of 1 stays a count of 1 on the radiogroup. The only check whose premise goes away ("a pick alone does not save") is replaced with an equivalent assertion. The new `expectScreens` steps add checks and remove none.
-- UI: The `/books/[id]` layout is given per width (phone, tablet 768 px+, desktop 1024 px+), with the primary control (the status segments), the button hierarchy, where "Edit details" sits, Delete last in red with a dialog that names the book, and not-found unchanged. The progress text from `formatProgress` stays on the page as `sr-only`, so the specs that read it keep working. The rest of the M9 screens are unchanged from the doc that last passed.
-- Module boundaries: Components stay under `components/` and data stays under `lib/`. No new layers or import rules.
-- NFR: Unchanged from the version that last passed. M9 is visual only: no new data, load or cost.
-- Simplicity: The two new optional props are the minimum that lets the book page differ while the other callers stay the same. Nothing speculative.
+- Scope of the change: `git diff HEAD -- docs/design/M9.md` shows only one new bullet, at the end of the F091 part of `## Specs that move` (line 136). The rest of the design is the same as the content behind the last committed PASS.
+- Specs that move: I ran `grep -rn 'data-slot=card' e2e/`. Before the edit it matched only `e2e/F064-tags-book.spec.ts` and `e2e/F065-tag-validation.spec.ts`, and both are listed. The working-tree diff of each spec changes only the `mask:` array of the `toHaveScreenshot` call, and the new array is exactly the one the design states. All assertions, the screenshot names (`F064-book-tagged.png`, `F065-tags-full.png`), `fullPage` and `stylePath` are unchanged. So it moves a step and removes no check.
+- The old mask really is broken: in `app/books/[id]/page.tsx` the top block is now a `<header>`, not a Card. The only Cards left on the page are in `components/book-notes.tsx` and `components/past-reads.tsx`, and they render one per note or past read. Neither test creates any, so `[data-slot=card]` matches nothing and the per-run title would go unmasked, as the bullet says.
+- Nothing per-run left unmasked, compared with what was on the page:
+  - Title: the `h1` is `<prefix> <lane>-<Date.now()>`; masked by `getByRole("heading", { level: 1 })`.
+  - Start date: "Started on <today>" (`components/reading-dates.tsx`) is masked by `getByText(/(Started|Finished) on/)`.
+  - Cover: placeholder initial is "T" for both "Tagged …" and "Tag rules …", so it is stable.
+  - Author: always "George Eliot" (`e2e/books.ts`).
+  - Tags: fixed names.
+  - Dates editor: "Edit dates" stays closed, so no date inputs show.
+  - Delete: the button label is a constant "Delete book". The title only appears in the confirm dialog, which is not open.
+  - Navigation: the shell's links are not per-run, and the old mask never covered them either.
+- Checks more, not less: the old mask hid the whole top card. The new one hides only the title and the date line, so the cover, author, status control and Edit details are now compared. The bullet states this correctly.
+- Consistency:
+  - The title mask is the one `e2e/F081-cover-upload.spec.ts:84` already uses.
+  - The date mask is the same regex as the added `expectScreens` steps in the bullet at line 134.
+  - Redrawing both baselines matches the "Baselines only" bullet's approach for `/books/[id]` shots.
+  - No conflict with the data model, contract, modules or decisions: no schema, route or module change.
+- Simplicity: the change is limited to the two broken masks. Nothing speculative is added.
 PROBLEMS:
 
-Notes:
-- Formatting only, not a defect: in Specs that move, the paragraph starting "F091 drops the "Save status" button…" comes straight after the last F092 bullet with no blank line, so Markdown may render it as part of the `status-filter.spec.ts` bullet. A blank line before it would fix that.
-- Not new in F091: the non-exact `name: "Edit"` would also match "Edit dates" wherever that button is on the page. The old "Edit" button had the same overlap, so this design does not change how those specs behave.
+Note (not a problem with the design): the working tree has the two spec edits, but `F064-book-tagged` and `F065-tags-full` have not been redrawn yet. The bullet requires both, in light and dark, before the feature commit.
+
+Files: /Users/huynguyen/Desktop/harness-web-trial-loop/F091/docs/design/M9.md, /Users/huynguyen/Desktop/harness-web-trial-loop/F091/e2e/F064-tags-book.spec.ts, /Users/huynguyen/Desktop/harness-web-trial-loop/F091/e2e/F065-tag-validation.spec.ts, /Users/huynguyen/Desktop/harness-web-trial-loop/F091/app/books/[id]/page.tsx
