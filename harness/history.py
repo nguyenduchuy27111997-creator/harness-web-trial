@@ -237,6 +237,33 @@ def roadmap(root, home, state):
     return {"features": out, "milestones": milestones, "next": nxt, "epics": backlog.epics(root)}
 
 
+def product(root):
+    """What the product is now, for the dashboard's Product page: every passing feature, by epic in the owner's order,
+    with the verifier's screenshots kept on main (harness/evidence/<id>/*.png), the main desktop one first."""
+    import backlog
+    feats = [f for f in backlog.read(root) if f.get("status") == "passing" and f.get("type") != "chore"]
+    ev = Path(root) / "harness/evidence"
+
+    def shots(fid):
+        d = ev / fid
+        names = sorted(p.name for p in d.glob("*.png")) if d.is_dir() else []
+        main = [n for n in names if re.fullmatch(r"step-\d+\.png", n)]
+        return (main[-1:] + [n for n in names if n not in main[-1:]])[:12]  # the last step's desktop screen first
+    out = [{"id": f["id"], "title": f.get("title", ""), "epic": f.get("epic"), "milestone": f.get("milestone"),
+            "type": f.get("type"), "shots": shots(f["id"])} for f in feats]
+    name = ""
+    spec = Path(root) / "docs/product/spec.md"
+    if spec.exists():  # the spec's title, unless it is only "Product spec"
+        m = re.search(r"^#\s+(.+)$", spec.read_text(), re.M)
+        name = m.group(1).strip() if m and not re.fullmatch(r"(product\s+)?spec(ification)?", m.group(1).strip(), re.I) else ""
+    for f in ("app/layout.tsx", "src/app/layout.tsx"):  # else the web app's own title (title: "Bookshelf")
+        lay = Path(root) / f
+        if not name and lay.exists():
+            m = re.search(r"""title:\s*(?:\{[^}]*?default:\s*)?["'`]([^"'`%]+)["'`]""", lay.read_text())
+            name = m.group(1).strip() if m else ""
+    return {"name": name, "epics": backlog.epics(root), "features": out}
+
+
 TREE_MAX = 20_000
 _trees = {}
 

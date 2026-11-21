@@ -191,6 +191,50 @@ def wanted(home, state, days=2):
     return out
 
 
+def product(home, root, per_epic=3, shots=None):
+    """A tour of the product as it is: its card, then each epic in the owner's order with its card and up to per_epic
+    screenshots of its features (the last step's desktop screen, the newest milestone first), then a closing card.
+    Out: <home>/history/recap/product.mp4."""
+    found = tools()
+    if not found:
+        return None
+    ffmpeg, _, chrome = found
+    p = history.product(root)
+    epics = p["epics"] or [{"id": None, "title": "The product"}]
+    feats = p["features"]
+    rank = lambda f: int(m.group(1)) if (m := re.fullmatch(r"M(\d+)", f.get("milestone") or "")) else 0  # noqa: E731
+    ev = Path(root) / "harness/evidence"
+    name = p["name"] or Path(root).name
+    with tempfile.TemporaryDirectory() as tmp:
+        t = Path(tmp)
+        scenes = [card(chrome, t, "intro", "Product tour", name,
+                       f"{len(feats)} features done, in {len(epics)} parts of the product")]
+        said = [f"{name}. {len(feats)} features done."]
+        if shots:  # screenshots of the running app (named "01 Library.png" ...): the product as a user sees it now
+            pics = sorted(Path(shots).glob("*.png"))
+            for i, pic in enumerate(pics):
+                title = re.sub(r"^\d+\s*", "", pic.stem)
+                scenes += [card(chrome, t, f"cap-{i}", f"{i + 1} of {len(pics)}", title, ""), pic]
+            said += [re.sub(r"^\d+\s*", "", pic.stem) + "." for pic in pics]
+            scenes.append(card(chrome, t, "outro", "That's the product today", name, "Built feature by feature by the loop"))
+            return film(ffmpeg, [x for x in scenes if x], " ".join(said), folder(home) / "product.mp4", voice())
+        for i, e in enumerate(epics, 1):
+            mine = [f for f in feats if f.get("epic") == e["id"] or (e["id"] is None)]
+            if not mine:
+                continue
+            scenes.append(card(chrome, t, f"epic-{i}", f"Part {i} of {len(epics)}", e["title"],
+                               ", ".join(f["title"] for f in mine[-3:])[:160]))
+            said.append(f"{e['title']}: {len(mine)} features.")
+            for f in sorted(mine, key=rank, reverse=True)[:per_epic]:
+                if f["shots"]:
+                    scenes.append(ev / f["id"] / f["shots"][0])
+        scenes.append(card(chrome, t, "outro", "That's the product today", name, "Built feature by feature by the loop"))
+        scenes = [x for x in scenes if x and Path(x).exists()]
+        if len(scenes) < 2:
+            return None
+        return film(ffmpeg, scenes, " ".join(said), folder(home) / "product.mp4", voice())
+
+
 def make(home, root, state, what):
     kind, key = what
     return feature(home, root, state["jobs"][key]) if kind == "feature" else day(home, root, state, key)
@@ -199,5 +243,8 @@ def make(home, root, state, what):
 if __name__ == "__main__":  # python3 harness/recap.py <home> <root> F039|2026-11-06: one film by hand
     import sys
     h, r, k = Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3]
+    if k == "product":  # python3 harness/recap.py <home> <root> product [<folder of the running app's screenshots>]
+        print(product(h, r, shots=sys.argv[4] if len(sys.argv) > 4 else None))
+        sys.exit(0)
     s = json.loads((h / "state.json").read_text())
     print(make(h, r, s, ("day" if history.DAY.match(k) else "feature", k)))

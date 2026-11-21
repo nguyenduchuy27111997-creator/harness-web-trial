@@ -665,9 +665,11 @@ def serve_dashboard(home, root):
             elif path == "/history/records.json":  # the office's records (history.records)
                 f = home / "state.json"
                 body, kind = json.dumps(history.records(home, json.loads(f.read_text()) if f.exists() else {})).encode(), "application/json"
+            elif path == "/product.json":  # the product as it is: passing features by epic, with their screenshots
+                body, kind = json.dumps(history.product(root)).encode(), "application/json"
             elif path == "/history/recaps.json":  # the films there are (recap.py)
                 body, kind = json.dumps(recap.made(home)).encode(), "application/json"
-            elif re.fullmatch(r"/history/recap/(F\d{3}|[DL]-[A-Za-z0-9]+|\d{4}-\d\d-\d\d)\.mp4", path):
+            elif re.fullmatch(r"/history/recap/(F\d{3}|[DL]-[A-Za-z0-9]+|\d{4}-\d\d-\d\d|product)\.mp4", path):
                 f = home / "history" / "recap" / path.rsplit("/", 1)[1]
                 if not f.exists():
                     self.send_error(404)
