@@ -42,7 +42,7 @@ export function BookStatusForm({ status, action }: Props) {
             key={s}
             value={s}
             disabled={pending}
-            className="min-h-11 flex-1 rounded-md px-3 text-subheadline text-muted-foreground hover:text-foreground aria-checked:bg-background aria-checked:font-medium aria-checked:text-foreground dark:aria-checked:bg-popover lg:min-h-8"
+            className="min-h-11 flex-1 rounded-md px-3 text-subheadline whitespace-nowrap text-muted-foreground max-md:px-2 hover:text-foreground aria-checked:bg-background aria-checked:font-medium aria-checked:text-foreground dark:aria-checked:bg-popover lg:min-h-8"
           >
             {STATUS_LABELS[s]}
           </RadioGroupItem>

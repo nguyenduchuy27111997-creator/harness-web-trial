@@ -14,7 +14,7 @@ type AppShellProps = {
 };
 
 const brand =
-  "inline-flex min-h-11 items-center font-heading text-title-2 font-semibold";
+  "inline-flex min-h-11 items-center font-heading text-title-3 font-semibold";
 
 // The page frame (docs/design/M9.md, Navigation): sidebar from lg, tab bar under it, a sticky blurred top bar.
 // Signed out, only the top bar with the brand (decision 0022).
