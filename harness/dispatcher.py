@@ -211,7 +211,8 @@ class Dispatcher:
             return False
         if n >= ACCEPT_AT and self.accept(job, key):
             return True
-        options = [o for o in (job.get("choices") or {}).get("options") or [] if "drop" not in o.get("label", "").lower()]
+        options = sorted((o for o in (job.get("choices") or {}).get("options") or [] if "drop" not in o.get("label", "").lower()),
+                         key=lambda o: not o.get("recommended"))  # its recommended answer first
         if action in ("ask_owner", "drop") or (action not in ACTS and action != "answer"):
             text = (options[0]["answer"] if options else detail) or "Retry it as it is."
             action = "rebuild" if re.match(r"(Rebuild it|Start again) from main", text, re.I) else "answer"
@@ -325,17 +326,29 @@ OWN = {"answer": "Do what it advises", "retry": "Retry as it is", "retry_large":
 
 
 def choices(advice):
-    """The one-line summary and the answers the owner can pick from on the dashboard (it copies `loop.py answer`)."""
-    opts = [{"label": str(o["label"])[:60], "answer": str(o["answer"])} for o in advice.get("options") or []
-            if isinstance(o, dict) and o.get("label") and o.get("answer")][:4]
+    """The one-line summary and exactly three answers the owner can pick from on the dashboard (it copies `loop.py
+    answer`), one of them recommended: the dispatcher's own, else the first. Fewer than three are filled from its advice,
+    a plain retry and a rebuild. Seen on the web trial: some holds had no options or one, and the owner could only type."""
+    given = [o for o in advice.get("options") or [] if isinstance(o, dict) and o.get("label") and o.get("answer")]
+    opts = [{"label": str(o["label"])[:60], "answer": str(o["answer"]), "recommended": o.get("recommended") is True}
+            for o in given][:3]
     detail, action = str(advice.get("detail") or "").strip(), advice.get("action")
-    if not opts and detail:  # no options written: its own advice, then a plain retry, so the owner still picks
-        # Seen on the web trial: F091's, F093's and F092's advice came with a summary and no options.
-        if action == "rebuild" and not re.match(r"(Rebuild it|Start again) from main", detail, re.I):
-            detail = f"Rebuild it from main: {detail}"  # the words the loop reads as a rebuild of an open PR
-        opts = [{"label": OWN.get(action, "Do what it advises"), "answer": detail}]
-        if action != "retry":
-            opts.append({"label": "Retry as it is", "answer": "Retry it as it is."})
+    if action == "rebuild" and detail and not re.match(r"(Rebuild it|Start again) from main", detail, re.I):
+        detail = f"Rebuild it from main: {detail}"  # the words the loop reads as a rebuild of an open PR
+    fill = ([{"label": OWN.get(action, "Do what it advises"), "answer": detail}] if detail else []) + [
+        {"label": "Retry as it is", "answer": "Retry it as it is."},
+        {"label": "Rebuild from main", "answer": "Rebuild it from main, building to the milestone design as written."},
+        {"label": "Build to the design", "answer": "Follow the milestone design as written; fix only what the gate and the "
+                                                   "verifier fail on, and leave polish for follow-up bugs."}]
+    for o in fill:
+        if len(opts) >= 3:
+            break
+        if all(o["answer"] != x["answer"] and o["label"] != x["label"] for x in opts):
+            opts.append({**o, "recommended": False})
+    if opts and not any(o["recommended"] for o in opts):
+        opts[0]["recommended"] = True
+    for o in opts[[o["recommended"] for o in opts].index(True) + 1:] if opts else []:
+        o["recommended"] = False  # one recommendation
     listed = lambda k: [str(x)[:300] for x in advice.get(k) or [] if x][:5]  # noqa: E731
     return {"summary": str(advice.get("summary") or advice.get("why") or "")[:200], "options": opts,
             "evidence": listed("evidence"), "unknowns": listed("unknowns")}
