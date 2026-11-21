@@ -1,4 +1,4 @@
 {
   "status": "passing",
-  "notes": "Retried as is after 4 CI runs failed on 'registry rate limit: Rate exceeded' (infrastructure, not code). check.sh green (8 load flakes passed on the one-worker rerun); verifier PASS (3 criteria, 375 and 1280). F081-cover-upload still fails on CI (F097). Designer follow-ups still open: Read again placement, segment width and selected colour, Saved layout shift, empty-progress hint, tablet width, Delete book 32px tall at 1280."
+  "notes": "F081-cover-upload CI failure fixed: baseline redrawn for F091's layout (M9 Specs that move, architect PASS). check.sh green (11 load flakes passed on the one-worker rerun); verifier PASS (3 criteria, 375 and 1280). Designer follow-ups still open: Read again placement, segment width and selected colour, Saved layout shift, empty-progress hint, tablet width, Delete book 32px tall at 1280."
 }
