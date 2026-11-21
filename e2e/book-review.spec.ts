@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { saveStatus } from "./books";
+import { expectAccessible, expectScreens } from "./a11y";
 
 // A fresh account with one Want to read book (the add form's default), open on its page.
 async function openNewBook(page: Page, email: string) {
@@ -23,10 +24,7 @@ test("review a finished book", async ({ page }) => {
   await expect(review).toHaveCount(0);
 
   // Finishing the book brings up the review field.
-  const statusField = page.getByRole("combobox", { name: "Status" });
-  await statusField.click();
-  await page.getByRole("option", { name: "Finished" }).click();
-  await page.getByRole("button", { name: "Save status" }).click();
+  await saveStatus(page, "Finished");
   await expect(review).toBeVisible();
 
   await review.fill("Loved the ending.");
@@ -39,6 +37,7 @@ test("review a finished book", async ({ page }) => {
   await page.getByRole("button", { name: "Post review" }).click();
   await expect(page.locator("form").filter({ has: review }).getByRole("alert")).toHaveText("Review must be at most 2,000 characters");
   await expectAccessible(page);
+  await expectScreens(page, "book-review-book-page", { mask: [page.getByText(/(Started|Finished) on/)] });
   await page.reload();
   await expect(review).toHaveValue("Loved the ending.");
 

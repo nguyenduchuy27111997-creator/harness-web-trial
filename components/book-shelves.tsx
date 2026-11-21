@@ -22,7 +22,7 @@ export function BookShelves({ shelves, onShelfIds, action, removeAction }: Props
   const available = shelves.filter((shelf) => !onShelfIds.includes(shelf.id));
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="font-heading text-title-3 font-semibold">Shelves</h2>
+      <h2 className="font-heading text-title-2 font-semibold">Shelves</h2>
       {shelves.length === 0 ? (
         <p className="text-subheadline text-muted-foreground">
           You have no shelves yet.{" "}
@@ -67,7 +67,7 @@ export function BookShelves({ shelves, onShelfIds, action, removeAction }: Props
                     ))}
                   </SelectContent>
                 </Select>
-                <Button type="submit" disabled={pending}>
+                <Button variant="secondary" type="submit" disabled={pending}>
                   {pending ? "Adding…" : "Add to shelf"}
                 </Button>
               </div>

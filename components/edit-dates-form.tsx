@@ -57,7 +57,7 @@ function OpenForm({ startedOn, finishedOn, action, onClose }: Props & { onClose:
         />
       )}
       <div className="flex flex-wrap gap-3">
-        <Button type="submit" disabled={pending}>
+        <Button variant="secondary" type="submit" disabled={pending}>
           {pending ? "Saving…" : "Save"}
         </Button>
         <Button type="button" variant="outline" onClick={onClose}>

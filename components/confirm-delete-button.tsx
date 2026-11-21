@@ -18,6 +18,8 @@ type Props = {
   heading: string;
   description: ReactNode;
   size?: "sm";
+  triggerLabel?: string;
+  triggerVariant?: "outline" | "destructive";
   action: (formData: FormData) => Promise<void>;
   // Controlled from elsewhere (a row's actions menu): no trigger button.
   open?: boolean;
@@ -34,13 +36,13 @@ function ConfirmButton() {
 }
 
 // A "Delete" button that asks for confirmation in an alert dialog, then submits `action`.
-export function ConfirmDeleteButton({ heading, description, size, action, open, onOpenChange }: Props) {
+export function ConfirmDeleteButton({ heading, description, size, triggerLabel = "Delete", triggerVariant = "outline", action, open, onOpenChange }: Props) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       {open === undefined && (
         <AlertDialogTrigger asChild>
-          <Button variant="outline" size={size} className="self-start">
-            Delete
+          <Button variant={triggerVariant} size={size} className="self-start">
+            {triggerLabel}
           </Button>
         </AlertDialogTrigger>
       )}

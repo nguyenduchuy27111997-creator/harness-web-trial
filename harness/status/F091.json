@@ -1,0 +1,5 @@
+{
+  "status": "blocked",
+  "blocked_reason": "failed",
+  "notes": "Build done per M9 (architect PASS). Blocked only by e2e/F091-book-page-layout.spec.ts line 97: it parses the OKLCH destructive colour (serialized as lab()) as RGB; see test-issue.md. The test-writer must assert via token/class instead."
+}

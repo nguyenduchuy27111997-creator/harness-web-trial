@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { expectAccessible, expectScreens } from "./a11y";
 import { signUpAs } from "./accounts";
 
 // F026: with the edit form open, the page's two submit buttons have different accessible names.
@@ -12,12 +12,13 @@ test("edit form open: the status and details Save buttons are told apart", async
   await page.getByRole("link", { name: "Midlemarch" }).click();
   await expect(page).toHaveURL(/\/books\/[0-9a-f-]{36}$/);
 
-  await page.getByRole("button", { name: "Edit" }).click();
+  await page.getByRole("button", { name: "Edit details" }).click();
   await expect(page.getByRole("textbox", { name: "Title" })).toBeVisible();
   const names = await page.getByRole("button").evaluateAll((els) => els.map((el) => el.textContent?.trim()));
-  expect(names.filter((n) => n?.startsWith("Save"))).toEqual(["Save details", "Save status", "Save quote"]);
-  await expect(page.getByRole("button", { name: "Save status" })).toHaveCount(1);
+  expect(names.filter((n) => n?.startsWith("Save"))).toEqual(["Save details", "Save quote"]);
+  await expect(page.getByRole("radiogroup", { name: "Status" })).toHaveCount(1);
   await expect(page.getByRole("button", { name: "Save details" })).toHaveCount(1);
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F026-edit-open-save-buttons.png", { stylePath: "e2e/hide-dev-overlay.css" });
+  await expectScreens(page, "book-save-buttons-book-page", { mask: [page.getByText(/(Started|Finished) on/)] });
 });

@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { saveStatus } from "./books";
+import { expectAccessible, expectScreens } from "./a11y";
 import { signUpAs } from "./accounts";
 
 // F035: record progress on a Reading book; hidden unless Reading. Fresh account (golden principle 7).
@@ -25,9 +26,7 @@ test("record reading progress", async ({ page }) => {
   await expect(total).toHaveValue("250");
 
   const setStatus = async (name: string) => {
-    await page.getByRole("combobox", { name: "Status" }).click();
-    await page.getByRole("option", { name }).click();
-    await page.getByRole("button", { name: "Save status" }).click();
+    await saveStatus(page, name);
   };
   await setStatus("Want to read");
   await expect(page.getByText("Want to read").first()).toBeVisible();
@@ -35,9 +34,10 @@ test("record reading progress", async ({ page }) => {
   await setStatus("Reading");
   await expect(page.getByText("Page 100 of 250 (40%)")).toBeVisible();
 
-  await expect(page.getByRole("button", { name: "Save status" })).toBeEnabled();
+  await expect(page.getByRole("radiogroup", { name: "Status" }).getByRole("radio", { name: "Reading", exact: true })).toBeEnabled();
   await page.mouse.move(0, 0); // the hover colour of the last-clicked button is below contrast
   await expectAccessible(page);
   await page.evaluate(() => window.scrollTo(0, 0)); // the Started on line makes the page taller, so the last click scrolled it
   await expect(page).toHaveScreenshot("F035-progress.png", { stylePath: "e2e/hide-dev-overlay.css", mask: [page.getByText(/Started on/)] });
+  await expectScreens(page, "reading-progress-book-page", { mask: [page.getByText(/(Started|Finished) on/)] });
 });

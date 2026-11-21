@@ -3,7 +3,6 @@
 import { StarIcon } from "lucide-react";
 import { startTransition, useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { RatingFormState } from "@/lib/books";
 
@@ -37,7 +36,7 @@ export function RatingForm({ rating, action }: Props) {
       noValidate
       className="flex flex-col gap-2"
     >
-      <Label id="rating-label">Rating</Label>
+      <h2 id="rating-label" className="font-heading text-title-2 font-semibold">Rating</h2>
       <div className="flex gap-3">
         <RadioGroup
           name="rating"
@@ -50,7 +49,7 @@ export function RatingForm({ rating, action }: Props) {
             <RadioGroupItem
               key={n}
               value={String(n)}
-              className="p-1"
+              className="flex min-h-11 min-w-11 items-center justify-center p-1"
               aria-label={n === 1 ? "1 star" : `${n} stars`}
             >
               <StarIcon
@@ -62,7 +61,7 @@ export function RatingForm({ rating, action }: Props) {
             </RadioGroupItem>
           ))}
         </RadioGroup>
-        <Button type="submit" disabled={pending || value === ""}>
+        <Button variant="secondary" type="submit" disabled={pending || value === ""}>
           {pending ? "Saving…" : "Rate"}
         </Button>
       </div>

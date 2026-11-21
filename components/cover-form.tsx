@@ -45,7 +45,7 @@ export function CoverForm({ url, uploadAction, removeAction }: Props) {
             {error}
           </p>
         )}
-        <PendingSubmitButton variant="outline" className="self-start" pendingLabel="Uploading…">
+        <PendingSubmitButton variant="secondary" className="self-start" pendingLabel="Uploading…">
           {label}
         </PendingSubmitButton>
       </form>

@@ -35,7 +35,8 @@ export function ReviewForm({ review, action }: Props) {
       noValidate
       className="flex flex-col gap-2"
     >
-      <Label htmlFor="review">Review</Label>
+      <h2 className="font-heading text-title-2 font-semibold">Review</h2>
+      <Label htmlFor="review" className="sr-only">Review</Label>
       <Textarea
         id="review"
         name="review"
@@ -51,7 +52,7 @@ export function ReviewForm({ review, action }: Props) {
         </p>
       )}
       <div className="flex items-center gap-3">
-        <Button type="submit" disabled={pending}>
+        <Button variant="secondary" type="submit" disabled={pending}>
           {pending ? "Saving…" : "Post review"}
         </Button>
         {state.saved && submitted === value && !pending && (

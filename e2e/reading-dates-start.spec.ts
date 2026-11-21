@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { saveStatus } from "./books";
+import { expectAccessible, expectScreens } from "./a11y";
 import { signUpAs } from "./accounts";
 
 // F052: moving a book to Reading records today's start date.
@@ -21,9 +22,7 @@ async function addBook(page: Page, title: string, status?: string) {
 }
 
 async function setStatus(page: Page, name: string) {
-  await page.getByRole("combobox", { name: "Status" }).click();
-  await page.getByRole("option", { name }).click();
-  await page.getByRole("button", { name: "Save status" }).click();
+  await saveStatus(page, name);
   await expect(page.getByRole("status")).toHaveText("Saved");
 }
 
@@ -60,4 +59,5 @@ test("a book without a start date opens without errors", async ({ page }) => {
   await expect(page.getByRole("heading", { name: `Old Book ${tag}` })).toBeVisible();
   await expect(page.getByText(/Started on/)).toHaveCount(0);
   await expectAccessible(page);
+  await expectScreens(page, "reading-dates-start-book-page", { mask: [page.getByText(/(Started|Finished) on/)] });
 });

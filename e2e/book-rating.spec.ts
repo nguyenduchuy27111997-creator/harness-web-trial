@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { saveStatus } from "./books";
+import { expectAccessible, expectScreens } from "./a11y";
 
 // A fresh account with one Reading book, open on its page.
 async function createFinishableBook(page: Page, tag: string) {
@@ -26,9 +27,7 @@ test("rate a finished book", async ({ page }) => {
   const group = page.getByRole("radiogroup", { name: "Rating" });
   await expect(group).toHaveCount(0);
 
-  await page.getByRole("combobox", { name: "Status" }).click();
-  await page.getByRole("option", { name: "Finished" }).click();
-  await page.getByRole("button", { name: "Save status" }).click();
+  await saveStatus(page, "Finished");
   await expect(group).toBeVisible();
   await expect(group.getByRole("radio", { checked: true })).toHaveCount(0);
 
@@ -48,4 +47,5 @@ test("rate a finished book", async ({ page }) => {
     mask: [page.getByText(/Started on/), page.getByText(/Finished on/)],
   });
   await rate(2);
+  await expectScreens(page, "book-rating-book-page", { mask: [page.getByText(/(Started|Finished) on/)] });
 });

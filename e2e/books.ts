@@ -17,8 +17,7 @@ export async function addAndOpenBook(page: Page, title: string, status: string) 
 
 // Picks a status and saves it; callers check the "Saved" status.
 export async function saveStatus(page: Page, name: string) {
-  await pick(page, "Status", name);
-  await page.getByRole("button", { name: "Save status" }).click();
+  await page.getByRole("radiogroup", { name: "Status" }).getByRole("radio", { name, exact: true }).click();
 }
 
 // Adds tags to the book page that is open; callers check the heading first.
