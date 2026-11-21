@@ -19,7 +19,6 @@ type Props = {
   description: ReactNode;
   size?: "sm";
   triggerLabel?: string;
-  confirmLabel?: string;
   triggerVariant?: "outline" | "destructive";
   action: (formData: FormData) => Promise<void>;
   // Controlled from elsewhere (a row's actions menu): no trigger button.
@@ -27,17 +26,17 @@ type Props = {
   onOpenChange?: (open: boolean) => void;
 };
 
-function ConfirmButton({ label }: { label: string }) {
+function ConfirmButton() {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" variant="destructive" disabled={pending}>
-      {pending ? "Deleting…" : label}
+      {pending ? "Deleting…" : "Delete"}
     </Button>
   );
 }
 
 // A "Delete" button that asks for confirmation in an alert dialog, then submits `action`.
-export function ConfirmDeleteButton({ heading, description, size, triggerLabel = "Delete", confirmLabel = "Delete", triggerVariant = "outline", action, open, onOpenChange }: Props) {
+export function ConfirmDeleteButton({ heading, description, size, triggerLabel = "Delete", triggerVariant = "outline", action, open, onOpenChange }: Props) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       {open === undefined && (
@@ -55,7 +54,7 @@ export function ConfirmDeleteButton({ heading, description, size, triggerLabel =
         <form action={action}>
           <AlertDialogFooter>
             <AlertDialogCancel type="button">Cancel</AlertDialogCancel>
-            <ConfirmButton label={confirmLabel} />
+            <ConfirmButton />
           </AlertDialogFooter>
         </form>
       </AlertDialogContent>

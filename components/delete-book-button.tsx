@@ -12,7 +12,6 @@ export function DeleteBookButton({ title, action }: Props) {
       description={<>“{title}” will be removed from your shelf. This cannot be undone.</>}
       triggerVariant="destructive"
       triggerLabel="Delete book"
-      confirmLabel="Delete book"
       action={action}
     />
   );
