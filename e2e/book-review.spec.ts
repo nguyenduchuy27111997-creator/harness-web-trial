@@ -37,7 +37,7 @@ test("review a finished book", async ({ page }) => {
   await page.getByRole("button", { name: "Post review" }).click();
   await expect(page.locator("form").filter({ has: review }).getByRole("alert")).toHaveText("Review must be at most 2,000 characters");
   await expectAccessible(page);
-  await expectScreens(page, "book-review-book-page", { mask: [page.getByText(/(Started|Finished) on/)] });
+  await expectScreens(page, "book-review-book-page", { mask: [page.getByText(/(Started|Finished) on/), page.getByRole("heading", { level: 1 })] });
   await page.reload();
   await expect(review).toHaveValue("Loved the ending.");
 

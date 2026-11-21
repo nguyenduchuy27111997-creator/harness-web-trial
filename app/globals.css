@@ -23,6 +23,15 @@
   }
 }
 
+/* The book page from lg: a main column and a w-80 trailing column; Delete sits under the main column. */
+@utility book-page-grid {
+  @media (min-width: 64rem) {
+    grid-template-columns: minmax(0, 1fr) calc(var(--spacing) * 80);
+    grid-template-rows: auto 1fr;
+    align-items: start;
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

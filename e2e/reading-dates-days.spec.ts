@@ -62,5 +62,5 @@ test("a Reading book shows only Started", async ({ page }) => {
   await expect(page.getByText(/Finished on/)).toHaveCount(0);
   await expect(page.getByText(/Read in/)).toHaveCount(0);
   await expectAccessible(page);
-  await expectScreens(page, "reading-dates-days-book-page", { mask: [page.getByText(/(Started|Finished) on/)] });
+  await expectScreens(page, "reading-dates-days-book-page", { mask: [page.getByText(/(Started|Finished) on/), page.getByRole("heading", { level: 1 })] });
 });

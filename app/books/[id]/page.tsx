@@ -101,8 +101,8 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
             ))}
         </div>
       </header>
-      <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
-        <div className="flex w-full min-w-0 flex-col gap-8 lg:max-w-prose lg:flex-1">
+      <div className="book-page-grid grid gap-8">
+        <div className="flex w-full min-w-0 flex-col gap-8 lg:max-w-prose">
           {book.status === "reading" && (
             <ProgressForm
               totalPages={book.total_pages}
@@ -126,9 +126,8 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
             editAction={editQuote.bind(null, book.id)}
             deleteAction={deleteQuote.bind(null, book.id)}
           />
-          <DeleteBookButton title={book.title} action={deleteBook.bind(null, book.id)} />
         </div>
-        <aside className="flex w-full flex-col gap-8 lg:w-80 lg:shrink-0">
+        <aside className="flex w-full flex-col gap-8 lg:col-start-2 lg:row-span-2 lg:row-start-1">
           <section aria-labelledby="dates-heading" className="flex flex-col gap-3">
             <h2 id="dates-heading" className="font-heading text-title-2 font-semibold">
               Dates
@@ -161,6 +160,10 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
             />
           </section>
         </aside>
+        {/* Last in the DOM so Delete ends the page; from lg the grid puts it under the main column. */}
+        <div className="lg:col-start-1 lg:row-start-2">
+          <DeleteBookButton title={book.title} action={deleteBook.bind(null, book.id)} />
+        </div>
       </div>
     </div>
   );

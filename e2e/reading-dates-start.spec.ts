@@ -59,5 +59,5 @@ test("a book without a start date opens without errors", async ({ page }) => {
   await expect(page.getByRole("heading", { name: `Old Book ${tag}` })).toBeVisible();
   await expect(page.getByText(/Started on/)).toHaveCount(0);
   await expectAccessible(page);
-  await expectScreens(page, "reading-dates-start-book-page", { mask: [page.getByText(/(Started|Finished) on/)] });
+  await expectScreens(page, "reading-dates-start-book-page", { mask: [page.getByText(/(Started|Finished) on/), page.getByRole("heading", { level: 1 })] });
 });
