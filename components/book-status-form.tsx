@@ -1,6 +1,8 @@
 "use client";
 
+import { motion, useReducedMotion } from "motion/react";
 import { useActionState, useRef, useState } from "react";
+import { quick } from "@/components/motion";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -12,6 +14,8 @@ type Props = {
 };
 
 export function BookStatusForm({ status, action }: Props) {
+  // With reduced motion a press scale would jump, not animate, so there is none.
+  const reduceMotion = useReducedMotion();
   const [state, formAction, pending] = useActionState(action, {} as StatusFormState);
   // The pick shows while it saves; afterwards the segments follow the saved status (Read again changes it too).
   const [pick, setPick] = useState<BookStatus | null>(null);
@@ -39,12 +43,15 @@ export function BookStatusForm({ status, action }: Props) {
       >
         {BOOK_STATUSES.map((s) => (
           <RadioGroupItem
+            asChild
             key={s}
             value={s}
             disabled={pending}
             className="min-h-11 flex-1 rounded-md px-3 text-subheadline whitespace-nowrap text-muted-foreground max-md:px-2 hover:text-foreground aria-checked:bg-background aria-checked:font-medium aria-checked:text-foreground dark:aria-checked:bg-popover lg:min-h-8"
           >
-            {STATUS_LABELS[s]}
+            <motion.button type="button" whileTap={reduceMotion ? undefined : { scale: 0.97 }} transition={quick}>
+              {STATUS_LABELS[s]}
+            </motion.button>
           </RadioGroupItem>
         ))}
       </RadioGroup>

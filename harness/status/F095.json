@@ -1,0 +1,4 @@
+{
+  "status": "passing",
+  "notes": "motion 14.9.0 (exact, preset pin) added. MotionConfig reducedMotion=user in components/providers.tsx; AnimatePresence + motion.li layout/appear in book-list; whileTap scale 0.97 with quick on status segments and stars, turned off under reduced motion (Motion snaps transforms instead of skipping them). Spec e2e/F095-motion.spec.ts passes 4/4; verifier PASS."
+}
