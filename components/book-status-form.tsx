@@ -2,7 +2,7 @@
 
 import { motion, useReducedMotion } from "motion/react";
 import { useActionState, useRef, useState } from "react";
-import { quick } from "@/components/motion";
+import { quick, spring } from "@/components/motion";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -47,10 +47,18 @@ export function BookStatusForm({ status, action }: Props) {
             key={s}
             value={s}
             disabled={pending}
-            className="min-h-11 flex-1 rounded-md px-3 text-subheadline whitespace-nowrap text-muted-foreground max-md:px-2 hover:text-foreground aria-checked:bg-background aria-checked:font-medium aria-checked:text-foreground dark:aria-checked:bg-popover lg:min-h-8"
+            className="min-h-11 flex-1 rounded-md px-3 text-subheadline whitespace-nowrap text-muted-foreground max-md:px-2 hover:text-foreground relative aria-checked:font-medium aria-checked:text-foreground lg:min-h-8"
           >
             <motion.button type="button" whileTap={reduceMotion ? undefined : { scale: 0.97 }} transition={quick}>
-              {STATUS_LABELS[s]}
+              {s === picked && (
+                <motion.span
+                  layoutId="status-indicator"
+                  transition={spring}
+                  aria-hidden
+                  className="absolute inset-0 rounded-md bg-background dark:bg-popover"
+                />
+              )}
+              <span className="relative">{STATUS_LABELS[s]}</span>
             </motion.button>
           </RadioGroupItem>
         ))}
