@@ -1,4 +1,5 @@
 {
-  "status": "passing",
-  "notes": "Built per M9 (architect PASS), verifier PASS, check.sh green. Designer follow-ups not done (budget): Read again sits unheaded between Review and Notes (move to header/Dates); status segments stretch full header width (md:max-w-md); selected segment label is green, M9 says text-foreground; Saved line shifts Edit details by 28px; empty Progress has no hint; tablet 768-1023 not screenshotted."
+  "status": "blocked",
+  "notes": "CI fix round: F064/F065 screenshot masks moved from [data-slot=card] (gone since F091) to the h1 + date line (M9 specs-that-move, architect PASS, e84c43b5). Their two baselines still need redrawing from CI actuals: git push was denied in this session, and a local --update-snapshots run was denied. check.sh fails at npm audit (no DNS to registry.npmjs.org on this machine). F081-cover-upload still fails on CI (F097). Built per M9 (architect PASS), verifier PASS, check.sh green. Designer follow-ups not done (budget): Read again sits unheaded between Review and Notes (move to header/Dates); status segments stretch full header width (md:max-w-md); selected segment label is green, M9 says text-foreground; Saved line shifts Edit details by 28px; empty Progress has no hint; tablet 768-1023 not screenshotted.",
+  "blocked_reason": "needs_human"
 }
