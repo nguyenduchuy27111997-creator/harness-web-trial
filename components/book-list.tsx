@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import Link from "next/link";
 import { useState } from "react";
 import { BookCover } from "@/components/book-cover";
@@ -23,6 +23,8 @@ export function BookList({ books, tagsByBook, coverUrls }: { books: ShelfBook[];
     setAppended(new Set(extends_ ? books.slice(prev.length).map((b) => b.id) : []));
   }
   return (
+    // MotionConfig here, not in the root layout, keeps Motion off pages that do not animate (LCP budget).
+    <MotionConfig reducedMotion="user">
     <ul className={`w-full max-w-3xl lg:max-w-none ${BOOK_GRID}`}>
       <AnimatePresence initial={false}>
       {books.map((book) => {
@@ -70,5 +72,6 @@ export function BookList({ books, tagsByBook, coverUrls }: { books: ShelfBook[];
       })}
       </AnimatePresence>
     </ul>
+    </MotionConfig>
   );
 }

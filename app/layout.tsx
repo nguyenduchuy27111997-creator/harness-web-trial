@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Lora } from "next/font/google";
 import "./globals.css";
-import { Providers } from "@/components/providers";
 import { AppShell } from "@/components/app-shell";
 import { cn } from "@/lib/utils";
 import { getDisplayName } from "@/lib/profile";
@@ -36,9 +35,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={cn("h-full", "antialiased", "font-sans", inter.variable, lora.variable)}
     >
       <body className="min-h-full flex flex-col">
-        <Providers>
-          <Shell>{children}</Shell>
-        </Providers>
+        <Shell>{children}</Shell>
       </body>
     </html>
   );

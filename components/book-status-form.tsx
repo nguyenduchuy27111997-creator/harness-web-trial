@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { MotionConfig, motion, useReducedMotion } from "motion/react";
 import { useActionState, useRef, useState } from "react";
 import { quick, spring } from "@/components/motion";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ export function BookStatusForm({ status, action }: Props) {
   const formRef = useRef<HTMLFormElement>(null);
   const hiddenRef = useRef<HTMLInputElement>(null);
   return (
+    <MotionConfig reducedMotion="user">
     <form ref={formRef} action={formAction} noValidate className="flex flex-col gap-2">
       <Label id="status-label">Status</Label>
       <Input ref={hiddenRef} type="hidden" name="status" value={picked} readOnly />
@@ -75,5 +76,6 @@ export function BookStatusForm({ status, action }: Props) {
         </p>
       )}
     </form>
+    </MotionConfig>
   );
 }

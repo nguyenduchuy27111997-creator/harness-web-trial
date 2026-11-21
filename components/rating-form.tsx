@@ -1,7 +1,7 @@
 "use client";
 
 import { StarIcon } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
+import { MotionConfig, motion, useReducedMotion } from "motion/react";
 import { startTransition, useActionState, useState } from "react";
 import { quick } from "@/components/motion";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ export function RatingForm({ rating, action }: Props) {
   // "Saved" only describes the value that was submitted; hide it once the choice differs from it.
   const [submitted, setSubmitted] = useState(value);
   return (
+    <MotionConfig reducedMotion="user">
     <form
       onSubmit={(event) => {
         // Submit by hand: the automatic form reset after an action puts the radios back to their first value.
@@ -83,5 +84,6 @@ export function RatingForm({ rating, action }: Props) {
         </p>
       )}
     </form>
+    </MotionConfig>
   );
 }
