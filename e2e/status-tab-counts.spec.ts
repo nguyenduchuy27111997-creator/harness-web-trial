@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { saveStatus } from "./books";
+import { expectAccessible, expectScreens } from "./a11y";
 import { signUpAs } from "./accounts";
 
 // F039: each status tab shows how many books it has, following search and status changes. Fresh account (golden principle 7).
@@ -44,9 +45,7 @@ test("status tabs show their book counts", async ({ page }) => {
   // Reading to Finished, also after reload.
   await page.goto("/books?status=reading");
   await page.getByRole("listitem").filter({ hasText: "Alpha Reading" }).getByRole("link").first().click();
-  await page.getByRole("combobox", { name: "Status" }).click();
-  await page.getByRole("option", { name: "Finished" }).click();
-  await page.getByRole("button", { name: "Save" }).first().click();
+  await saveStatus(page, "Finished");
   await expect(page.getByText(/Finished on/)).toBeVisible();
   await page.goto("/books");
   await expectCounts(6, 2, 0, 4);
@@ -54,4 +53,5 @@ test("status tabs show their book counts", async ({ page }) => {
   await expectCounts(6, 2, 0, 4);
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F039-tab-counts.png");
+  await expectScreens(page, "status-tab-counts-book-page", { mask: [page.getByText(/(Started|Finished) on/)] });
 });

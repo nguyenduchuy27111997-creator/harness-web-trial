@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
-import { expectAccessible } from "./a11y";
+import { saveStatus } from "./books";
+import { expectAccessible, expectScreens } from "./a11y";
 import { signUpAs } from "./accounts";
 
 // F053: the book page shows when I started and finished it and how many days I read it.
@@ -20,9 +21,7 @@ async function openNewBook(page: Page, email: string, title: string, status = "W
 }
 
 async function moveTo(page: Page, status: string) {
-  await page.getByRole("combobox", { name: "Status" }).click();
-  await page.getByRole("option", { name: status, exact: true }).click();
-  await page.getByRole("button", { name: "Save status" }).click();
+  await saveStatus(page, status);
   await expect(page.getByRole("status")).toHaveText("Saved");
 }
 
@@ -63,4 +62,5 @@ test("a Reading book shows only Started", async ({ page }) => {
   await expect(page.getByText(/Finished on/)).toHaveCount(0);
   await expect(page.getByText(/Read in/)).toHaveCount(0);
   await expectAccessible(page);
+  await expectScreens(page, "reading-dates-days-book-page", { mask: [page.getByText(/(Started|Finished) on/), page.getByRole("heading", { level: 1 })] });
 });

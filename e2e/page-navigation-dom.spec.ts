@@ -46,7 +46,7 @@ test("after moving between pages the document has one main, unique ids and singl
   await page.getByRole("link", { name: "Dom Book" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Dom Book" })).toBeVisible();
   await expectCleanDom();
-  await expect(page.getByRole("combobox", { name: "Status", exact: true })).toBeVisible();
+  await expect(page.getByRole("radiogroup", { name: "Status" })).toBeVisible();
 
   await page.getByRole("button", { name: "Edit" }).click();
   await expectCleanDom();
@@ -56,7 +56,7 @@ test("after moving between pages the document has one main, unique ids and singl
   await page.goForward();
   await expect(page.getByRole("heading", { level: 1, name: "Dom Book" })).toBeVisible();
   await expectCleanDom();
-  await expect(page.locator("#status")).toHaveCount(1);
+  await expect(page.getByRole("radiogroup", { name: "Status" })).toHaveCount(1);
   await expectAccessible(page);
   await expect(page).toHaveScreenshot("F025-book-page-after-forward.png");
 });

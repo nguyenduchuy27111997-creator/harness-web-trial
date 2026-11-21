@@ -57,7 +57,7 @@ export function EditQuoteForm({ quote, action, onClose }: Props) {
         error={state.fieldErrors?.page}
       />
       <div className="flex items-center gap-2">
-        <Button type="submit" disabled={pending}>
+        <Button variant="secondary" type="submit" disabled={pending}>
           {pending ? "Saving…" : "Save"}
         </Button>
         <Button type="button" variant="ghost" onClick={onClose}>

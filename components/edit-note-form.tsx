@@ -41,7 +41,7 @@ export function EditNoteForm({ id, body, action, onClose }: Props) {
         </p>
       )}
       <div className="flex gap-2">
-        <Button type="submit" size="sm" disabled={pending}>
+        <Button variant="secondary" type="submit" size="sm" disabled={pending}>
           {pending ? "Saving…" : "Save"}
         </Button>
         <Button type="button" size="sm" variant="outline" onClick={onClose}>

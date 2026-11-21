@@ -31,7 +31,7 @@ export function NoteForm({ action }: Props) {
         </p>
       )}
       <div>
-        <Button type="submit" disabled={pending}>
+        <Button variant="secondary" type="submit" disabled={pending}>
           {pending ? "Adding…" : "Add note"}
         </Button>
       </div>

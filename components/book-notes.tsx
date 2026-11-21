@@ -20,7 +20,7 @@ export function BookNotes({ notes, action, editAction, deleteAction }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
   return (
     <section aria-labelledby="notes-heading" className="flex flex-col gap-3">
-      <h2 id="notes-heading" className="font-heading text-title-3 font-semibold">
+      <h2 id="notes-heading" className="font-heading text-title-2 font-semibold">
         Notes
       </h2>
       <NoteForm action={action} />

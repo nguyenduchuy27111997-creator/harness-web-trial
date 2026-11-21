@@ -1,4 +1,5 @@
 import { expect, type Page } from "@playwright/test";
+import { saveStatus } from "./books";
 
 async function pick(page: Page, combobox: string, option: string) {
   await page.getByRole("combobox", { name: combobox }).click();
@@ -18,8 +19,7 @@ export async function addBookWithStatus(page: Page, title: string, status: strin
 
 // Sets the status to Finished, then rates the book.
 export async function finishAndRateBook(page: Page, stars: number) {
-  await pick(page, "Status", "Finished");
-  await page.getByRole("button", { name: "Save status" }).click();
+  await saveStatus(page, "Finished");
   await expect(page.getByRole("status").first()).toHaveText("Saved");
   const group = page.getByRole("radiogroup", { name: "Rating" });
   await group.getByRole("radio", { name: stars === 1 ? "1 star" : `${stars} stars` }).click();
@@ -48,8 +48,7 @@ export async function setTotalPages(page: Page, total: string) {
 
 // Sets the status to Finished and waits for "Saved".
 export async function finishBook(page: Page) {
-  await pick(page, "Status", "Finished");
-  await page.getByRole("button", { name: "Save status" }).click();
+  await saveStatus(page, "Finished");
   // Wait for the save to land: a Finished book has no Progress form (its own "Saved" would match first otherwise).
   await expect(page.getByRole("button", { name: "Save progress" })).toBeHidden();
   await expect(page.getByRole("status").first()).toHaveText("Saved");
